@@ -451,7 +451,7 @@ public class JCdmBuilderMain {
 		vocabFileField.setText("");
 		vocabFileField.setToolTipText("Specify the name of the folder containing the vocabulary CSV files here");
 		vocabFilePanel.add(vocabFileField);
-		JButton pickButton = new JButton("Pick file");
+		JButton pickButton = new JButton("Pick folder");
 		pickButton.setToolTipText("Select the folder containing the vocabulary CSV files");
 		vocabFilePanel.add(pickButton);
 		pickButton.addActionListener(new ActionListener() {
