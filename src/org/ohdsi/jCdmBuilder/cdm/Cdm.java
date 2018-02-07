@@ -68,6 +68,7 @@ public class Cdm {
 				if (localFile.canRead()) {
 					try {
 						resourceStream = new FileInputStream(localFile);
+						System.out.println("Using local definition: " + resourceName);
 					} catch (FileNotFoundException e) {
 						throw new RuntimeException("ERROR opening file: " + JCdmBuilderMain.localPath + resourceName);
 					}
@@ -135,6 +136,7 @@ public class Cdm {
 			File localFile = new File(JCdmBuilderMain.localPath + resourceName);
 			if (localFile.exists()) {
 				if (localFile.canRead()) {
+					System.out.println("Using local definition: " + resourceName);
 					resourceName = JCdmBuilderMain.localPath + resourceName;
 					localDefinition = true;
 				}

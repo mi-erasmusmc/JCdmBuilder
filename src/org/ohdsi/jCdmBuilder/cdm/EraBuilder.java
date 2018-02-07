@@ -43,6 +43,7 @@ public class EraBuilder {
 				if (localFile.canRead()) {
 					try {
 						resourceStream = new FileInputStream(localFile);
+						System.out.println("Using local definition: " + resourceName);
 					} catch (FileNotFoundException e) {
 						throw new RuntimeException("ERROR opening file: " + JCdmBuilderMain.localPath + resourceName);
 					}
