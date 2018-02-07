@@ -1,8 +1,14 @@
 package org.ohdsi.jCdmBuilder.cdm;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+
 import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
+import org.ohdsi.jCdmBuilder.JCdmBuilderMain;
 import org.ohdsi.sql.SqlTranslate;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadTextFile;
@@ -30,8 +36,29 @@ public class EraBuilder {
 		if (cdmVersion == VERSION_5 && domain == CONDITION_ERA)
 			resourceName = "conditionEraV5.sql";
 
+		InputStream resourceStream = null;
+		if (JCdmBuilderMain.localPath != null) {
+			File localFile = new File(JCdmBuilderMain.localPath + resourceName);
+			if (localFile.exists()) {
+				if (localFile.canRead()) {
+					try {
+						resourceStream = new FileInputStream(localFile);
+					} catch (FileNotFoundException e) {
+						throw new RuntimeException("ERROR opening file: " + JCdmBuilderMain.localPath + resourceName);
+					}
+				}
+				else {
+					throw new RuntimeException("ERROR reading file: " + JCdmBuilderMain.localPath + resourceName);
+				}
+			}
+		}
+		
+		if (resourceStream == null) {
+			resourceStream = EraBuilder.class.getResourceAsStream(resourceName);
+		}
+		
 		String sql = "";
-		for (String line : new ReadTextFile(EraBuilder.class.getResourceAsStream(resourceName)))
+		for (String line : new ReadTextFile(resourceStream))
 			sql = sql + line + "\n";
 
 		String dbms = "sql server";

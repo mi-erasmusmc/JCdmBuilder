@@ -15,6 +15,9 @@
  ******************************************************************************/
 package org.ohdsi.databases;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.sql.BatchUpdateException;
 import java.sql.Connection;
@@ -44,6 +47,7 @@ import org.ohdsi.utilities.files.WriteCSVFileWithHeader;
 
 public class RichConnection {
 	public static int				INSERT_BATCH_SIZE	= 100000;
+	private static String			SUBSTITUTE 			= Character.toString((char) 26) + Character.toString((char) 26);
 	private Connection				connection;
 	private Class<?>				context;											// Used for locating resources
 	private boolean					verbose				= false;
@@ -110,6 +114,17 @@ public class RichConnection {
 		if (context == null)
 			throw new RuntimeException("Context not specified, unable to load resource");
 		executeResource(context.getResourceAsStream(sql));
+	}
+	
+	public void executeLocalFile(String sql) {
+		File localFile = new File(sql);
+		FileInputStream localFileStream;
+		try {
+			localFileStream = new FileInputStream(localFile);
+			executeResource(localFileStream);
+		} catch (FileNotFoundException e) {
+			throw new RuntimeException("ERROR reading file: " + sql);
+		}
 	}
 
 	public void executeAsOne(String sql) {
@@ -529,8 +544,12 @@ public class RichConnection {
 					String value = row.get(columns.get(i));
 					if (value != null && value.length() == 0 && emptyStringToNull)
 						value = null;
-					if (dbType == DbType.POSTGRESQL) // PostgreSQL does not allow unspecified types
+					if (dbType == DbType.POSTGRESQL) {// PostgreSQL does not allow unspecified types
+						if (tableName.equals("note") && (value != null) && (value.contains("\\"))) {
+							value = value.replace("\\\\", SUBSTITUTE).replace("\\n", "\n").replace("\\t", "\t").replace(SUBSTITUTE, "\\");
+						}
 						statement.setObject(i + 1, value, Types.OTHER);
+					}
 					else if (dbType == DbType.ORACLE) {
 						if (isDate(value)) {
 							statement.setDate(i + 1, java.sql.Date.valueOf(value));

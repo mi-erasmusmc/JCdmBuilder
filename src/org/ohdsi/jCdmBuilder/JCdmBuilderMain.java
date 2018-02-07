@@ -29,6 +29,7 @@ import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -114,6 +115,8 @@ public class JCdmBuilderMain {
 	private PropertiesManager	propertiesManager				= new PropertiesManager();
 	
 	private List<JComponent>	componentsToDisableWhenRunning	= new ArrayList<JComponent>();
+	
+	public static String localPath = null;
 	
 	public static void main(String[] args) {
 		new JCdmBuilderMain(args);
@@ -257,7 +260,7 @@ public class JCdmBuilderMain {
 		targetDatabaseField = new JTextField("");
 		targetPanel.add(targetDatabaseField);
 		targetPanel.add(new JLabel("CDM version"));
-		targetCdmVersion = new JComboBox<String>(new String[] { "4.0", "5.0.1" });
+		targetCdmVersion = new JComboBox<String>(new String[] { "4.0", "5.0.1", "5.3" });
 		targetCdmVersion.setToolTipText("Select the CMD version");
 		targetCdmVersion.setSelectedIndex(1);
 		
@@ -292,6 +295,15 @@ public class JCdmBuilderMain {
 		});
 		targetType.setSelectedIndex(1);
 		targetPanel.add(targetCdmVersion);
+
+		File jarPath = new File("./Local");
+		if (jarPath.exists()) {
+			try {
+				localPath = jarPath.getCanonicalPath().toString() + "/";
+			} catch (IOException e1) {
+				localPath = null;
+			}
+		}
 		
 		c.gridx = 0;
 		c.gridy = 1;
@@ -1069,7 +1081,17 @@ public class JCdmBuilderMain {
 				component.setEnabled(false);
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
-				int version = targetCdmVersion.getSelectedItem().equals("5.0.1") ? 5 : 4;
+				int version = Cdm.VERSION_4;
+				switch (targetCdmVersion.getSelectedItem().toString()) {
+				case "5.0.1":
+					version = Cdm.VERSION_501;
+					break;
+				case "5.3":
+					version = Cdm.VERSION_53;
+					break;
+				default:
+					break;
+				}
 				Cdm.createStructure(dbSettings, version, idsToBigInt);
 			} catch (Exception e) {
 				handleError(e);
@@ -1087,7 +1109,17 @@ public class JCdmBuilderMain {
 				component.setEnabled(false);
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
-				int version = targetCdmVersion.getSelectedItem().equals("5.0.1") ? Cdm.VERSION_5 : Cdm.VERSION_4;
+				int version = Cdm.VERSION_4;
+				switch (targetCdmVersion.getSelectedItem().toString()) {
+				case "5.0.1":
+					version = Cdm.VERSION_501;
+					break;
+				case "5.3":
+					version = Cdm.VERSION_53;
+					break;
+				default:
+					break;
+				}
 				Cdm.createIndices(dbSettings, version);
 			} catch (Exception e) {
 				handleError(e);
@@ -1114,7 +1146,15 @@ public class JCdmBuilderMain {
 				component.setEnabled(false);
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
-				int version = targetCdmVersion.getSelectedItem().equals("5.0.1") ? EraBuilder.VERSION_5 : EraBuilder.VERSION_4;
+				int version = EraBuilder.VERSION_4;
+				switch (targetCdmVersion.getSelectedItem().toString()) {
+				case "5.0.1":
+				case "5.3":
+					version = EraBuilder.VERSION_5;
+					break;
+				default:
+					break;
+				}
 				int domain = type == DRUGS ? EraBuilder.DRUG_ERA : EraBuilder.CONDITION_ERA;
 				EraBuilder.buildEra(dbSettings, version, domain);
 			} catch (Exception e) {
