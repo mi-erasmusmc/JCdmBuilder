@@ -1006,7 +1006,7 @@ public class JCdmBuilderMain {
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(sourceFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()));
+						etl.process(sourceFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString());
 				}
 				if (etlType.getSelectedItem().equals("2. ARS -> OMOP CDM V4")) {
 					ARSETL etl = new ARSETL();

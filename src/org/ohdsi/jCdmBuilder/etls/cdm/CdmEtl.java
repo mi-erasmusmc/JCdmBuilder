@@ -16,7 +16,7 @@ import org.ohdsi.utilities.files.Row;
 
 public class CdmEtl {
 	
-	public void process(String folder, DbSettings dbSettings, int maxPersons, int versionId) {
+	public void process(String folder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion) {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(dbSettings.database);
 		
@@ -24,9 +24,11 @@ public class CdmEtl {
 		for (String table : connection.getTableNames(dbSettings.database))
 			tables.add(table.toLowerCase());
 		
-		connection.execute("TRUNCATE TABLE _version");
-		String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-		connection.execute("INSERT INTO _version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
+		if (targetCmdVersion.equals("5.0.1")) {
+			connection.execute("TRUNCATE TABLE _version");
+			String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+			connection.execute("INSERT INTO _version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
+		}
 		
 		for (File file : new File(folder).listFiles()) {
 			if (file.getName().toLowerCase().endsWith(".csv")) {
