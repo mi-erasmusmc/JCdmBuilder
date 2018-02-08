@@ -92,10 +92,19 @@ public class Cdm {
 		connection.setContext(cdm.getClass());
 		connection.use(dbSettings.database);
 		StringUtilities.outputWithTime("Deleting old tables if they exist");
+		String currentCreate = "";
 		for (String line : sqlLines) {
-			String tableName = StringUtilities.findBetween(line, "CREATE TABLE ", " (").trim();
-			if (tableName.length() != 0)
-				connection.dropTableIfExists(tableName);
+			currentCreate += line;
+			if (currentCreate.contains("CREATE TABLE ")) {
+				String tableName = StringUtilities.findBetween(currentCreate, "CREATE TABLE", "(").trim();
+				if (tableName.length() != 0) {
+					connection.dropTableIfExists(tableName);
+					currentCreate = "";
+				}
+			}
+			else {
+				currentCreate = "";
+			}
 		}
 		
 		StringUtilities.outputWithTime("Creating CDM data structure");
