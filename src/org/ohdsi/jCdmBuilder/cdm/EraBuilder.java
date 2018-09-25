@@ -8,7 +8,6 @@ import java.io.InputStream;
 import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
-import org.ohdsi.jCdmBuilder.JCdmBuilderMain;
 import org.ohdsi.sql.SqlTranslate;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadTextFile;
@@ -20,7 +19,7 @@ public class EraBuilder {
 	public static int	VERSION_4		= 4;
 	public static int	VERSION_5		= 5;
 
-	public static void buildEra(DbSettings dbSettings, int cdmVersion, int domain) {
+	public static void buildEra(DbSettings dbSettings, int cdmVersion, String sourceFolder, int domain) {
 		if (domain == DRUG_ERA)
 			StringUtilities.outputWithTime("Constructing drug eras");
 		else
@@ -37,19 +36,19 @@ public class EraBuilder {
 			resourceName = "conditionEraV5.sql";
 
 		InputStream resourceStream = null;
-		if (JCdmBuilderMain.localPath != null) {
-			File localFile = new File(JCdmBuilderMain.localPath + resourceName);
+		if (sourceFolder != null) {
+			File localFile = new File(sourceFolder + resourceName);
 			if (localFile.exists()) {
 				if (localFile.canRead()) {
 					try {
 						resourceStream = new FileInputStream(localFile);
 						System.out.println("Using local definition: " + resourceName);
 					} catch (FileNotFoundException e) {
-						throw new RuntimeException("ERROR opening file: " + JCdmBuilderMain.localPath + resourceName);
+						throw new RuntimeException("ERROR opening file: " + sourceFolder + resourceName);
 					}
 				}
 				else {
-					throw new RuntimeException("ERROR reading file: " + JCdmBuilderMain.localPath + resourceName);
+					throw new RuntimeException("ERROR reading file: " + sourceFolder + resourceName);
 				}
 			}
 		}
