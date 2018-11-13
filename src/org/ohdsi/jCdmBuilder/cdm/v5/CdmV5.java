@@ -41,4 +41,34 @@ public class CdmV5 implements CdmVx {
 	public String indexesOracle() {
 		return "OMOP CDM indexes required - Oracle  Without constraints.sql";
 	}
+
+	@Override
+	public String resultsMSSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsPostgreSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsOracle() {
+		return null;
+	}
+
+	@Override
+	public String resultsIndexesMSSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsIndexesPostgreSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsIndexesOracle() {
+		return null;
+	}
 }

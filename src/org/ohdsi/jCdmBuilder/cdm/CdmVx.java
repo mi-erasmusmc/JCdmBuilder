@@ -27,4 +27,16 @@ public interface CdmVx {
 	public String indexesPostgreSQL();
 
 	public String indexesOracle();
+
+	public String resultsMSSQL();
+
+	public String resultsPostgreSQL();
+
+	public String resultsOracle();
+
+	public String resultsIndexesMSSQL();
+
+	public String resultsIndexesPostgreSQL();
+
+	public String resultsIndexesOracle();
 }

@@ -10,18 +10,19 @@ import java.util.Set;
 
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
+import org.ohdsi.jCdmBuilder.cdm.Cdm;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadCSVFileWithHeader;
 import org.ohdsi.utilities.files.Row;
 
 public class CdmEtl {
 	
-	public void process(String folder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion) {
+	public void process(int currentStructure, String folder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion) {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.use(dbSettings.database);
+		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 		
 		Set<String> tables = new HashSet<String>();
-		for (String table : connection.getTableNames(dbSettings.database))
+		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase))
 			tables.add(table.toLowerCase());
 		
 		if (targetCmdVersion.equals("5.0.1")) {

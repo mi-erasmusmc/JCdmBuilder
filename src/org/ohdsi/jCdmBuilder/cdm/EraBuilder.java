@@ -18,6 +18,7 @@ public class EraBuilder {
 
 	public static int	VERSION_4		= 4;
 	public static int	VERSION_5		= 5;
+	public static int	VERSION_6		= 6;
 
 	public static void buildEra(DbSettings dbSettings, int cdmVersion, String sourceFolder, int domain) {
 		if (domain == DRUG_ERA)
@@ -30,10 +31,14 @@ public class EraBuilder {
 			resourceName = "drugEraV4.sql";
 		if (cdmVersion == VERSION_5 && domain == DRUG_ERA)
 			resourceName = "drugEraV5.sql";
+		if (cdmVersion == VERSION_6 && domain == DRUG_ERA)
+			resourceName = "drugEraV6.sql";
 		if (cdmVersion == VERSION_4 && domain == CONDITION_ERA)
 			resourceName = "conditionEraV4.sql";
 		if (cdmVersion == VERSION_5 && domain == CONDITION_ERA)
 			resourceName = "conditionEraV5.sql";
+		if (cdmVersion == VERSION_6 && domain == CONDITION_ERA)
+			resourceName = "conditionEraV6.sql";
 
 		InputStream resourceStream = null;
 		if (sourceFolder != null) {

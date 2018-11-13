@@ -32,6 +32,7 @@ public class DbSettings {
 	public String		user;
 	public String		password;
 	public String		database;
+	public String		resultsDatabase;
 	public String		server;
 	public String		domain;
 	

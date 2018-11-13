@@ -41,4 +41,34 @@ public class CdmV4 implements CdmVx {
 	public String indexesOracle() {
 		return "CreateCDMIndices.sql";
 	}
+
+	@Override
+	public String resultsMSSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsPostgreSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsOracle() {
+		return null;
+	}
+
+	@Override
+	public String resultsIndexesMSSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsIndexesPostgreSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsIndexesOracle() {
+		return null;
+	}
 }

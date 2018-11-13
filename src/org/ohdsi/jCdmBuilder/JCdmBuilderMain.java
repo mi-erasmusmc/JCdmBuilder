@@ -83,11 +83,13 @@ public class JCdmBuilderMain {
 	private JRadioButton		vocabSchemaTypeButton;
 	private JPanel				vocabCards;
 	private JCheckBox			executeStructureCheckBox;
+	private JCheckBox			executeResultsStructureCheckBox;
 	private JCheckBox			executeVocabCheckBox;
 	private JCheckBox			executeETLCheckBox;
 	private JCheckBox			executeConditionErasCheckBox;
 	private JCheckBox			executeDrugErasCheckBox;
 	private JCheckBox			executeIndicesCheckBox;
+	private JCheckBox			executeResultsIndicesCheckBox;
 	private JComboBox<String>	etlType;
 	private JComboBox<String>	sourceType;
 	private JComboBox<String>	targetType;
@@ -96,6 +98,7 @@ public class JCdmBuilderMain {
 	private JTextField			targetPasswordField;
 	private JTextField			targetServerField;
 	private JTextField			targetDatabaseField;
+	private JTextField			targetResultsDatabaseField;
 	private JComboBox<String>	targetCdmVersion;
 	private JTextField			sourceDelimiterField;
 	private JTextField			sourceFolderField;
@@ -104,14 +107,16 @@ public class JCdmBuilderMain {
 	private JTextField			sourcePasswordField;
 	private JTextField			sourceDatabaseField;
 	private JPanel				sourceCards;
-	private boolean				executeCdmStructureWhenReady	= false;
-	private boolean				executeVocabWhenReady			= false;
-	private boolean				executeEtlWhenReady				= false;
-	private boolean				executeDrugErasWhenReady		= false;
-	private boolean				executeConditionErasWhenReady	= false;
-	private boolean				executeIndicesWhenReady			= false;
-	private boolean				idsToBigInt						= false;
-	private PropertiesManager	propertiesManager				= new PropertiesManager();
+	private boolean				executeCdmStructureWhenReady		= false;
+	private boolean				executeResultsStructureWhenReady	= false;
+	private boolean				executeVocabWhenReady				= false;
+	private boolean				executeEtlWhenReady					= false;
+	private boolean				executeDrugErasWhenReady			= false;
+	private boolean				executeConditionErasWhenReady		= false;
+	private boolean				executeIndicesWhenReady				= false;
+	private boolean				executeResultsIndicesWhenReady		= false;
+	private boolean				idsToBigInt							= false;
+	private PropertiesManager	propertiesManager					= new PropertiesManager();
 	
 	private List<JComponent>	componentsToDisableWhenRunning	= new ArrayList<JComponent>();
 	
@@ -146,8 +151,14 @@ public class JCdmBuilderMain {
 		frame.setVisible(true);
 		ObjectExchange.frame = frame;
 		executeParameters(args);
-		if (executeCdmStructureWhenReady || executeVocabWhenReady || executeEtlWhenReady || executeConditionErasWhenReady || executeDrugErasWhenReady
-				|| executeIndicesWhenReady) {
+		if (	executeCdmStructureWhenReady || 
+				executeResultsStructureWhenReady || 
+				executeVocabWhenReady || 
+				executeEtlWhenReady || 
+				executeConditionErasWhenReady || 
+				executeDrugErasWhenReady || 
+				executeIndicesWhenReady || 
+				executeResultsIndicesWhenReady) {
 			//ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
 			AutoRunThread autoRunThread = new AutoRunThread();
 			autoRunThread.start();
@@ -253,11 +264,14 @@ public class JCdmBuilderMain {
 		targetPanel.add(new JLabel("Password"));
 		targetPasswordField = new JPasswordField("");
 		targetPanel.add(targetPasswordField);
-		targetPanel.add(new JLabel("Database name"));
+		targetPanel.add(new JLabel("CDM Database name"));
 		targetDatabaseField = new JTextField("");
 		targetPanel.add(targetDatabaseField);
+		targetPanel.add(new JLabel("Results Database name"));
+		targetResultsDatabaseField = new JTextField("");
+		targetPanel.add(targetResultsDatabaseField);
 		targetPanel.add(new JLabel("CDM version"));
-		targetCdmVersion = new JComboBox<String>(new String[] { "4.0", "5.0.1", "5.3" });
+		targetCdmVersion = new JComboBox<String>(new String[] { "4.0", "5.0.1", "5.3", "6.0.0" });
 		targetCdmVersion.setToolTipText("Select the CMD version");
 		targetCdmVersion.setSelectedIndex(1);
 		
@@ -327,6 +341,11 @@ public class JCdmBuilderMain {
 					JOptionPane.ERROR_MESSAGE);
 			return;
 		}
+		if (dbSettings.database == null || dbSettings.database.equals("")) {
+			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap("Please specify database name", 80), "Error connecting to server",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
 		if (dbSettings.server == null || dbSettings.server.equals("")) {
 			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap("Please specify the server", 80), "Error connecting to server",
 					JOptionPane.ERROR_MESSAGE);
@@ -362,6 +381,7 @@ public class JCdmBuilderMain {
 		targetServerField.setText(propertiesManager.get("TargetServerLocation"));
 		targetUserField.setText(propertiesManager.get("TargetUserName"));
 		targetDatabaseField.setText(propertiesManager.get("TargetDatabaseName"));
+		targetResultsDatabaseField.setText(propertiesManager.get("TargetResultsDatabaseName"));
 		targetCdmVersion.setSelectedItem(propertiesManager.get("TargetCdmVersion"));
 		
 		// ETL
@@ -391,6 +411,7 @@ public class JCdmBuilderMain {
 		propertiesManager.set("TargetServerLocation", targetServerField.getText());
 		propertiesManager.set("TargetUserName", targetUserField.getText());
 		propertiesManager.set("TargetDatabaseName", targetDatabaseField.getText());
+		propertiesManager.set("TargetResultsDatabaseName", targetResultsDatabaseField.getText());
 		propertiesManager.set("TargetCdmVersion", targetCdmVersion.getSelectedItem().toString());
 		
 		// ETL
@@ -646,8 +667,14 @@ public class JCdmBuilderMain {
 		checkboxPanel.add(executeConditionErasCheckBox);
 		executeDrugErasCheckBox = new JCheckBox("Create drug eras");
 		checkboxPanel.add(executeDrugErasCheckBox);
-		executeIndicesCheckBox = new JCheckBox("Create indices");
+		executeIndicesCheckBox = new JCheckBox("Create CDM indices");
 		checkboxPanel.add(executeIndicesCheckBox);
+		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
+		checkboxPanel.add(executeResultsStructureCheckBox);
+		executeETLCheckBox = new JCheckBox("Load Results Data");
+		checkboxPanel.add(executeETLCheckBox);
+		executeResultsIndicesCheckBox = new JCheckBox("Create Results indices");
+		checkboxPanel.add(executeResultsIndicesCheckBox);
 		c.gridy = 0;
 		panel.add(checkboxPanel, c);
 		
@@ -662,13 +689,21 @@ public class JCdmBuilderMain {
 		executeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				executeCdmStructureWhenReady = executeStructureCheckBox.isSelected();
+				executeResultsStructureWhenReady = executeResultsStructureCheckBox.isSelected();
 				executeVocabWhenReady = executeVocabCheckBox.isSelected();
 				executeEtlWhenReady = executeETLCheckBox.isSelected();
 				executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
 				executeDrugErasWhenReady = executeDrugErasCheckBox.isSelected();
 				executeIndicesWhenReady = executeIndicesCheckBox.isSelected();
-				if (executeCdmStructureWhenReady || executeVocabWhenReady || executeEtlWhenReady || executeConditionErasWhenReady || executeDrugErasWhenReady
-						|| executeIndicesWhenReady)
+				executeResultsIndicesWhenReady = executeResultsIndicesCheckBox.isSelected();
+				if (	executeCdmStructureWhenReady || 
+						executeResultsStructureWhenReady || 
+						executeVocabWhenReady || 
+						executeEtlWhenReady || 
+						executeConditionErasWhenReady || 
+						executeDrugErasWhenReady || 
+						executeIndicesWhenReady || 
+						executeResultsIndicesWhenReady)
 					runAll();
 			}
 		});
@@ -735,6 +770,8 @@ public class JCdmBuilderMain {
 				mode = arg.toLowerCase();
 				if (mode.equals("-executecdmstructure"))
 					executeCdmStructureWhenReady = true;
+				if (mode.equals("-executeresultsstructure"))
+					executeResultsStructureWhenReady = true;
 				if (mode.equals("-executevocab"))
 					executeVocabWhenReady = true;
 				if (mode.equals("-executeetl"))
@@ -745,6 +782,8 @@ public class JCdmBuilderMain {
 					executeConditionErasWhenReady = true;
 				if (mode.equals("-executeindices"))
 					executeIndicesWhenReady = true;
+				if (mode.equals("-executeresultsindices"))
+					executeResultsIndicesWhenReady = true;
 				if (mode.equals("-idstobigint")) {
 					idsToBigInt = true;
 					System.out.println("IDs will be converted to BIGINT");
@@ -913,6 +952,7 @@ public class JCdmBuilderMain {
 		dbSettings.password = targetPasswordField.getText();
 		dbSettings.server = targetServerField.getText();
 		dbSettings.database = targetDatabaseField.getText();
+		dbSettings.resultsDatabase = targetResultsDatabaseField.getText();
 		if (targetType.getSelectedItem().toString().equals("MySQL"))
 			dbSettings.dbType = DbType.MYSQL;
 		else if (targetType.getSelectedItem().toString().equals("Oracle"))
@@ -943,14 +983,22 @@ public class JCdmBuilderMain {
 	}
 	
 	private void etlRun(int maxPersons) {
-		EtlThread etlThread = new EtlThread(maxPersons);
+		EtlThread etlThread = new EtlThread(Cdm.CDM, maxPersons);
 		etlThread.start();
 	}
 	
 	private class AutoRunThread extends Thread {
 		public void run() {
+			if (executeResultsStructureWhenReady) {
+				DropStructureThread dropStructureThread = new DropStructureThread(Cdm.RESULTS);
+				dropStructureThread.run();
+			}
 			if (executeCdmStructureWhenReady) {
-				StructureThread structureThread = new StructureThread();
+				DropStructureThread dropStructureThread = new DropStructureThread(Cdm.CDM);
+				dropStructureThread.run();
+			}
+			if (executeCdmStructureWhenReady) {
+				StructureThread structureThread = new StructureThread(Cdm.CDM);
 				structureThread.run();
 			}
 			if (executeVocabWhenReady) {
@@ -958,7 +1006,7 @@ public class JCdmBuilderMain {
 				vocabRunThread.run();
 			}
 			if (executeEtlWhenReady) {
-				EtlThread etlThread = new EtlThread(Integer.MAX_VALUE);
+				EtlThread etlThread = new EtlThread(Cdm.CDM, Integer.MAX_VALUE);
 				etlThread.run();
 			}
 			if (executeConditionErasWhenReady) {
@@ -970,17 +1018,31 @@ public class JCdmBuilderMain {
 				eraThread.run();
 			}
 			if (executeIndicesWhenReady) {
-				IndexThread indexThread = new IndexThread();
+				IndexThread indexThread = new IndexThread(Cdm.CDM);
+				indexThread.run();
+			}
+			if (executeResultsStructureWhenReady) {
+				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
+				structureThread.run();
+			}
+			if (executeEtlWhenReady) {
+				EtlThread etlThread = new EtlThread(Cdm.RESULTS, Integer.MAX_VALUE);
+				etlThread.run();
+			}
+			if (executeResultsIndicesWhenReady) {
+				IndexThread indexThread = new IndexThread(Cdm.RESULTS);
 				indexThread.run();
 			}
 		}
 	}
 	
 	private class EtlThread extends Thread {
-		
+
+		private int structure;
 		private int maxPersons;
 		
-		public EtlThread(int maxPersons) {
+		public EtlThread(int structure, int maxPersons) {
+			this.structure = structure;
 			this.maxPersons = maxPersons;
 		}
 		
@@ -989,12 +1051,12 @@ public class JCdmBuilderMain {
 				component.setEnabled(false);
 			
 			try {
-				if (etlType.getSelectedItem().equals("1. Load CSV files in CDM format to server")) {
+				if (etlType.getSelectedItem().equals("1. Load CSV files in CDM format to server") || (structure == Cdm.RESULTS)) {
 					CdmEtl etl = new CdmEtl();
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(sourceFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString());
+						etl.process(structure, sourceFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString());
 				}
 				if (etlType.getSelectedItem().equals("2. ARS -> OMOP CDM V4")) {
 					ARSETL etl = new ARSETL();
@@ -1062,7 +1124,12 @@ public class JCdmBuilderMain {
 		}
 	}
 	
-	private class StructureThread extends Thread {
+	private class DropStructureThread extends Thread {
+		private int structure;
+		
+		public DropStructureThread(int structure) {
+			this.structure = structure;
+		}
 		
 		public void run() {
 			for (JComponent component : componentsToDisableWhenRunning)
@@ -1077,11 +1144,51 @@ public class JCdmBuilderMain {
 				case "5.3":
 					version = Cdm.VERSION_53;
 					break;
+				case "6.0.0":
+					version = Cdm.VERSION_600;
+					break;
 				default:
 					break;
 				}
-				Cdm.createStructure(dbSettings, version, sourceFolderField.getText(), idsToBigInt);
-				Cdm.patchStructure(dbSettings, version, sourceFolderField.getText(), idsToBigInt);
+				Cdm.dropPatchStructure(structure, dbSettings, version, sourceFolderField.getText());
+				Cdm.dropStructure(structure, dbSettings, version, sourceFolderField.getText());
+			} catch (Exception e) {
+				handleError(e);
+			} finally {
+				for (JComponent component : componentsToDisableWhenRunning)
+					component.setEnabled(true);
+			}
+		}
+	}
+	
+	private class StructureThread extends Thread {
+		private int structure;
+		
+		public StructureThread(int structure) {
+			this.structure = structure;
+		}
+		
+		public void run() {
+			for (JComponent component : componentsToDisableWhenRunning)
+				component.setEnabled(false);
+			try {
+				DbSettings dbSettings = getTargetDbSettings();
+				int version = Cdm.VERSION_4;
+				switch (targetCdmVersion.getSelectedItem().toString()) {
+				case "5.0.1":
+					version = Cdm.VERSION_501;
+					break;
+				case "5.3":
+					version = Cdm.VERSION_53;
+					break;
+				case "6.0.0":
+					version = Cdm.VERSION_600;
+					break;
+				default:
+					break;
+				}
+				Cdm.createStructure(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt);
+				Cdm.patchStructure(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1092,6 +1199,11 @@ public class JCdmBuilderMain {
 	}
 	
 	private class IndexThread extends Thread {
+		private int structure;
+		
+		public IndexThread(int structure) {
+			this.structure = structure;
+		}
 		
 		public void run() {
 			for (JComponent component : componentsToDisableWhenRunning)
@@ -1106,11 +1218,14 @@ public class JCdmBuilderMain {
 				case "5.3":
 					version = Cdm.VERSION_53;
 					break;
+				case "6.0.0":
+					version = Cdm.VERSION_600;
+					break;
 				default:
 					break;
 				}
-				Cdm.createIndices(dbSettings, version, sourceFolderField.getText());
-				Cdm.patchIndices(dbSettings, version, sourceFolderField.getText());
+				Cdm.createIndices(structure, dbSettings, version, sourceFolderField.getText());
+				Cdm.patchIndices(structure, dbSettings, version, sourceFolderField.getText());
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1141,6 +1256,9 @@ public class JCdmBuilderMain {
 				case "5.0.1":
 				case "5.3":
 					version = EraBuilder.VERSION_5;
+					break;
+				case "6.0.0":
+					version = EraBuilder.VERSION_6;
 					break;
 				default:
 					break;
