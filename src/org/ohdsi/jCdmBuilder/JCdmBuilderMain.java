@@ -336,42 +336,39 @@ public class JCdmBuilderMain {
 	}
 	
 	private void testConnection(DbSettings dbSettings) {
-		if (dbSettings.database == null || dbSettings.database.equals("")) {
-			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap("Please specify database name", 80), "Error connecting to server",
-					JOptionPane.ERROR_MESSAGE);
-			return;
+		int messageType = JOptionPane.ERROR_MESSAGE;
+		String messageTitle = "Error connecting to server";
+		String message = testConnectionResult(dbSettings);
+		if (message.equals("OK")) {
+			messageType = JOptionPane.INFORMATION_MESSAGE;
+			messageTitle = "Connection succesful";
+			message = "Succesfully connected to " + dbSettings.database + " on server " + dbSettings.server;
 		}
-		if (dbSettings.database == null || dbSettings.database.equals("")) {
-			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap("Please specify database name", 80), "Error connecting to server",
-					JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-		if (dbSettings.server == null || dbSettings.server.equals("")) {
-			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap("Please specify the server", 80), "Error connecting to server",
-					JOptionPane.ERROR_MESSAGE);
-			return;
+		JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), messageTitle, messageType);
+	}
+	
+	private String testConnectionResult(DbSettings dbSettings) {
+		String result = "OK";
+		if (dbSettings.database == null || dbSettings.database.equals("")) result = "Please specify database name";
+		else if (dbSettings.database == null || dbSettings.database.equals("")) result = "Please specify database name";
+		else if (dbSettings.server == null || dbSettings.server.equals(""))  result = "Please specify the server";
+		else {
+			RichConnection connection;
+			try {
+				connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+
+				try {
+					connection.getTableNames(dbSettings.database);
+					connection.close();
+				} catch (Exception e) {
+					result = "Could not connect to database: " + e.getMessage();
+				}
+			} catch (Exception e) {
+				result = "Could not connect: " + e.getMessage();
+			}
 		}
 		
-		RichConnection connection;
-		try {
-			connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		} catch (Exception e) {
-			String message = "Could not connect: " + e.getMessage();
-			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error connecting to server", JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-		
-		try {
-			connection.getTableNames(dbSettings.database);
-		} catch (Exception e) {
-			String message = "Could not connect to database: " + e.getMessage();
-			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error connecting to server", JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-		
-		connection.close();
-		String message = "Succesfully connected to " + dbSettings.database + " on server " + dbSettings.server;
-		JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Connection succesful", JOptionPane.INFORMATION_MESSAGE);
+		return result;
 	}
 	
 	private void loadSettings() {
@@ -688,23 +685,28 @@ public class JCdmBuilderMain {
 		executeButton.setToolTipText("Execute all selected steps");
 		executeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				executeCdmStructureWhenReady = executeStructureCheckBox.isSelected();
-				executeResultsStructureWhenReady = executeResultsStructureCheckBox.isSelected();
-				executeVocabWhenReady = executeVocabCheckBox.isSelected();
-				executeEtlWhenReady = executeETLCheckBox.isSelected();
-				executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
-				executeDrugErasWhenReady = executeDrugErasCheckBox.isSelected();
-				executeIndicesWhenReady = executeIndicesCheckBox.isSelected();
-				executeResultsIndicesWhenReady = executeResultsIndicesCheckBox.isSelected();
-				if (	executeCdmStructureWhenReady || 
-						executeResultsStructureWhenReady || 
-						executeVocabWhenReady || 
-						executeEtlWhenReady || 
-						executeConditionErasWhenReady || 
-						executeDrugErasWhenReady || 
-						executeIndicesWhenReady || 
-						executeResultsIndicesWhenReady)
-					runAll();
+				if (checkInputs()) {
+					executeCdmStructureWhenReady = executeStructureCheckBox.isSelected();
+					executeResultsStructureWhenReady = executeResultsStructureCheckBox.isSelected();
+					executeVocabWhenReady = executeVocabCheckBox.isSelected();
+					executeEtlWhenReady = executeETLCheckBox.isSelected();
+					executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
+					executeDrugErasWhenReady = executeDrugErasCheckBox.isSelected();
+					executeIndicesWhenReady = executeIndicesCheckBox.isSelected();
+					executeResultsIndicesWhenReady = executeResultsIndicesCheckBox.isSelected();
+					if (	executeCdmStructureWhenReady || 
+							executeResultsStructureWhenReady || 
+							executeVocabWhenReady || 
+							executeEtlWhenReady || 
+							executeConditionErasWhenReady || 
+							executeDrugErasWhenReady || 
+							executeIndicesWhenReady || 
+							executeResultsIndicesWhenReady)
+						runAll();
+				}
+				else {
+					
+				}
 			}
 		});
 		componentsToDisableWhenRunning.add(executeButton);
@@ -712,6 +714,53 @@ public class JCdmBuilderMain {
 		panel.add(buttonPanel, c);
 		
 		return panel;
+	}
+	
+	private boolean checkInputs() {
+		boolean result = true;
+		List<String> errors = new ArrayList<String>();
+		
+		result = folderExists(folderField.getText().trim(), false, "Working folder", errors);
+		String connectionResult = testConnectionResult(getTargetDbSettings());
+		if (!connectionResult.equals("OK")) {
+			errors.add(connectionResult);
+			result = false;
+		}
+		if (executeVocabCheckBox.isSelected()) {
+			result = folderExists(vocabFileField.getText(), false, "Vocabulary data folder", errors);
+		}
+		if (executeETLCheckBox.isSelected()) {
+			result = folderExists(sourceFolderField.getText(), false, "Source folder", errors);
+		}
+		if (!result) {
+			String message = "";
+			for (String error : errors) {
+				message += (!message.equals("") ? "\r\n" : "") + error;
+			}
+			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Incorrect settings", JOptionPane.ERROR_MESSAGE);
+		}
+		
+		return result;
+	}
+	
+	private boolean folderExists(String folderName, boolean mayBeEmpty, String description, List<String> errors) {
+		boolean exists = true;
+		
+		if (folderName.equals("")) {
+			if (!mayBeEmpty) {
+				errors.add(description + " is not specified");
+				exists = false;
+			} 
+		}
+		else {
+			File folder = new File(folderName);
+			if (!folder.isDirectory()) {
+				errors.add(description + " does not exist");
+				exists = false;
+			}
+		}
+		
+		return exists;
 	}
 	
 	private JComponent createConsolePanel() {
