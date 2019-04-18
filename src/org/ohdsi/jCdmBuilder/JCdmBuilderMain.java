@@ -349,9 +349,7 @@ public class JCdmBuilderMain {
 	
 	private String testConnectionResult(DbSettings dbSettings) {
 		String result = "OK";
-		if (dbSettings.database == null || dbSettings.database.equals("")) result = "Please specify database name";
-		else if (dbSettings.database == null || dbSettings.database.equals("")) result = "Please specify database name";
-		else if (dbSettings.server == null || dbSettings.server.equals(""))  result = "Please specify the server";
+		if (dbSettings.server == null || dbSettings.server.equals(""))  result = "Please specify the server";
 		else {
 			RichConnection connection;
 			try {
