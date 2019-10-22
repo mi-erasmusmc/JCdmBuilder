@@ -20,6 +20,21 @@ public class CdmV6 implements CdmVx {
 	}
 
 	@Override
+	public String constraintsMSSQL() {
+		return null;
+	}
+
+	@Override
+	public String constraintsPostgreSQL() {
+		return null;
+	}
+
+	@Override
+	public String constraintsOracle() {
+		return null;
+	}
+
+	@Override
 	public String indexesMSSQL() {
 		return "OMOP CDM sql server pk indexes.sql";
 	}
@@ -47,6 +62,21 @@ public class CdmV6 implements CdmVx {
 	@Override
 	public String resultsOracle() {
 		return "OMOP CDM Results oracle ddl.sql";
+	}
+
+	@Override
+	public String resultsConstraintsMSSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsConstraintsPostgreSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsConstraintsOracle() {
+		return null;
 	}
 
 	@Override

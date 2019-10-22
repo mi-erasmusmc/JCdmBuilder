@@ -89,6 +89,7 @@ public class JCdmBuilderMain {
 	private JCheckBox			executeConditionErasCheckBox;
 	private JCheckBox			executeDrugErasCheckBox;
 	private JCheckBox			executeIndicesCheckBox;
+	private JCheckBox			executeConstraintsCheckBox;
 	private JCheckBox			executeResultsIndicesCheckBox;
 	private JComboBox<String>	etlType;
 	private JComboBox<String>	sourceType;
@@ -114,6 +115,7 @@ public class JCdmBuilderMain {
 	private boolean				executeDrugErasWhenReady			= false;
 	private boolean				executeConditionErasWhenReady		= false;
 	private boolean				executeIndicesWhenReady				= false;
+	private boolean				executeConstraintsWhenReady			= false;
 	private boolean				executeResultsIndicesWhenReady		= false;
 	private boolean				idsToBigInt							= false;
 	private PropertiesManager	propertiesManager					= new PropertiesManager();
@@ -271,7 +273,7 @@ public class JCdmBuilderMain {
 		targetResultsDatabaseField = new JTextField("");
 		targetPanel.add(targetResultsDatabaseField);
 		targetPanel.add(new JLabel("CDM version"));
-		targetCdmVersion = new JComboBox<String>(new String[] { "4.0", "5.0.1", "5.3", "6.0.0" });
+		targetCdmVersion = new JComboBox<String>(new String[] { "4.0", "5.0.1", "5.3.0", "5.3.1", "6.0.0" });
 		targetCdmVersion.setToolTipText("Select the CMD version");
 		targetCdmVersion.setSelectedIndex(1);
 		
@@ -664,6 +666,8 @@ public class JCdmBuilderMain {
 		checkboxPanel.add(executeDrugErasCheckBox);
 		executeIndicesCheckBox = new JCheckBox("Create CDM indices");
 		checkboxPanel.add(executeIndicesCheckBox);
+		executeConstraintsCheckBox = new JCheckBox("Create CDM constraints");
+		checkboxPanel.add(executeConstraintsCheckBox);
 		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
 		checkboxPanel.add(executeResultsStructureCheckBox);
 		executeETLCheckBox = new JCheckBox("Load Results Data");
@@ -691,6 +695,7 @@ public class JCdmBuilderMain {
 					executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
 					executeDrugErasWhenReady = executeDrugErasCheckBox.isSelected();
 					executeIndicesWhenReady = executeIndicesCheckBox.isSelected();
+					executeConstraintsWhenReady = executeConstraintsCheckBox.isSelected();
 					executeResultsIndicesWhenReady = executeResultsIndicesCheckBox.isSelected();
 					if (	executeCdmStructureWhenReady || 
 							executeResultsStructureWhenReady || 
@@ -699,6 +704,7 @@ public class JCdmBuilderMain {
 							executeConditionErasWhenReady || 
 							executeDrugErasWhenReady || 
 							executeIndicesWhenReady || 
+							executeConstraintsWhenReady || 
 							executeResultsIndicesWhenReady)
 						runAll();
 				}
@@ -829,6 +835,8 @@ public class JCdmBuilderMain {
 					executeConditionErasWhenReady = true;
 				if (mode.equals("-executeindices"))
 					executeIndicesWhenReady = true;
+				if (mode.equals("-executeconstraints"))
+					executeConstraintsWhenReady = true;
 				if (mode.equals("-executeresultsindices"))
 					executeResultsIndicesWhenReady = true;
 				if (mode.equals("-idstobigint")) {
@@ -1068,6 +1076,10 @@ public class JCdmBuilderMain {
 				IndexThread indexThread = new IndexThread(Cdm.CDM);
 				indexThread.run();
 			}
+			if (executeConstraintsWhenReady) {
+				ConstraintThread constraintThread = new ConstraintThread(Cdm.CDM);
+				constraintThread.run();
+			}
 			if (executeResultsStructureWhenReady) {
 				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
 				structureThread.run();
@@ -1188,8 +1200,11 @@ public class JCdmBuilderMain {
 				case "5.0.1":
 					version = Cdm.VERSION_501;
 					break;
-				case "5.3":
-					version = Cdm.VERSION_53;
+				case "5.3.0":
+					version = Cdm.VERSION_530;
+					break;
+				case "5.3.1":
+					version = Cdm.VERSION_531;
 					break;
 				case "6.0.0":
 					version = Cdm.VERSION_600;
@@ -1225,8 +1240,11 @@ public class JCdmBuilderMain {
 				case "5.0.1":
 					version = Cdm.VERSION_501;
 					break;
-				case "5.3":
-					version = Cdm.VERSION_53;
+				case "5.3.0":
+					version = Cdm.VERSION_530;
+					break;
+				case "5.3.1":
+					version = Cdm.VERSION_531;
 					break;
 				case "6.0.0":
 					version = Cdm.VERSION_600;
@@ -1262,8 +1280,11 @@ public class JCdmBuilderMain {
 				case "5.0.1":
 					version = Cdm.VERSION_501;
 					break;
-				case "5.3":
-					version = Cdm.VERSION_53;
+				case "5.3.0":
+					version = Cdm.VERSION_530;
+					break;
+				case "5.3.1":
+					version = Cdm.VERSION_531;
 					break;
 				case "6.0.0":
 					version = Cdm.VERSION_600;
@@ -1273,6 +1294,45 @@ public class JCdmBuilderMain {
 				}
 				Cdm.createIndices(structure, dbSettings, version, sourceFolderField.getText());
 				Cdm.patchIndices(structure, dbSettings, version, sourceFolderField.getText());
+			} catch (Exception e) {
+				handleError(e);
+			} finally {
+				for (JComponent component : componentsToDisableWhenRunning)
+					component.setEnabled(true);
+			}
+		}
+	}
+	
+	private class ConstraintThread extends Thread {
+		private int structure;
+		
+		public ConstraintThread(int structure) {
+			this.structure = structure;
+		}
+		
+		public void run() {
+			for (JComponent component : componentsToDisableWhenRunning)
+				component.setEnabled(false);
+			try {
+				DbSettings dbSettings = getTargetDbSettings();
+				int version = Cdm.VERSION_4;
+				switch (targetCdmVersion.getSelectedItem().toString()) {
+				case "5.0.1":
+					version = Cdm.VERSION_501;
+					break;
+				case "5.3.0":
+					version = Cdm.VERSION_530;
+					break;
+				case "5.3.1":
+					version = Cdm.VERSION_531;
+					break;
+				case "6.0.0":
+					version = Cdm.VERSION_600;
+					break;
+				default:
+					break;
+				}
+				Cdm.createConstraints(structure, dbSettings, version, sourceFolderField.getText());
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1301,7 +1361,8 @@ public class JCdmBuilderMain {
 				int version = EraBuilder.VERSION_4;
 				switch (targetCdmVersion.getSelectedItem().toString()) {
 				case "5.0.1":
-				case "5.3":
+				case "5.3.0":
+				case "5.3.1":
 					version = EraBuilder.VERSION_5;
 					break;
 				case "6.0.0":

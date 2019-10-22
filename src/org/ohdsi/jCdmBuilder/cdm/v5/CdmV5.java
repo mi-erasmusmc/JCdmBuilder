@@ -30,6 +30,18 @@ public class CdmV5 implements CdmVx {
 		return "OMOP CDM ddl - Oracle.sql";
 	}
 
+	public String constraintsMSSQL() {
+		return "OMOP CDM constraints - SQL Server.sql";
+	}
+
+	public String constraintsPostgreSQL() {
+		return "OMOP CDM constraints - PostgreSQL.sql";
+	}
+
+	public String constraintsOracle() {
+		return "OMOP CDM constraints - Oracle.sql";
+	}
+
 	public String indexesMSSQL() {
 		return "OMOP CDM indexes required - SQL Server.sql";
 	}
@@ -39,7 +51,7 @@ public class CdmV5 implements CdmVx {
 	}
 
 	public String indexesOracle() {
-		return "OMOP CDM indexes required - Oracle  Without constraints.sql";
+		return "OMOP CDM indexes required - Oracle.sql";
 	}
 
 	@Override
@@ -54,6 +66,21 @@ public class CdmV5 implements CdmVx {
 
 	@Override
 	public String resultsOracle() {
+		return null;
+	}
+
+	@Override
+	public String resultsConstraintsMSSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsConstraintsPostgreSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsConstraintsOracle() {
 		return null;
 	}
 

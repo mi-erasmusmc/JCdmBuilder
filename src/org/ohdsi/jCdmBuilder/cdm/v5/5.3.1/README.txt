@@ -1,0 +1,1 @@
+2019-10-22	Removed NOT NULL requirement from vocabulary_version field in vocabulary table.

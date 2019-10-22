@@ -22,6 +22,12 @@ public interface CdmVx {
 
 	public String structureOracle();
 
+	public String constraintsMSSQL();
+
+	public String constraintsPostgreSQL();
+
+	public String constraintsOracle();
+
 	public String indexesMSSQL();
 
 	public String indexesPostgreSQL();
@@ -33,6 +39,12 @@ public interface CdmVx {
 	public String resultsPostgreSQL();
 
 	public String resultsOracle();
+
+	public String resultsConstraintsMSSQL();
+
+	public String resultsConstraintsPostgreSQL();
+
+	public String resultsConstraintsOracle();
 
 	public String resultsIndexesMSSQL();
 

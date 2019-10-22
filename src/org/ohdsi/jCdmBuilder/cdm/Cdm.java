@@ -44,7 +44,8 @@ public class Cdm {
 	
 	public static final int	VERSION_4	= 400;
 	public static final int	VERSION_501	= 501;
-	public static final int	VERSION_53	= 530;
+	public static final int	VERSION_530	= 530;
+	public static final int	VERSION_531	= 531;
 	public static final int	VERSION_600	= 600;
 	
 	public static final int CDM     = 0;
@@ -54,7 +55,7 @@ public class Cdm {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_53))
+		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -88,7 +89,7 @@ public class Cdm {
 			}
 			
 			if (resourceStream == null) {
-				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_53 ? "5.3/" : "6.0.0/"))) + resourceName;
+				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
 				URL resourceURL = cdm.getClass().getResource(resourceName);
 				if (resourceURL != null) {
 					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
@@ -131,7 +132,7 @@ public class Cdm {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_53))
+		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -165,7 +166,7 @@ public class Cdm {
 			}
 			
 			if (resourceStream == null) {
-				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_53 ? "5.3/" : "6.0.0/"))) + resourceName;
+				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
 				URL resourceURL = cdm.getClass().getResource(resourceName);
 				if (resourceURL != null) {
 					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
@@ -238,7 +239,7 @@ public class Cdm {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_53))
+		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -314,7 +315,7 @@ public class Cdm {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_53))
+		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -387,7 +388,7 @@ public class Cdm {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_53))
+		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -426,7 +427,7 @@ public class Cdm {
 				connection.executeLocalFile(resourceName);
 			}
 			else {
-				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_53 ? "5.3/" : "6.0.0/"))) + resourceName;
+				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
 				URL resourceURL = cdm.getClass().getResource(resourceName);
 				if (resourceURL != null) {
 					connection.executeResource(resourceName);
@@ -445,7 +446,7 @@ public class Cdm {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_53))
+		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -490,6 +491,64 @@ public class Cdm {
 			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
 			if (patchFound) {
 				connection.executeLocalFile(resourceName);
+			}
+			
+			connection.close();
+			StringUtilities.outputWithTime("Done");
+		}
+	}
+	
+	public static void createConstraints(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
+		CdmVx cdm;
+		if (version == VERSION_4)
+			cdm = new CdmV4();
+		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+			cdm = new CdmV5();
+		else
+			cdm = new CdmV6();
+		
+		String resourceName = null;
+		if (dbSettings.dbType == DbType.ORACLE) {
+			resourceName = currentStructure == CDM ? cdm.constraintsOracle() : cdm.resultsConstraintsOracle();
+		} else if (dbSettings.dbType == DbType.MSSQL) {
+			resourceName = currentStructure == CDM ? cdm.constraintsMSSQL() : cdm.resultsConstraintsMSSQL();
+		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
+			resourceName = currentStructure == CDM ? cdm.constraintsPostgreSQL() : cdm.resultsConstraintsPostgreSQL();
+		}
+		
+		if (resourceName != null) {
+			boolean localDefinition = false;
+			if (sourceFolder != null) {
+				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+				if (localFile.exists()) {
+					if (localFile.canRead()) {
+						System.out.println("Using local definition: " + resourceName);
+						resourceName = sourceFolder + "/Scripts/" + resourceName;
+						localDefinition = true;
+					}
+					else {
+						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+					}
+				}
+			}
+			
+			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+			connection.setContext(cdm.getClass());
+			
+			StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " indices");
+			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			if (localDefinition) {
+				connection.executeLocalFile(resourceName);
+			}
+			else {
+				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
+				URL resourceURL = cdm.getClass().getResource(resourceName);
+				if (resourceURL != null) {
+					connection.executeResource(resourceName);
+				}
+				else {
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " indices defintion not found.");
+				}
 			}
 			
 			connection.close();

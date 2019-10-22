@@ -30,6 +30,18 @@ public class CdmV4 implements CdmVx {
 		return "CreateCDMStructureOracle.sql";
 	}
 
+	public String constraintsMSSQL() {
+		return null;
+	}
+
+	public String constraintsPostgreSQL() {
+		return null;
+	}
+
+	public String constraintsOracle() {
+		return null;
+	}
+
 	public String indexesMSSQL() {
 		return "CreateCDMIndicesSQLServer.sql";
 	}
@@ -54,6 +66,21 @@ public class CdmV4 implements CdmVx {
 
 	@Override
 	public String resultsOracle() {
+		return null;
+	}
+
+	@Override
+	public String resultsConstraintsMSSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsConstraintsPostgreSQL() {
+		return null;
+	}
+
+	@Override
+	public String resultsConstraintsOracle() {
 		return null;
 	}
 
