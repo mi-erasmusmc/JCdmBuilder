@@ -51,7 +51,96 @@ public class Cdm {
 	public static final int CDM     = 0;
 	public static final int RESULTS = 1;
 	
+	
 	public static void dropStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
+		dropConstraints(currentStructure, dbSettings, version, sourceFolder);
+		dropTables(currentStructure, dbSettings, version, sourceFolder);
+	}
+	
+	public static void dropConstraints(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
+		if (currentStructure == CDM) {
+			CdmVx cdm;
+			if (version == VERSION_4)
+				cdm = new CdmV4();
+			else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+				cdm = new CdmV5();
+			else
+				cdm = new CdmV6();
+			
+			String resourceName = null;
+			if (dbSettings.dbType == DbType.ORACLE) {
+				resourceName = cdm.constraintsOracle();
+			} else if (dbSettings.dbType == DbType.MSSQL) {
+				resourceName = cdm.constraintsMSSQL();
+			} else if (dbSettings.dbType == DbType.POSTGRESQL) {
+				resourceName = cdm.constraintsPostgreSQL();
+			}
+
+			if (resourceName != null) {
+				InputStream resourceStream = null;
+				if (sourceFolder != null) {
+					File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+					if (localFile.exists()) {
+						if (localFile.canRead()) {
+							try {
+								resourceStream = new FileInputStream(localFile);
+								System.out.println("Using local definition: " + resourceName);
+							} catch (FileNotFoundException e) {
+								throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
+							}
+						}
+						else {
+							throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+						}
+					}
+				}
+				
+				if (resourceStream == null) {
+					resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
+					URL resourceURL = cdm.getClass().getResource(resourceName);
+					if (resourceURL != null) {
+						resourceStream = cdm.getClass().getResourceAsStream(resourceName);
+					}
+					else {
+						StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " constraints definition not found");
+					}
+				}
+				
+				List<String> sqlLines = new ArrayList<>();
+				for (String line : new ReadTextFile(resourceStream)) {
+					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						sqlLines.add(line);
+					}
+				}
+
+				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				
+				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " constraints if they exist");
+				String currentConstraint = "";
+				for (String line : sqlLines) {
+					currentConstraint += line;
+					if (currentConstraint.contains("ALTER TABLE ") && currentConstraint.contains(" ADD CONSTAINT ") && currentConstraint.contains(" FOREIGN KEY ")) {
+						String tableName = StringUtilities.findBetween(currentConstraint, "ALTER TABLE ", " ADD CONSTAINT ").trim();
+						String constraintName = StringUtilities.findBetween(currentConstraint, " ADD CONSTAINT ", " FOREIGN KEY ").trim();
+						if (tableName.length() != 0) {
+							connection.dropConstraintIfExists(tableName, constraintName);
+							currentConstraint = "";
+						}
+					}
+					else {
+						currentConstraint = "";
+					}
+				}
+				
+				connection.close();
+				StringUtilities.outputWithTime("Done");
+			}
+		}
+	}
+	
+	public static void dropTables(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
@@ -100,8 +189,11 @@ public class Cdm {
 			}
 			
 			List<String> sqlLines = new ArrayList<>();
-			for (String line : new ReadTextFile(resourceStream))
-				sqlLines.add(line);
+			for (String line : new ReadTextFile(resourceStream)) {
+				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+					sqlLines.add(line);
+				}
+			}
 
 			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 			connection.setContext(cdm.getClass());
@@ -177,29 +269,16 @@ public class Cdm {
 			}
 			
 			List<String> sqlLines = new ArrayList<>();
-			for (String line : new ReadTextFile(resourceStream))
-				sqlLines.add(line);
+			for (String line : new ReadTextFile(resourceStream)) {
+				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+					sqlLines.add(line);
+				}
+			}
+			
 			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 			connection.setContext(cdm.getClass());
 			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-			
-/*			
-			StringUtilities.outputWithTime("Deleting old tables if they exist");
-			String currentCreate = "";
-			for (String line : sqlLines) {
-				currentCreate += line;
-				if (currentCreate.contains("CREATE TABLE ")) {
-					String tableName = StringUtilities.findBetween(currentCreate, "CREATE TABLE", "(").trim();
-					if (tableName.length() != 0) {
-						connection.dropTableIfExists(tableName);
-						currentCreate = "";
-					}
-				}
-				else {
-					currentCreate = "";
-				}
-			}
-*/			
+						
 			StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " data structure");
 			if (idsToBigInt) {
 				StringUtilities.outputWithTime("- Converting IDs to BIGINT");
@@ -282,8 +361,11 @@ public class Cdm {
 			
 			if (resourceStream != null) {
 				List<String> sqlLines = new ArrayList<>();
-				for (String line : new ReadTextFile(resourceStream))
-					sqlLines.add(line);
+				for (String line : new ReadTextFile(resourceStream)) {
+					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						sqlLines.add(line);
+					}
+				}
 
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
@@ -358,8 +440,11 @@ public class Cdm {
 			
 			if (resourceStream != null) {
 				List<String> sqlLines = new ArrayList<>();
-				for (String line : new ReadTextFile(resourceStream))
-					sqlLines.add(line);
+				for (String line : new ReadTextFile(resourceStream)) {
+					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						sqlLines.add(line);
+					}
+				}
 
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
@@ -535,7 +620,7 @@ public class Cdm {
 			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 			connection.setContext(cdm.getClass());
 			
-			StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " indices");
+			StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " constraints");
 			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
 			if (localDefinition) {
 				connection.executeLocalFile(resourceName);

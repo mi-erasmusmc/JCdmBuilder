@@ -363,19 +363,50 @@ public class RichConnection {
 
 		return names;
 	}
+	
+	public void dropConstraintIfExists(String table, String constraint) {
+		if (dbType == DbType.ORACLE) {
+			try {
+				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+				if (verbose) {
+					System.out.println("Executing: ALTER TABLE " + table + "DROP CONSTRAINT " + constraint);
+				}
+				statement.execute("ALTER TABLE " + table + "DROP CONSTRAINT " + constraint);
+				statement.close();
+			} catch (Exception e) {
+				if (verbose)
+					System.out.println(e.getMessage());
+			}
+		} else if (dbType == DbType.MSSQL) {
+			execute("BEGIN EXECUTE IMMEDIATE 'ALTER TABLE " + table + " DROP CONSTRAINT " + constraint + "'; EXCEPTION WHEN OTHERS THEN NULL; END");
+		} else if (dbType == DbType.POSTGRESQL) {
+			// Do nothing. The DROP CASCADE of the tables will take care of that.
+		}
+		else {
+			execute("ALTER TABLE " + table + "DROP CONSTRAINT " + constraint);
+		}
+	}
 
 	public void dropTableIfExists(String table) {
 		if (dbType == DbType.ORACLE || dbType == DbType.POSTGRESQL) {
 			try {
 				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 				if (verbose) {
-					System.out.println("Executing: TRUNCATE TABLE " + table);
+					System.out.println("Executing: TRUNCATE TABLE " + table + " CASCADE");
 				}
-				statement.execute("TRUNCATE TABLE " + table);
-				if (verbose) {
-					System.out.println("Executing: DROP TABLE " + table);
+				statement.execute("TRUNCATE TABLE " + table + " CASCADE");
+				if (dbType == DbType.ORACLE) {
+					if (verbose) {
+						System.out.println("Executing: BEGIN EXECUTE IMMEDIATE 'DROP TABLE " + table + "'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
+					}
+					execute("BEGIN EXECUTE IMMEDIATE 'DROP TABLE " + table + "'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
 				}
-				statement.execute("DROP TABLE " + table);
+				else { // dbType == DbType.POSTGRESQL
+					if (verbose) {
+						System.out.println("Executing: DROP TABLE IF EXISTS " + table + " CASCADE");
+					}
+					statement.execute("DROP TABLE IF EXISTS " + table + " CASCADE");
+				}
 				statement.close();
 			} catch (Exception e) {
 				if (verbose)
@@ -428,6 +459,7 @@ public class RichConnection {
 		StringBuilder sql = new StringBuilder();
 		for (String line : new ReadTextFile(sqlStream)) {
 			line = line.replaceAll("--.*", ""); // Remove comments
+			line = line.replaceAll("#.*", ""); // Remove comments
 			line = line.trim();
 			if (line.length() != 0) {
 				sql.append(line.trim());
