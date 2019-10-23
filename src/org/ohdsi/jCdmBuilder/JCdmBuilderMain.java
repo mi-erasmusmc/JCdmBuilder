@@ -549,7 +549,7 @@ public class JCdmBuilderMain {
 		sourceFolderField.setText("");
 		sourceFolderField.setToolTipText("Specify the name of the folder containing the CSV files here");
 		sourceFolderFieldPanel.add(sourceFolderField);
-		JButton pickButton = new JButton("Pick file");
+		JButton pickButton = new JButton("Pick folder");
 		pickButton.setToolTipText("Select the folder containing the source CSV files");
 		sourceFolderFieldPanel.add(pickButton);
 		pickButton.addActionListener(new ActionListener() {
