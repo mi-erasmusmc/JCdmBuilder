@@ -22,6 +22,8 @@ import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -30,6 +32,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.PrintStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +44,7 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -70,6 +74,9 @@ import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
+	
+	private static final String ICON = "/org/ohdsi/jCDMBuilder/OHDSI Icon Picture 048x048.gif"; 
+	
 	private static String		SOURCEFOLDER					= "source folder";
 	private static String		SOURCEDATABASE					= "source database";
 	private static String		VOCABFOLDER						= "vocab folder";
@@ -83,13 +90,14 @@ public class JCdmBuilderMain {
 	private JRadioButton		vocabSchemaTypeButton;
 	private JPanel				vocabCards;
 	private JCheckBox			executeStructureCheckBox;
-	private JCheckBox			executeResultsStructureCheckBox;
 	private JCheckBox			executeVocabCheckBox;
 	private JCheckBox			executeETLCheckBox;
 	private JCheckBox			executeConditionErasCheckBox;
 	private JCheckBox			executeDrugErasCheckBox;
 	private JCheckBox			executeIndicesCheckBox;
 	private JCheckBox			executeConstraintsCheckBox;
+	private JCheckBox			executeResultsStructureCheckBox;
+	private JCheckBox			executeResultsDataCheckBox;
 	private JCheckBox			executeResultsIndicesCheckBox;
 	private JComboBox<String>	etlType;
 	private JComboBox<String>	sourceType;
@@ -109,22 +117,43 @@ public class JCdmBuilderMain {
 	private JTextField			sourceDatabaseField;
 	private JPanel				sourceCards;
 	private boolean				executeCdmStructureWhenReady		= false;
-	private boolean				executeResultsStructureWhenReady	= false;
 	private boolean				executeVocabWhenReady				= false;
 	private boolean				executeEtlWhenReady					= false;
-	private boolean				executeDrugErasWhenReady			= false;
 	private boolean				executeConditionErasWhenReady		= false;
+	private boolean				executeDrugErasWhenReady			= false;
 	private boolean				executeIndicesWhenReady				= false;
 	private boolean				executeConstraintsWhenReady			= false;
+	private boolean				executeResultsStructureWhenReady	= false;
+	private boolean				executeResultsDataWhenReady		        = false;
 	private boolean				executeResultsIndicesWhenReady		= false;
 	private boolean				idsToBigInt							= false;
 	private PropertiesManager	propertiesManager					= new PropertiesManager();
 	
 	private List<JComponent>	componentsToDisableWhenRunning	= new ArrayList<JComponent>();
 	
+	
 	public static void main(String[] args) {
 		new JCdmBuilderMain(args);
 	}
+	
+
+	/**
+	 * Sets an icon on a JFrame or a JDialog.
+	 * @param container - the GUI component on which the icon is to be put
+	 */
+	public static void setIcon(Object container){
+		URL url = JCdmBuilderMain.class.getResource(ICON);
+		Image img = Toolkit.getDefaultToolkit().getImage(url);
+		if (container.getClass() == JFrame.class ||
+				JFrame.class.isAssignableFrom(container.getClass()))
+			((JFrame)container).setIconImage(img);
+		else if (container.getClass() == JDialog.class  ||
+				JDialog.class.isAssignableFrom(container.getClass()))
+			((JDialog)container).setIconImage(img);
+		else
+			((JFrame)container).setIconImage(img);
+	}
+	
 	
 	public JCdmBuilderMain(String[] args) {
 		if (args.length > 0 && (args[0].toLowerCase().equals("-usage") || args[0].toLowerCase().equals("-help") || args[0].toLowerCase().equals("?"))) {
@@ -139,6 +168,7 @@ public class JCdmBuilderMain {
 			}
 		});
 		frame.setLayout(new BorderLayout());
+		JCdmBuilderMain.setIcon(frame);
 		
 		JMenuBar menuBar = createMenu();
 		
@@ -153,13 +183,14 @@ public class JCdmBuilderMain {
 		frame.setVisible(true);
 		ObjectExchange.frame = frame;
 		executeParameters(args);
-		if (	executeCdmStructureWhenReady || 
-				executeResultsStructureWhenReady || 
+		if (	executeCdmStructureWhenReady ||  
 				executeVocabWhenReady || 
 				executeEtlWhenReady || 
 				executeConditionErasWhenReady || 
 				executeDrugErasWhenReady || 
 				executeIndicesWhenReady || 
+				executeResultsStructureWhenReady ||
+				executeResultsDataWhenReady ||
 				executeResultsIndicesWhenReady) {
 			//ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
 			AutoRunThread autoRunThread = new AutoRunThread();
@@ -670,8 +701,8 @@ public class JCdmBuilderMain {
 		checkboxPanel.add(executeConstraintsCheckBox);
 		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
 		checkboxPanel.add(executeResultsStructureCheckBox);
-		executeETLCheckBox = new JCheckBox("Load Results Data");
-		checkboxPanel.add(executeETLCheckBox);
+		executeResultsDataCheckBox = new JCheckBox("Load Results Data");
+		checkboxPanel.add(executeResultsDataCheckBox);
 		executeResultsIndicesCheckBox = new JCheckBox("Create Results indices");
 		checkboxPanel.add(executeResultsIndicesCheckBox);
 		c.gridy = 0;
@@ -689,22 +720,24 @@ public class JCdmBuilderMain {
 			public void actionPerformed(ActionEvent e) {
 				if (checkInputs()) {
 					executeCdmStructureWhenReady = executeStructureCheckBox.isSelected();
-					executeResultsStructureWhenReady = executeResultsStructureCheckBox.isSelected();
 					executeVocabWhenReady = executeVocabCheckBox.isSelected();
 					executeEtlWhenReady = executeETLCheckBox.isSelected();
 					executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
 					executeDrugErasWhenReady = executeDrugErasCheckBox.isSelected();
 					executeIndicesWhenReady = executeIndicesCheckBox.isSelected();
 					executeConstraintsWhenReady = executeConstraintsCheckBox.isSelected();
+					executeResultsStructureWhenReady = executeResultsStructureCheckBox.isSelected();
+					executeResultsDataWhenReady = executeResultsDataCheckBox.isSelected();
 					executeResultsIndicesWhenReady = executeResultsIndicesCheckBox.isSelected();
 					if (	executeCdmStructureWhenReady || 
-							executeResultsStructureWhenReady || 
 							executeVocabWhenReady || 
 							executeEtlWhenReady || 
 							executeConditionErasWhenReady || 
 							executeDrugErasWhenReady || 
 							executeIndicesWhenReady || 
 							executeConstraintsWhenReady || 
+							executeResultsStructureWhenReady || 
+							executeResultsDataWhenReady || 
 							executeResultsIndicesWhenReady)
 						runAll();
 				}
@@ -788,106 +821,202 @@ public class JCdmBuilderMain {
 		System.out.println("Usage: java -jar JCDMBuilder.jar [options]");
 		System.out.println("");
 		System.out.println("Options are:");
+		System.out.println("");
+		System.out.println("-settingsfile <file>        Use the specified settings file");
+		System.out.println("-targetpassword <password>  Set target database password");
+		System.out.println("");
+		System.out.println("When one of the options below is added they overrule the value in");
+		System.out.println("the settings file.");
+		System.out.println("");
+		System.out.println("or:");
+		System.out.println("");
 		System.out.println("-folder <folder>            Set working folder");
-		System.out.println("-targettype <type>          Set target type, e.g. '-targettype \"SQL Server\"'");
-		System.out.println("-targetserver <server>      Set target server, e.g. '-targetserver myserver.mycompany.com'");
-		System.out.println("-targetdatabase <database>  Set target database, e.g. '-targetdatabase cdm_hcup'");
+		System.out.println("-targettype <type>          Set target type, e.g.");
+		System.out.println("                              '-targettype \"SQL Server\"'");
+		System.out.println("-targetserver <server>      Set target server, e.g.");
+		System.out.println("                              '-targetserver myserver.mycompany.com'");
+		System.out.println("-targetdatabase <database>  Set target database, e.g.");
+		System.out.println("                              '-targetdatabase cdm_hcup'");
 		System.out.println("-targetuser <user>          Set target database user");
 		System.out.println("-targetpassword <password>  Set target database password");
-		System.out.println("-vocabsourcetype <type>     Set vocab source type, e.g. '-vocabsourcetype files' or '-vocabsourcetype schema'");
+		System.out.println("-vocabsourcetype <type>     Set vocab source type, e.g.");
+		System.out.println("                              '-vocabsourcetype files' or");
+		System.out.println("                              '-vocabsourcetype schema'");
 		System.out.println("-vocabfolder <folder>       Set vocab folder when using file type");
-		System.out.println("-vocabSchemaField <schema>  Set vocab schema name (assumed to be on target server)");
-		System.out.println("-etlnumber <number>         Set ETL number, e.g. '-etlnumber 4' for HCUP ETL to CDM version 5'");
-		System.out.println("-versionid <id>             Set version ID (integer) to be loaded into _version table");
-		System.out.println("-sourcetype <type>          Set source type, e.g. '-sourcetype \"SQL Server\"'");
-		System.out.println("-sourceserver <server>      Set source server, e.g. '-sourceserver myserver.mycompany.com'");
-		System.out.println("-sourcedatabase <database>  Set source database, e.g. '-sourcedatabase [hcup-nis]'");
+		System.out.println("-vocabSchemaField <schema>  Set vocab schema name (on target server)");
+		System.out.println("-etlnumber <number>         Set ETL number, e.g.");
+		System.out.println("                              '-etlnumber 4' for HCUP ETL to CDM version 5'");
+		System.out.println("-versionid <id>             Set version ID (integer) to be loaded into");
+		System.out.println("                            _version table");
+		System.out.println("-sourcetype <type>          Set source type, e.g.");
+		System.out.println("                              '-sourcetype \"SQL Server\"'");
+		System.out.println("-sourceserver <server>      Set source server, e.g.");
+		System.out.println("                              '-sourceserver myserver.mycompany.com'");
+		System.out.println("-sourcedatabase <database>  Set source database, e.g.");
+		System.out.println("                              '-sourcedatabase [hcup-nis]'");
 		System.out.println("-sourceuser <user>          Set source database user");
 		System.out.println("-sourcepassword <password>  Set source database password");
 		System.out.println("-sourcefolder <folder>      Set source folder containing CSV files");
-		System.out.println("-idtobigint  				When creating the CDM structure, use BIGINT instead of INT for all IDs");
+		System.out.println("-idtobigint  				When creating the CDM structure, use BIGINT instead");
+		System.out.println("                            of INT for all IDs");
 		System.out.println("");
-		System.out.println("The following options allow the steps to be automatically executed. Steps are executed in order:");
+		System.out.println("The following options allow the steps to be automatically executed. Steps are");
+		System.out.println("executed in order:");
+		System.out.println("");
 		System.out.println("-executecdmstructure        Create default CDM structure on startup");
 		System.out.println("-executevocab               Insert vocabulary on startup");
 		System.out.println("-executeetl                 Execute ETL on startup");
-		System.out.println("-executedrugeras            Create drug eras on startup");
 		System.out.println("-executeconditioneras       Create condition eras on startup");
+		System.out.println("-executedrugeras            Create drug eras on startup");
 		System.out.println("-executeindices             Create required indices on startup");
+		System.out.println("-executeconstraints         Add constraints on startup");
+		System.out.println("-executereseultsstructure   Create results structure on startup");
+		System.out.println("-executeresultsdata         Load results data on startup");
+		System.out.println("-executeresultsindices      Create results indices on startup");
 	}
 	
 	private void executeParameters(String[] args) {
-		String mode = null;
-		for (String arg : args) {
-			if (arg.startsWith("-")) {
-				mode = arg.toLowerCase();
-				if (mode.equals("-executecdmstructure"))
-					executeCdmStructureWhenReady = true;
-				if (mode.equals("-executeresultsstructure"))
-					executeResultsStructureWhenReady = true;
-				if (mode.equals("-executevocab"))
-					executeVocabWhenReady = true;
-				if (mode.equals("-executeetl"))
-					executeEtlWhenReady = true;
-				if (mode.equals("-executedrugeras"))
-					executeDrugErasWhenReady = true;
-				if (mode.equals("-executeconditioneras"))
-					executeConditionErasWhenReady = true;
-				if (mode.equals("-executeindices"))
-					executeIndicesWhenReady = true;
-				if (mode.equals("-executeconstraints"))
-					executeConstraintsWhenReady = true;
-				if (mode.equals("-executeresultsindices"))
-					executeResultsIndicesWhenReady = true;
-				if (mode.equals("-idstobigint")) {
-					idsToBigInt = true;
-					System.out.println("IDs will be converted to BIGINT");
+		String parameter = null;
+		String parameterValue = null;
+		int argNr = 0;
+		while (argNr < args.length) {
+			parameter = args[argNr].toLowerCase();
+			if (parameter.startsWith("-")) {
+				if (parameter.equals("-settingsfile")) {
+					argNr++;
+					parameterValue = args[argNr];
+					propertiesManager.load(parameterValue);
+					loadSettings();
+					break;
 				}
-			} else {
-				if (mode.equals("-folder"))
-					folderField.setText(arg);
-				if (mode.equals("-targetpassword"))
-					targetPasswordField.setText(arg);
-				if (mode.equals("-targetserver"))
-					targetServerField.setText(arg);
-				if (mode.equals("-targettype"))
-					targetType.setSelectedItem(arg);
-				if (mode.equals("-targetdatabase"))
-					targetDatabaseField.setText(arg);
-				if (mode.equals("-targetuser"))
-					targetUserField.setText(arg);
-				if (mode.equals("-sourceserver"))
-					sourceServerField.setText(arg);
-				if (mode.equals("-sourcetype"))
-					sourceType.setSelectedItem(arg);
-				if (mode.equals("-sourcedatabase"))
-					sourceDatabaseField.setText(arg);
-				if (mode.equals("-sourceuser"))
-					sourceUserField.setText(arg);
-				if (mode.equals("-sourcepassword"))
-					sourcePasswordField.setText(arg);
-				if (mode.equals("-vocabsourcetype")) {
-					if (arg.toLowerCase().contains("database") || arg.toLowerCase().contains("schema"))
+			}
+			parameter = null;
+			parameterValue = null;
+			argNr++;
+		}
+		argNr = 0;
+		while (argNr < args.length) {
+			parameter = args[argNr].toLowerCase();
+			if (parameter.startsWith("-")) {
+				if (parameter.equals("-folder")) {
+					folderField.setText(parameterValue);
+				}
+				if (parameter.equals("-targetpassword")) {
+					argNr++;
+					parameterValue = args[argNr];
+					targetPasswordField.setText(parameterValue);
+				}
+				if (parameter.equals("-targetserver")) {
+					argNr++;
+					parameterValue = args[argNr];
+					targetServerField.setText(parameterValue);
+				}
+				if (parameter.equals("-targettype")) {
+					argNr++;
+					parameterValue = args[argNr];
+					targetType.setSelectedItem(parameterValue);
+				}
+				if (parameter.equals("-targetdatabase")) {
+					argNr++;
+					parameterValue = args[argNr];
+					targetDatabaseField.setText(parameterValue);
+				}
+				if (parameter.equals("-targetuser")) {
+					argNr++;
+					parameterValue = args[argNr];
+					targetUserField.setText(parameterValue);
+				}
+				if (parameter.equals("-sourceserver")) {
+					argNr++;
+					parameterValue = args[argNr];
+					sourceServerField.setText(parameterValue);
+				}
+				if (parameter.equals("-sourcetype")) {
+					argNr++;
+					parameterValue = args[argNr];
+					sourceType.setSelectedItem(parameterValue);
+				}
+				if (parameter.equals("-sourcedatabase")) {
+					argNr++;
+					parameterValue = args[argNr];
+					sourceDatabaseField.setText(parameterValue);
+				}
+				if (parameter.equals("-sourceuser")) {
+					argNr++;
+					parameterValue = args[argNr];
+					sourceUserField.setText(parameterValue);
+				}
+				if (parameter.equals("-sourcepassword")) {
+					argNr++;
+					parameterValue = args[argNr];
+					sourcePasswordField.setText(parameterValue);
+				}
+				if (parameter.equals("-vocabsourcetype")) {
+					argNr++;
+					parameterValue = args[argNr];
+					if (parameterValue.toLowerCase().contains("database") || parameterValue.toLowerCase().contains("schema"))
 						vocabSchemaTypeButton.doClick();
 					else
 						vocabFileTypeButton.doClick();
 				}
-				if (mode.equals("-sourcefolder"))
-					sourceFolderField.setText(arg);
-				if (mode.equals("-vocabfolder")) {
-					vocabFileField.setText(arg);
+				if (parameter.equals("-sourcefolder")) {
+					argNr++;
+					parameterValue = args[argNr];
+					sourceFolderField.setText(parameterValue);
 				}
-				if (mode.equals("-vocabschema")) {
-					vocabSchemaField.setText(arg);
+				if (parameter.equals("-vocabfolder")) {
+					argNr++;
+					parameterValue = args[argNr];
+					vocabFileField.setText(parameterValue);
 				}
-				if (mode.equals("-versionid")) {
-					versionIdField.setText(arg);
+				if (parameter.equals("-vocabschema")) {
+					argNr++;
+					parameterValue = args[argNr];
+					vocabSchemaField.setText(parameterValue);
 				}
-				if (mode.equals("-etlnumber")) {
-					int etlNumber = Integer.parseInt(arg);
+				if (parameter.equals("-versionid")) {
+					argNr++;
+					parameterValue = args[argNr];
+					versionIdField.setText(parameterValue);
+				}
+				if (parameter.equals("-etlnumber")) {
+					argNr++;
+					parameterValue = args[argNr];
+					int etlNumber = Integer.parseInt(parameterValue);
 					etlType.setSelectedIndex(etlNumber - 1);
 				}
-				mode = null;
+			}
+			parameter = null;
+			parameterValue = null;
+			argNr++;
+		}
+		for (String arg : args) {
+			if (arg.startsWith("-")) {
+				parameter = arg.toLowerCase();
+				if (parameter.equals("-executecdmstructure"))
+					executeCdmStructureWhenReady = true;
+				if (parameter.equals("-executevocab"))
+					executeVocabWhenReady = true;
+				if (parameter.equals("-executeetl"))
+					executeEtlWhenReady = true;
+				if (parameter.equals("-executedrugeras"))
+					executeDrugErasWhenReady = true;
+				if (parameter.equals("-executeconditioneras"))
+					executeConditionErasWhenReady = true;
+				if (parameter.equals("-executeindices"))
+					executeIndicesWhenReady = true;
+				if (parameter.equals("-executeconstraints"))
+					executeConstraintsWhenReady = true;
+				if (parameter.equals("-executeresultsstructure"))
+					executeResultsStructureWhenReady = true;
+				if (parameter.equals("-executeresultsdata"))
+					executeResultsDataWhenReady = true;
+				if (parameter.equals("-executeresultsindices"))
+					executeResultsIndicesWhenReady = true;
+				if (parameter.equals("-idstobigint")) {
+					idsToBigInt = true;
+					System.out.println("IDs will be converted to BIGINT");
+				}
 			}
 		}
 	}
@@ -1084,7 +1213,7 @@ public class JCdmBuilderMain {
 				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
 				structureThread.run();
 			}
-			if (executeEtlWhenReady) {
+			if (executeResultsDataWhenReady) {
 				EtlThread etlThread = new EtlThread(Cdm.RESULTS, Integer.MAX_VALUE);
 				etlThread.run();
 			}
