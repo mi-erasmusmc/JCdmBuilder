@@ -75,7 +75,7 @@ import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
 	
-	private static final String ICON = "/org/ohdsi/jCDMBuilder/OHDSI Icon Picture 048x048.gif"; 
+	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
 	
 	private static String		SOURCEFOLDER					= "source folder";
 	private static String		SOURCEDATABASE					= "source database";
