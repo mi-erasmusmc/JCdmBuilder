@@ -52,7 +52,7 @@ public class InsertVocabularyInServer {
 				}
 			}
 		}
-		System.out.println("Finished inserting tables");
+		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 
 	private static class RowFilterIterator implements Iterator<Row> {

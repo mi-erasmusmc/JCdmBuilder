@@ -30,8 +30,9 @@ public class CdmEtl {
 			String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 			connection.execute("INSERT INTO _version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
 		}
-		
+
 		for (File file : new File(folder).listFiles()) {
+			System.out.println("  " + file.getAbsolutePath());
 			if (file.getName().toLowerCase().endsWith(".csv")) {
 				String table = file.getName().substring(0, file.getName().length() - 4);
 				if (tables.contains(table.toLowerCase())) {
@@ -43,7 +44,7 @@ public class CdmEtl {
 				}
 			}
 		}
-		System.out.println("Finished inserting tables");
+		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 	
 	private static class RowFilterIterator implements Iterator<Row> {

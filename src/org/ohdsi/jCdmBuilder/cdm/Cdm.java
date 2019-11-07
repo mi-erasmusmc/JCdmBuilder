@@ -84,7 +84,7 @@ public class Cdm {
 						if (localFile.canRead()) {
 							try {
 								resourceStream = new FileInputStream(localFile);
-								System.out.println("Using local definition: " + resourceName);
+								StringUtilities.outputWithTime("Using local definition: " + resourceName);
 							} catch (FileNotFoundException e) {
 								throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
 							}
@@ -166,7 +166,7 @@ public class Cdm {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
-							System.out.println("Using local definition: " + resourceName);
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
 							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
 						}
@@ -246,7 +246,7 @@ public class Cdm {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
-							System.out.println("Using local definition: " + resourceName);
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
 							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
 						}
@@ -348,7 +348,7 @@ public class Cdm {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
-							System.out.println("Using local definition: " + resourceName);
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
 							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
 						}
@@ -427,7 +427,7 @@ public class Cdm {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
-							System.out.println("Using local definition: " + resourceName);
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
 							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
 						}
@@ -493,7 +493,7 @@ public class Cdm {
 				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
-						System.out.println("Using local definition: " + resourceName);
+						StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						resourceName = sourceFolder + "/Scripts/" + resourceName;
 						localDefinition = true;
 					}
@@ -559,7 +559,7 @@ public class Cdm {
 				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
-						System.out.println("Using local definition: " + resourceName);
+						StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						resourceName = sourceFolder + "/Scripts/" + resourceName;
 						patchFound = true;
 					}
@@ -607,7 +607,7 @@ public class Cdm {
 				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
-						System.out.println("Using local definition: " + resourceName);
+						StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						resourceName = sourceFolder + "/Scripts/" + resourceName;
 						localDefinition = true;
 					}
