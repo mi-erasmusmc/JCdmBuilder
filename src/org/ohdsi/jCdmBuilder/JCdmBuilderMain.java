@@ -74,6 +74,7 @@ import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
+	private static final String VERSION = "0.2.2";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
 	
@@ -92,10 +93,10 @@ public class JCdmBuilderMain {
 	private JCheckBox			executeStructureCheckBox;
 	private JCheckBox			executeVocabCheckBox;
 	private JCheckBox			executeETLCheckBox;
-	private JCheckBox			executeConditionErasCheckBox;
-	private JCheckBox			executeDrugErasCheckBox;
 	private JCheckBox			executeIndicesCheckBox;
 	private JCheckBox			executeConstraintsCheckBox;
+	private JCheckBox			executeConditionErasCheckBox;
+	private JCheckBox			executeDrugErasCheckBox;
 	private JCheckBox			executeResultsStructureCheckBox;
 	private JCheckBox			executeResultsDataCheckBox;
 	private JCheckBox			executeResultsIndicesCheckBox;
@@ -119,12 +120,12 @@ public class JCdmBuilderMain {
 	private boolean				executeCdmStructureWhenReady		= false;
 	private boolean				executeVocabWhenReady				= false;
 	private boolean				executeEtlWhenReady					= false;
-	private boolean				executeConditionErasWhenReady		= false;
-	private boolean				executeDrugErasWhenReady			= false;
 	private boolean				executeIndicesWhenReady				= false;
 	private boolean				executeConstraintsWhenReady			= false;
+	private boolean				executeConditionErasWhenReady		= false;
+	private boolean				executeDrugErasWhenReady			= false;
 	private boolean				executeResultsStructureWhenReady	= false;
-	private boolean				executeResultsDataWhenReady		        = false;
+	private boolean				executeResultsDataWhenReady		    = false;
 	private boolean				executeResultsIndicesWhenReady		= false;
 	private boolean				idsToBigInt							= false;
 	private PropertiesManager	propertiesManager					= new PropertiesManager();
@@ -160,7 +161,7 @@ public class JCdmBuilderMain {
 			printUsage();
 			return;
 		}
-		frame = new JFrame("JCDMBuilder");
+		frame = new JFrame("JCDMBuilder version " + VERSION);
 		
 		frame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -186,9 +187,11 @@ public class JCdmBuilderMain {
 		if (	executeCdmStructureWhenReady ||  
 				executeVocabWhenReady || 
 				executeEtlWhenReady || 
+				executeIndicesWhenReady || 
+				executeConstraintsWhenReady || 
 				executeConditionErasWhenReady || 
 				executeDrugErasWhenReady || 
-				executeIndicesWhenReady || 
+				executeConditionErasWhenReady || 
 				executeResultsStructureWhenReady ||
 				executeResultsDataWhenReady ||
 				executeResultsIndicesWhenReady) {
@@ -691,14 +694,14 @@ public class JCdmBuilderMain {
 		checkboxPanel.add(executeVocabCheckBox);
 		executeETLCheckBox = new JCheckBox("Perform ETL");
 		checkboxPanel.add(executeETLCheckBox);
-		executeConditionErasCheckBox = new JCheckBox("Create condition eras");
-		checkboxPanel.add(executeConditionErasCheckBox);
-		executeDrugErasCheckBox = new JCheckBox("Create drug eras");
-		checkboxPanel.add(executeDrugErasCheckBox);
 		executeIndicesCheckBox = new JCheckBox("Create CDM indices");
 		checkboxPanel.add(executeIndicesCheckBox);
 		executeConstraintsCheckBox = new JCheckBox("Create CDM constraints");
 		checkboxPanel.add(executeConstraintsCheckBox);
+		executeConditionErasCheckBox = new JCheckBox("Create condition eras");
+		checkboxPanel.add(executeConditionErasCheckBox);
+		executeDrugErasCheckBox = new JCheckBox("Create drug eras");
+		checkboxPanel.add(executeDrugErasCheckBox);
 		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
 		checkboxPanel.add(executeResultsStructureCheckBox);
 		executeResultsDataCheckBox = new JCheckBox("Load Results Data");
@@ -722,20 +725,20 @@ public class JCdmBuilderMain {
 					executeCdmStructureWhenReady = executeStructureCheckBox.isSelected();
 					executeVocabWhenReady = executeVocabCheckBox.isSelected();
 					executeEtlWhenReady = executeETLCheckBox.isSelected();
-					executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
-					executeDrugErasWhenReady = executeDrugErasCheckBox.isSelected();
 					executeIndicesWhenReady = executeIndicesCheckBox.isSelected();
 					executeConstraintsWhenReady = executeConstraintsCheckBox.isSelected();
+					executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
+					executeDrugErasWhenReady = executeDrugErasCheckBox.isSelected();
 					executeResultsStructureWhenReady = executeResultsStructureCheckBox.isSelected();
 					executeResultsDataWhenReady = executeResultsDataCheckBox.isSelected();
 					executeResultsIndicesWhenReady = executeResultsIndicesCheckBox.isSelected();
 					if (	executeCdmStructureWhenReady || 
 							executeVocabWhenReady || 
 							executeEtlWhenReady || 
-							executeConditionErasWhenReady || 
-							executeDrugErasWhenReady || 
 							executeIndicesWhenReady || 
 							executeConstraintsWhenReady || 
+							executeConditionErasWhenReady || 
+							executeDrugErasWhenReady || 
 							executeResultsStructureWhenReady || 
 							executeResultsDataWhenReady || 
 							executeResultsIndicesWhenReady)
@@ -866,10 +869,10 @@ public class JCdmBuilderMain {
 		System.out.println("-executecdmstructure        Create default CDM structure on startup");
 		System.out.println("-executevocab               Insert vocabulary on startup");
 		System.out.println("-executeetl                 Execute ETL on startup");
-		System.out.println("-executeconditioneras       Create condition eras on startup");
-		System.out.println("-executedrugeras            Create drug eras on startup");
 		System.out.println("-executeindices             Create required indices on startup");
 		System.out.println("-executeconstraints         Add constraints on startup");
+		System.out.println("-executeconditioneras       Create condition eras on startup");
+		System.out.println("-executedrugeras            Create drug eras on startup");
 		System.out.println("-executereseultsstructure   Create results structure on startup");
 		System.out.println("-executeresultsdata         Load results data on startup");
 		System.out.println("-executeresultsindices      Create results indices on startup");
@@ -999,14 +1002,14 @@ public class JCdmBuilderMain {
 					executeVocabWhenReady = true;
 				if (parameter.equals("-executeetl"))
 					executeEtlWhenReady = true;
-				if (parameter.equals("-executedrugeras"))
-					executeDrugErasWhenReady = true;
-				if (parameter.equals("-executeconditioneras"))
-					executeConditionErasWhenReady = true;
 				if (parameter.equals("-executeindices"))
 					executeIndicesWhenReady = true;
 				if (parameter.equals("-executeconstraints"))
 					executeConstraintsWhenReady = true;
+				if (parameter.equals("-executedrugeras"))
+					executeDrugErasWhenReady = true;
+				if (parameter.equals("-executeconditioneras"))
+					executeConditionErasWhenReady = true;
 				if (parameter.equals("-executeresultsstructure"))
 					executeResultsStructureWhenReady = true;
 				if (parameter.equals("-executeresultsdata"))
@@ -1193,14 +1196,6 @@ public class JCdmBuilderMain {
 				EtlThread etlThread = new EtlThread(Cdm.CDM, Integer.MAX_VALUE);
 				etlThread.run();
 			}
-			if (executeConditionErasWhenReady) {
-				EraThread eraThread = new EraThread(EraThread.CONDITIONS);
-				eraThread.run();
-			}
-			if (executeDrugErasWhenReady) {
-				EraThread eraThread = new EraThread(EraThread.DRUGS);
-				eraThread.run();
-			}
 			if (executeIndicesWhenReady) {
 				IndexThread indexThread = new IndexThread(Cdm.CDM);
 				indexThread.run();
@@ -1208,6 +1203,14 @@ public class JCdmBuilderMain {
 			if (executeConstraintsWhenReady) {
 				ConstraintThread constraintThread = new ConstraintThread(Cdm.CDM);
 				constraintThread.run();
+			}
+			if (executeConditionErasWhenReady) {
+				EraThread eraThread = new EraThread(EraThread.CONDITIONS);
+				eraThread.run();
+			}
+			if (executeDrugErasWhenReady) {
+				EraThread eraThread = new EraThread(EraThread.DRUGS);
+				eraThread.run();
 			}
 			if (executeResultsStructureWhenReady) {
 				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
