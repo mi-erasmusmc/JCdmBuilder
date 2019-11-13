@@ -1247,7 +1247,7 @@ public class JCdmBuilderMain {
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString());
+						etl.process(structure, sourceFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText());
 				}
 				if (etlType.getSelectedItem().equals("2. ARS -> OMOP CDM V4")) {
 					ARSETL etl = new ARSETL();
@@ -1515,12 +1515,14 @@ public class JCdmBuilderMain {
 	}
 	
 	private void handleError(Exception e) {
-		System.err.println("Error: " + e.getMessage());
-		String errorReportFilename = ErrorReport.generate(folderField.getText(), e);
-		String message = "Error: " + e.getLocalizedMessage();
-		message += "\nAn error report has been generated:\n" + errorReportFilename;
-		System.out.println(message);
-		JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error", JOptionPane.ERROR_MESSAGE);
+		if (!e.getMessage().equals("NO ERROR")) {
+			System.err.println("Error: " + e.getMessage());
+			String errorReportFilename = ErrorReport.generate(folderField.getText(), e);
+			String message = "Error: " + e.getLocalizedMessage();
+			message += "\nAn error report has been generated:\n" + errorReportFilename;
+			System.out.println(message);
+			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	
 	private void runAll() {

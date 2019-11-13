@@ -8,8 +8,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.swing.JComponent;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
+import org.ohdsi.jCdmBuilder.ErrorReport;
 import org.ohdsi.jCdmBuilder.cdm.Cdm;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadCSVFileWithHeader;
@@ -17,7 +22,7 @@ import org.ohdsi.utilities.files.Row;
 
 public class CdmEtl {
 	
-	public void process(int currentStructure, String folder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion) {
+	public void process(int currentStructure, String folder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 		
@@ -32,19 +37,39 @@ public class CdmEtl {
 		}
 
 		for (File file : new File(folder).listFiles()) {
-			System.out.println("  " + file.getAbsolutePath());
-			if (file.getName().toLowerCase().endsWith(".csv")) {
-				String table = file.getName().substring(0, file.getName().length() - 4);
-				if (tables.contains(table.toLowerCase())) {
-					StringUtilities.outputWithTime("Inserting data for table " + table);
-					connection.execute("TRUNCATE " + table);
-					Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath()).iterator();
-					Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(table), table);
-					connection.insertIntoTable(filteredIterator, table, false, true);
+			try {
+				System.out.println("  " + file.getAbsolutePath());
+				if (file.getName().toLowerCase().endsWith(".csv")) {
+					String table = file.getName().substring(0, file.getName().length() - 4);
+					if (tables.contains(table.toLowerCase())) {
+						StringUtilities.outputWithTime("Inserting data for table " + table);
+						connection.execute("TRUNCATE " + table);
+						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath()).iterator();
+						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(table), table);
+						connection.insertIntoTable(filteredIterator, table, false, true);
+					}
+				}
+			} catch (Exception e) {
+				handleError(e, frame, errorFolder);
+				if (JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+					connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				}
+				else {
+					throw new Exception("NO ERROR");
 				}
 			}
 		}
 		StringUtilities.outputWithTime("Finished inserting tables");
+	}
+	
+	private void handleError(Exception e, JFrame frame, String errorFolder) {
+		System.err.println("Error: " + e.getMessage());
+		String errorReportFilename = ErrorReport.generate(errorFolder, e);
+		String message = "Error: " + e.getLocalizedMessage();
+		message += "\nAn error report has been generated:\n" + errorReportFilename;
+		System.out.println(message);
+		JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error", JOptionPane.ERROR_MESSAGE);
 	}
 	
 	private static class RowFilterIterator implements Iterator<Row> {
