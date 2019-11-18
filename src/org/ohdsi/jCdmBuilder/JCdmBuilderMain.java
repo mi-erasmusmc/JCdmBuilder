@@ -74,7 +74,7 @@ import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
-	private static final String VERSION = "0.2.2";
+	private static final String VERSION = "0.2.3";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
 	
@@ -1384,6 +1384,7 @@ public class JCdmBuilderMain {
 				default:
 					break;
 				}
+				Cdm.createSchema(structure, dbSettings, version);
 				Cdm.createStructure(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt);
 				Cdm.patchStructure(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt);
 			} catch (Exception e) {

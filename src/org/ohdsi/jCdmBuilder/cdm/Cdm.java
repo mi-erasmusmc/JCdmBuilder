@@ -55,6 +55,7 @@ public class Cdm {
 	public static void dropStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
 		dropConstraints(currentStructure, dbSettings, version, sourceFolder);
 		dropTables(currentStructure, dbSettings, version, sourceFolder);
+		dropSchema(currentStructure, dbSettings, version);
 	}
 	
 	public static void dropConstraints(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
@@ -218,6 +219,46 @@ public class Cdm {
 			connection.close();
 			StringUtilities.outputWithTime("Done");
 		}
+	}
+	
+	public static void dropSchema(int currentStructure, DbSettings dbSettings, int version) {
+		CdmVx cdm;
+		if (version == VERSION_4)
+			cdm = new CdmV4();
+		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+			cdm = new CdmV5();
+		else
+			cdm = new CdmV6();
+
+		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+		connection.setContext(cdm.getClass());
+		connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		
+		StringUtilities.outputWithTime("Deleting " + (currentStructure == CDM ? "CDM" : "Results") + " schema if it exists");
+		connection.dropSchemaIfExists(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		
+		connection.close();
+		StringUtilities.outputWithTime("Done");
+	}
+	
+	public static void createSchema(int currentStructure, DbSettings dbSettings, int version) {
+		CdmVx cdm;
+		if (version == VERSION_4)
+			cdm = new CdmV4();
+		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+			cdm = new CdmV5();
+		else
+			cdm = new CdmV6();
+
+		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+		connection.setContext(cdm.getClass());
+		connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		
+		StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " schema");
+		connection.createSchema(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		
+		connection.close();
+		StringUtilities.outputWithTime("Done");
 	}
 	
 	public static void createStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, boolean idsToBigInt) {

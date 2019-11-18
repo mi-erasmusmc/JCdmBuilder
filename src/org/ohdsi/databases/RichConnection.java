@@ -419,6 +419,31 @@ public class RichConnection {
 		}
 	}
 
+	public void dropSchemaIfExists(String schema) {
+		String query = null;
+		if (dbType == DbType.ORACLE || dbType == DbType.POSTGRESQL) {
+			if (dbType == DbType.ORACLE) {
+				query = "DROP SCHEMA " + schema + ";";
+			}
+			else if (dbType == DbType.POSTGRESQL) {
+				query = "DROP SCHEMA IF EXISTS " + schema + " CASCADE;";
+			}
+			else if (dbType == DbType.MSSQL) {
+				query = "DROP SCHEMA IF EXISTS " + schema + ";";
+			}
+			else {
+				query = "DROP SCHEMA " + schema + ";";
+			}
+		}
+		if (query != null) {
+			execute(query);
+		}
+	}
+
+	public void createSchema(String schema) {
+		execute("CREATE SCHEMA " + schema + ";");
+	}
+
 	public void dropDatabaseIfExists(String database) {
 		execute("DROP DATABASE " + database);
 	}
