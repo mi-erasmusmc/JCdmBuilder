@@ -195,7 +195,7 @@ public class JCdmBuilderMain {
 				executeResultsStructureWhenReady ||
 				executeResultsDataWhenReady ||
 				executeResultsIndicesWhenReady) {
-			//ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
+			ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
 			AutoRunThread autoRunThread = new AutoRunThread();
 			autoRunThread.start();
 		}
