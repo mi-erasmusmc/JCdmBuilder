@@ -74,14 +74,15 @@ import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
-	private static final String VERSION = "0.2.3";
+	private static final String VERSION = "0.3.0";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
 	
-	private static String		SOURCEFOLDER					= "source folder";
-	private static String		SOURCEDATABASE					= "source database";
-	private static String		VOCABFOLDER						= "vocab folder";
-	private static String		VOCABSCHEMA						= "vocab schema";
+	private static String		SOURCEFOLDER					        = "source folder";
+	private static String		SOURCEVIASERVERFOLDER			        = "source via server folder";
+	private static String		SOURCEDATABASE					        = "source database";
+	private static String		VOCABFOLDER						        = "vocab folder";
+	private static String		VOCABSCHEMA						        = "vocab schema";
 	private JFrame				frame;
 	private JTabbedPane			tabbedPane;
 	private JTextField			folderField;
@@ -116,21 +117,25 @@ public class JCdmBuilderMain {
 	private JTextField			sourceUserField;
 	private JTextField			sourcePasswordField;
 	private JTextField			sourceDatabaseField;
+	private JTextField			sourceServerDelimiterField;
+	private JTextField			sourceServerFolderField;
+	private JTextField			sourceServerTempFolderField;
+	private JTextField			sourceServerTempLocalFolderField;
 	private JPanel				sourceCards;
-	private boolean				executeCdmStructureWhenReady		= false;
-	private boolean				executeVocabWhenReady				= false;
-	private boolean				executeEtlWhenReady					= false;
-	private boolean				executeIndicesWhenReady				= false;
-	private boolean				executeConstraintsWhenReady			= false;
-	private boolean				executeConditionErasWhenReady		= false;
-	private boolean				executeDrugErasWhenReady			= false;
-	private boolean				executeResultsStructureWhenReady	= false;
-	private boolean				executeResultsDataWhenReady		    = false;
-	private boolean				executeResultsIndicesWhenReady		= false;
-	private boolean				idsToBigInt							= false;
-	private PropertiesManager	propertiesManager					= new PropertiesManager();
+	private boolean				executeCdmStructureWhenReady		    = false;
+	private boolean				executeVocabWhenReady				    = false;
+	private boolean				executeEtlWhenReady					    = false;
+	private boolean				executeIndicesWhenReady				    = false;
+	private boolean				executeConstraintsWhenReady			    = false;
+	private boolean				executeConditionErasWhenReady		    = false;
+	private boolean				executeDrugErasWhenReady			    = false;
+	private boolean				executeResultsStructureWhenReady	    = false;
+	private boolean				executeResultsDataWhenReady		        = false;
+	private boolean				executeResultsIndicesWhenReady		    = false;
+	private boolean				idsToBigInt							    = false;
+	private PropertiesManager	propertiesManager					    = new PropertiesManager();
 	
-	private List<JComponent>	componentsToDisableWhenRunning	= new ArrayList<JComponent>();
+	private List<JComponent>	componentsToDisableWhenRunning	        = new ArrayList<JComponent>();
 	
 	
 	public static void main(String[] args) {
@@ -424,6 +429,10 @@ public class JCdmBuilderMain {
 		sourceDatabaseField.setText(propertiesManager.get("SourceDatabaseName"));
 		sourceDelimiterField.setText(propertiesManager.get("SourceDelimiter"));
 		sourceFolderField.setText(propertiesManager.get("SourceFolder"));
+		sourceServerDelimiterField.setText(propertiesManager.get("SourceServerDelimiter"));
+		sourceServerFolderField.setText(propertiesManager.get("SourceServerFolder"));
+		sourceServerTempFolderField.setText(propertiesManager.get("SourceServerTempFolder"));
+		sourceServerTempLocalFolderField.setText(propertiesManager.get("SourceServerTempLocalFolder"));
 		
 		// vocabulary
 		vocabFileField.setText(propertiesManager.get("VocabFileField"));
@@ -454,6 +463,10 @@ public class JCdmBuilderMain {
 		propertiesManager.set("SourceDatabaseName", sourceDatabaseField.getText());
 		propertiesManager.set("SourceDelimiter", sourceDelimiterField.getText());
 		propertiesManager.set("SourceFolder", sourceFolderField.getText());
+		propertiesManager.set("SourceServerDelimiter", sourceServerDelimiterField.getText());
+		propertiesManager.set("SourceServerFolder", sourceServerFolderField.getText());
+		propertiesManager.set("SourceServerTempFolder", sourceServerTempFolderField.getText());
+		propertiesManager.set("SourceServerTempLocalFolder", sourceServerTempLocalFolderField.getText());
 		
 		// vocabulary
 		propertiesManager.set("VocabFileField", vocabFileField.getText());
@@ -539,7 +552,7 @@ public class JCdmBuilderMain {
 		etlTypePanel.setLayout(new BoxLayout(etlTypePanel, BoxLayout.X_AXIS));
 		etlTypePanel.setBorder(BorderFactory.createTitledBorder("ETL type"));
 		etlType = new JComboBox<String>(
-				new String[] { "1. Load CSV files in CDM format to server", "2. ARS -> OMOP CDM V4", "3. HCUP -> OMOP CDM V4", "4. HCUP -> OMOP CDM V5" });
+				new String[] { "1. Load CSV files in CDM format to server", "2. ARS -> OMOP CDM V4", "3. HCUP -> OMOP CDM V4", "4. HCUP -> OMOP CDM V5", "5. PostgreSQL only: Load CSV files from server in CDM format to server" });
 		etlType.setToolTipText("Select the appropriate ETL process");
 		etlType.addItemListener(new ItemListener() {
 			
@@ -548,6 +561,8 @@ public class JCdmBuilderMain {
 				String selection = arg0.getItem().toString();
 				if (selection.equals("1. Load CSV files in CDM format to server") || selection.equals("2. ARS -> OMOP CDM V4"))
 					((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEFOLDER);
+				else if (selection.equals("5. PostgreSQL only: Load CSV files from server in CDM format to server"))
+						((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEVIASERVERFOLDER);
 				else
 					((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEDATABASE);
 			}
@@ -572,9 +587,12 @@ public class JCdmBuilderMain {
 		c.gridwidth = 1;
 		panel.add(versionIdPanel, c);
 		
+		
+		// ETL-Type 1 and 2 Panel
 		JPanel sourceFolderPanel = new JPanel();
 		sourceFolderPanel.setLayout(new GridLayout(5, 2));
 		sourceFolderPanel.setBorder(BorderFactory.createTitledBorder("Source folder location"));
+		
 		sourceFolderPanel.add(new JLabel("Folder"));
 		
 		JPanel sourceFolderFieldPanel = new JPanel();
@@ -592,6 +610,7 @@ public class JCdmBuilderMain {
 			}
 		});
 		sourceFolderPanel.add(sourceFolderFieldPanel);
+		
 		sourceFolderPanel.add(new JLabel("Delimiter"));
 		sourceDelimiterField = new JTextField(",");
 		sourceDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
@@ -601,6 +620,60 @@ public class JCdmBuilderMain {
 		sourceFolderPanel.add(Box.createHorizontalGlue());
 		sourceFolderPanel.add(Box.createHorizontalGlue());
 		
+
+		// ETL-Type 5 Panel
+		JPanel sourceServerFolderPanel = new JPanel();
+		sourceServerFolderPanel.setLayout(new GridLayout(5, 2));
+		sourceServerFolderPanel.setBorder(BorderFactory.createTitledBorder("Folder locations"));
+		sourceServerFolderPanel.add(new JLabel("Folder"));
+		
+		JPanel sourceViaServerFolderFieldPanel = new JPanel();
+		sourceViaServerFolderFieldPanel.setLayout(new BoxLayout(sourceViaServerFolderFieldPanel, BoxLayout.X_AXIS));
+		sourceServerFolderField = new JTextField();
+		sourceServerFolderField.setText("");
+		sourceServerFolderField.setToolTipText("Specify the name of the folder containing the CSV files here");
+		sourceViaServerFolderFieldPanel.add(sourceServerFolderField);
+		JButton pickFolderButton = new JButton("Pick folder");
+		pickFolderButton.setToolTipText("Select the folder containing the source CSV files");
+		sourceViaServerFolderFieldPanel.add(pickFolderButton);
+		pickFolderButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pickSourceFolder();
+			}
+		});
+		sourceServerFolderPanel.add(sourceViaServerFolderFieldPanel);
+		
+		sourceServerFolderPanel.add(new JLabel("Server folder"));
+		
+		JPanel sourceServerTempFolderFieldPanel = new JPanel();
+		sourceServerTempFolderFieldPanel.setLayout(new BoxLayout(sourceServerTempFolderFieldPanel, BoxLayout.X_AXIS));
+		sourceServerTempFolderField = new JTextField();
+		sourceServerTempFolderField.setText("");
+		sourceServerTempFolderField.setToolTipText("Specify the path of the temporary folder on the server here");
+		sourceServerTempFolderFieldPanel.add(sourceServerTempFolderField);
+		JButton pickServerFolderButton = new JButton("Pick folder");
+		pickServerFolderButton.setToolTipText("Select the temporary folder on the server");
+		sourceServerTempFolderFieldPanel.add(pickServerFolderButton);
+		pickServerFolderButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pickTemporaryServerFolder();
+			}
+		});
+		sourceServerFolderPanel.add(sourceServerTempFolderFieldPanel);
+
+		sourceServerTempLocalFolderField = new JTextField();
+		sourceServerTempLocalFolderField.setText("");
+		sourceServerTempLocalFolderField.setToolTipText("Specify the local path on the server of the temporary folder on the server here");
+		sourceServerFolderPanel.add(new JLabel("Local path server folder"));
+		sourceServerFolderPanel.add(sourceServerTempLocalFolderField);
+		
+		sourceServerFolderPanel.add(new JLabel("Delimiter"));
+		sourceServerDelimiterField = new JTextField(",");
+		sourceServerDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
+		sourceServerFolderPanel.add(sourceServerDelimiterField);
+		
+		
+		// ETL-Type 3 and 4 Panel
 		JPanel sourceDatabasePanel = new JPanel();
 		sourceDatabasePanel.setLayout(new GridLayout(0, 2));
 		sourceDatabasePanel.setBorder(BorderFactory.createTitledBorder("Source database location"));
@@ -652,6 +725,7 @@ public class JCdmBuilderMain {
 		sourceCards = new JPanel(new CardLayout());
 		sourceCards.add(sourceFolderPanel, SOURCEFOLDER);
 		sourceCards.add(sourceDatabasePanel, SOURCEDATABASE);
+		sourceCards.add(sourceServerFolderPanel, SOURCEVIASERVERFOLDER);
 		
 		c.gridx = 0;
 		c.gridy = 1;
@@ -741,8 +815,16 @@ public class JCdmBuilderMain {
 							executeDrugErasWhenReady || 
 							executeResultsStructureWhenReady || 
 							executeResultsDataWhenReady || 
-							executeResultsIndicesWhenReady)
-						runAll();
+							executeResultsIndicesWhenReady) {
+						if (
+								(!etlType.getSelectedItem().equals("5. PostgreSQL only: Load CSV files from server in CDM format to server")) ||
+								(targetType.getSelectedItem().equals("PostgreSQL"))) {
+							runAll();
+						}
+						else {
+							JOptionPane.showMessageDialog(frame, "ETL-Type 5 is only available for PostgreSQL", "Incorrect settings", JOptionPane.ERROR_MESSAGE);
+						}
+					}
 				}
 				else {
 					
@@ -833,49 +915,53 @@ public class JCdmBuilderMain {
 		System.out.println("");
 		System.out.println("or:");
 		System.out.println("");
-		System.out.println("-folder <folder>            Set working folder");
-		System.out.println("-targettype <type>          Set target type, e.g.");
-		System.out.println("                              '-targettype \"SQL Server\"'");
-		System.out.println("-targetserver <server>      Set target server, e.g.");
-		System.out.println("                              '-targetserver myserver.mycompany.com'");
-		System.out.println("-targetdatabase <database>  Set target database, e.g.");
-		System.out.println("                              '-targetdatabase cdm_hcup'");
-		System.out.println("-targetuser <user>          Set target database user");
-		System.out.println("-targetpassword <password>  Set target database password");
-		System.out.println("-vocabsourcetype <type>     Set vocab source type, e.g.");
-		System.out.println("                              '-vocabsourcetype files' or");
-		System.out.println("                              '-vocabsourcetype schema'");
-		System.out.println("-vocabfolder <folder>       Set vocab folder when using file type");
-		System.out.println("-vocabSchemaField <schema>  Set vocab schema name (on target server)");
-		System.out.println("-etlnumber <number>         Set ETL number, e.g.");
-		System.out.println("                              '-etlnumber 4' for HCUP ETL to CDM version 5'");
-		System.out.println("-versionid <id>             Set version ID (integer) to be loaded into");
-		System.out.println("                            _version table");
-		System.out.println("-sourcetype <type>          Set source type, e.g.");
-		System.out.println("                              '-sourcetype \"SQL Server\"'");
-		System.out.println("-sourceserver <server>      Set source server, e.g.");
-		System.out.println("                              '-sourceserver myserver.mycompany.com'");
-		System.out.println("-sourcedatabase <database>  Set source database, e.g.");
-		System.out.println("                              '-sourcedatabase [hcup-nis]'");
-		System.out.println("-sourceuser <user>          Set source database user");
-		System.out.println("-sourcepassword <password>  Set source database password");
-		System.out.println("-sourcefolder <folder>      Set source folder containing CSV files");
-		System.out.println("-idtobigint  				When creating the CDM structure, use BIGINT instead");
-		System.out.println("                            of INT for all IDs");
+		System.out.println("-folder <folder>                   Set working folder");
+		System.out.println("-targettype <type>                 Set target type, e.g.");
+		System.out.println("                                     '-targettype \"SQL Server\"'");
+		System.out.println("-targetserver <server>             Set target server, e.g.");
+		System.out.println("                                     '-targetserver myserver.mycompany.com'");
+		System.out.println("-targetdatabase <database>         Set target database, e.g.");
+		System.out.println("                                     '-targetdatabase cdm_hcup'");
+		System.out.println("-targetuser <user>                 Set target database user");
+		System.out.println("-targetpassword <password>         Set target database password");
+		System.out.println("-vocabsourcetype <type>            Set vocab source type, e.g.");
+		System.out.println("                                     '-vocabsourcetype files' or");
+		System.out.println("                                     '-vocabsourcetype schema'");
+		System.out.println("-vocabfolder <folder>              Set vocab folder when using file type");
+		System.out.println("-vocabSchemaField <schema>         Set vocab schema name (on target server)");
+		System.out.println("-etlnumber <number>                Set ETL number, e.g.");
+		System.out.println("                                     '-etlnumber 4' for HCUP ETL to CDM");
+		System.out.println("                                     version 5'");
+		System.out.println("-versionid <id>                    Set version ID (integer) to be loaded into");
+		System.out.println("                                   _version table");
+		System.out.println("-sourcetype <type>                 Set source type, e.g.");
+		System.out.println("                                     '-sourcetype \"SQL Server\"'");
+		System.out.println("-sourceserver <server>             Set source server, e.g.");
+		System.out.println("                                     '-sourceserver myserver.mycompany.com'");
+		System.out.println("-sourcedatabase <database>         Set source database, e.g.");
+		System.out.println("                                     '-sourcedatabase [hcup-nis]'");
+		System.out.println("-sourceuser <user>                 Set source database user");
+		System.out.println("-sourcepassword <password>         Set source database password");
+		System.out.println("-sourcefolder <folder>             Set source folder containing CSV files");
+		System.out.println("-sourceserverfolder <folder>       PostgreSQL only: Set temporary server folder");
+		System.out.println("-sourceserverlocalfolder <folder>  PostgreSQL only: Set local path on the");
+		System.out.println("                                   server for the temporary server folder");
+		System.out.println("-idtobigint  				       When creating the CDM structure, use BIGINT");
+		System.out.println("                                   instead of INT for all IDs");
 		System.out.println("");
 		System.out.println("The following options allow the steps to be automatically executed. Steps are");
 		System.out.println("executed in order:");
 		System.out.println("");
-		System.out.println("-executecdmstructure        Create default CDM structure on startup");
-		System.out.println("-executevocab               Insert vocabulary on startup");
-		System.out.println("-executeetl                 Execute ETL on startup");
-		System.out.println("-executeindices             Create required indices on startup");
-		System.out.println("-executeconstraints         Add constraints on startup");
-		System.out.println("-executeconditioneras       Create condition eras on startup");
-		System.out.println("-executedrugeras            Create drug eras on startup");
-		System.out.println("-executereseultsstructure   Create results structure on startup");
-		System.out.println("-executeresultsdata         Load results data on startup");
-		System.out.println("-executeresultsindices      Create results indices on startup");
+		System.out.println("-executecdmstructure               Create default CDM structure on startup");
+		System.out.println("-executevocab                      Insert vocabulary on startup");
+		System.out.println("-executeetl                        Execute ETL on startup");
+		System.out.println("-executeindices                    Create required indices on startup");
+		System.out.println("-executeconstraints                Add constraints on startup");
+		System.out.println("-executeconditioneras              Create condition eras on startup");
+		System.out.println("-executedrugeras                   Create drug eras on startup");
+		System.out.println("-executereseultsstructure          Create results structure on startup");
+		System.out.println("-executeresultsdata                Load results data on startup");
+		System.out.println("-executeresultsindices             Create results indices on startup");
 	}
 	
 	private void executeParameters(String[] args) {
@@ -966,6 +1052,17 @@ public class JCdmBuilderMain {
 					argNr++;
 					parameterValue = args[argNr];
 					sourceFolderField.setText(parameterValue);
+					sourceServerFolderField.setText(parameterValue);
+				}
+				if (parameter.equals("-sourceserverfolder")) {
+					argNr++;
+					parameterValue = args[argNr];
+					sourceServerTempFolderField.setText(parameterValue);
+				}
+				if (parameter.equals("-sourceserverlocalfolder")) {
+					argNr++;
+					parameterValue = args[argNr];
+					sourceServerTempLocalFolderField.setText(parameterValue);
 				}
 				if (parameter.equals("-vocabfolder")) {
 					argNr++;
@@ -1074,6 +1171,14 @@ public class JCdmBuilderMain {
 		int returnVal = fileChooser.showDialog(frame, "Select source folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			sourceFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+	}
+	
+	private void pickTemporaryServerFolder() {
+		JFileChooser fileChooser = new JFileChooser(new File(sourceServerTempFolderField.getText()));
+		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		int returnVal = fileChooser.showDialog(frame, "Select temporary server folder");
+		if (returnVal == JFileChooser.APPROVE_OPTION)
+			sourceServerTempFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
 	}
 	
 	private DbSettings getSourceDbSettings() {
@@ -1275,6 +1380,13 @@ public class JCdmBuilderMain {
 						testConnection(targetDbSettings, false);
 						etl.process(folderField.getText(), sourceDbSettings, targetDbSettings, maxPersons, Integer.parseInt(versionIdField.getText()));
 					}
+				}
+				if (etlType.getSelectedItem().equals("5. PostgreSQL only: Load CSV files from server in CDM format to server")) {
+					CdmEtl etl = new CdmEtl();
+					DbSettings dbSettings = getTargetDbSettings();
+					testConnection(dbSettings, false);
+					if (dbSettings != null)
+						etl.process(structure, sourceServerFolderField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText());
 				}
 				
 			} catch (Exception e) {

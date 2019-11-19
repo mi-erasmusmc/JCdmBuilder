@@ -8,10 +8,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
+import org.apache.commons.io.FileUtils;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
 import org.ohdsi.jCdmBuilder.ErrorReport;
@@ -47,6 +47,72 @@ public class CdmEtl {
 						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath()).iterator();
 						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(table), table);
 						connection.insertIntoTable(filteredIterator, table, false, true);
+					}
+				}
+			} catch (Exception e) {
+				handleError(e, frame, errorFolder);
+				if (JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+					connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				}
+				else {
+					throw new Exception("NO ERROR");
+				}
+			}
+		}
+		StringUtilities.outputWithTime("Finished inserting tables");
+	}
+	
+	public void process(int currentStructure, String folder, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder) throws Exception {
+		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		
+		Set<String> tables = new HashSet<String>();
+		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase))
+			tables.add(table.toLowerCase());
+		
+		if (targetCmdVersion.equals("5.0.1")) {
+			connection.execute("TRUNCATE TABLE _version");
+			String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+			connection.execute("INSERT INTO _version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
+		}
+
+		for (File file : new File(folder).listFiles()) {
+			try {
+				if (file.getName().toLowerCase().endsWith(".csv")) {
+					String table = file.getName().substring(0, file.getName().length() - 4);
+					if (tables.contains(table.toLowerCase())) {
+						StringUtilities.outputWithTime("Inserting data for table " + table);
+						connection.execute("TRUNCATE " + table);
+
+						String temporarySourceFileName = file.getName();
+						String temporarySourceFileNamePath = file.getAbsolutePath();
+						File temporarySourceFile = null;
+						if (!folder.equals(temporaryLocalServerFolder)) {
+							// Copy source file to temporary file on the server
+							
+							//PostgerSQL only
+							String databaseName = dbSettings.server.split("/")[1].trim();
+							
+							temporarySourceFileName = databaseName + "_" + file.getName();
+							StringUtilities.outputWithTime("Copy file " + file.getName() + " to " + temporarySourceFileName);
+							temporarySourceFileNamePath = temporaryServerFolder + "/" + temporarySourceFileName;
+							temporarySourceFile = new File(temporarySourceFileNamePath);
+							FileUtils.copyFile(file, temporarySourceFile);
+						}
+						
+						// Copy data into table
+						
+						// Postgresql
+						StringUtilities.outputWithTime("Import file " + temporarySourceFileName + " into table " + table);
+						connection.execute("COPY " + dbSettings.database + "." + table + " FROM '" + temporarySourceFileNamePath + "' WITH DELIMITER '" + dbSettings.delimiter + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
+						
+						// SQL Server
+						//connection.execute("BULK INSERT " + dbSettings.database + "." + table + " FROM '" + temporarySourceFileName + "' WITH (FORMAT = 'CSV', FIELDTERMINATOR = '" + dbSettings.delimiter + "', FIELDQUOTE = '\"', ROWTERMINATOR = '\n');");
+
+						if (temporarySourceFile != null) {
+							FileUtils.forceDelete(temporarySourceFile);
+						}
 					}
 				}
 			} catch (Exception e) {
