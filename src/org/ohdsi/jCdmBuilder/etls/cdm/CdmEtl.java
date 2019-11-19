@@ -104,8 +104,8 @@ public class CdmEtl {
 						// Copy data into table
 						
 						// Postgresql
-						StringUtilities.outputWithTime("Import file " + temporarySourceFileName + " into table " + table);
-						connection.execute("COPY " + dbSettings.database + "." + table + " FROM '" + temporarySourceFileNamePath + "' WITH DELIMITER '" + dbSettings.delimiter + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
+						StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + temporarySourceFileName + " into table " + table);
+						connection.execute("COPY " + dbSettings.database + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH DELIMITER '" + dbSettings.delimiter + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
 						
 						// SQL Server
 						//connection.execute("BULK INSERT " + dbSettings.database + "." + table + " FROM '" + temporarySourceFileName + "' WITH (FORMAT = 'CSV', FIELDTERMINATOR = '" + dbSettings.delimiter + "', FIELDQUOTE = '\"', ROWTERMINATOR = '\n');");
