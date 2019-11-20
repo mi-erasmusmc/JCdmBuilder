@@ -152,11 +152,11 @@ public class Cdm {
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsOracle();
+			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsStructureOracle();
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsMSSQL();
+			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsStructureMSSQL();
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsPostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsStructurePostgreSQL();
 		}
 
 		if (resourceName != null) {
@@ -201,21 +201,10 @@ public class Cdm {
 			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
 			
 			StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " tables if they exist");
-			String currentCreate = "";
-			for (String line : sqlLines) {
-				currentCreate += line;
-				if (currentCreate.contains("CREATE TABLE ")) {
-					String tableName = StringUtilities.findBetween(currentCreate, "CREATE TABLE", "(").trim();
-					if (tableName.length() != 0) {
-						connection.dropTableIfExists(tableName);
-						currentCreate = "";
-					}
-				}
-				else {
-					currentCreate = "";
-				}
+			for (String tableName : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase)) {
+				connection.dropTableIfExists(tableName);
 			}
-			
+
 			connection.close();
 			StringUtilities.outputWithTime("Done");
 		}
@@ -272,11 +261,11 @@ public class Cdm {
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsOracle();
+			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsStructureOracle();
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsMSSQL();
+			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsStructureMSSQL();
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsPostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsStructurePostgreSQL();
 		}
 
 		if (resourceName != null) {
@@ -366,11 +355,11 @@ public class Cdm {
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsOracle();
+			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsStructureOracle();
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsMSSQL();
+			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsStructureMSSQL();
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsPostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsStructurePostgreSQL();
 		}
 
 		if (resourceName != null) {
@@ -445,11 +434,11 @@ public class Cdm {
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsOracle();
+			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsStructureOracle();
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsMSSQL();
+			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsStructureMSSQL();
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsPostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsStructurePostgreSQL();
 		}
 
 		if (resourceName != null) {

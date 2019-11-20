@@ -74,7 +74,7 @@ import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
-	private static final String VERSION = "0.3.0";
+	private static final String VERSION = "0.3.1";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
 	

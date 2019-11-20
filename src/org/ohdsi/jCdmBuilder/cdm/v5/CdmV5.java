@@ -19,54 +19,54 @@ import org.ohdsi.jCdmBuilder.cdm.CdmVx;
 
 public class CdmV5 implements CdmVx {
 	public String structureMSSQL() {
-		return "OMOP CDM ddl - SQL Server.sql";
+		return "OMOP CDM sql server ddl.txt";
 	}
 
 	public String structurePostgreSQL() {
-		return "OMOP CDM ddl - PostgreSQL.sql";
+		return "OMOP CDM postgresql ddl.txt";
 	}
 
 	public String structureOracle() {
-		return "OMOP CDM ddl - Oracle.sql";
+		return "OMOP CDM oracle ddl.txt";
 	}
 
 	public String constraintsMSSQL() {
-		return "OMOP CDM constraints - SQL Server.sql";
+		return "OMOP CDM sql server constraints.txt";
 	}
 
 	public String constraintsPostgreSQL() {
-		return "OMOP CDM constraints - PostgreSQL.sql";
+		return "OMOP CDM postgresql constraints.txt";
 	}
 
 	public String constraintsOracle() {
-		return "OMOP CDM constraints - Oracle.sql";
+		return "OMOP CDM oracle constraints.txt";
 	}
 
 	public String indexesMSSQL() {
-		return "OMOP CDM indexes required - SQL Server.sql";
+		return "OMOP CDM sql server pk indexes.txt";
 	}
 
 	public String indexesPostgreSQL() {
-		return "OMOP CDM indexes required - PostgreSQL.sql";
+		return "OMOP CDM postgresql pk indexes.txt";
 	}
 
 	public String indexesOracle() {
-		return "OMOP CDM indexes required - Oracle.sql";
+		return "OMOP CDM oracle pk indexes.txt";
 	}
 
 	@Override
-	public String resultsMSSQL() {
-		return null;
+	public String resultsStructureMSSQL() {
+		return "OMOP CDM Results sql server ddl.txt";
 	}
 
 	@Override
-	public String resultsPostgreSQL() {
-		return null;
+	public String resultsStructurePostgreSQL() {
+		return "OMOP CDM Results postgresql ddl.txt";
 	}
 
 	@Override
-	public String resultsOracle() {
-		return null;
+	public String resultsStructureOracle() {
+		return "OMOP CDM Results oracle ddl.txt";
 	}
 
 	@Override

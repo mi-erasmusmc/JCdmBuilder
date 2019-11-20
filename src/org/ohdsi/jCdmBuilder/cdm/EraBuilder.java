@@ -76,6 +76,9 @@ public class EraBuilder {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(dbSettings.database);
 		connection.execute(sql);
-		StringUtilities.outputWithTime("Finished constructing eras");
+		if (domain == DRUG_ERA)
+			StringUtilities.outputWithTime("Finished constructing drug eras");
+		else
+			StringUtilities.outputWithTime("Finished constructing condition eras");
 	}
 }

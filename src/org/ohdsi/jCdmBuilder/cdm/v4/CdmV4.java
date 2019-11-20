@@ -55,17 +55,17 @@ public class CdmV4 implements CdmVx {
 	}
 
 	@Override
-	public String resultsMSSQL() {
+	public String resultsStructureMSSQL() {
 		return null;
 	}
 
 	@Override
-	public String resultsPostgreSQL() {
+	public String resultsStructurePostgreSQL() {
 		return null;
 	}
 
 	@Override
-	public String resultsOracle() {
+	public String resultsStructureOracle() {
 		return null;
 	}
 
