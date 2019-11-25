@@ -968,7 +968,7 @@ public class JCdmBuilderMain {
 		System.out.println("-executeconstraints                Add constraints on startup");
 		System.out.println("-executeconditioneras              Create condition eras on startup");
 		System.out.println("-executedrugeras                   Create drug eras on startup");
-		System.out.println("-executereseultsstructure          Create results structure on startup");
+		System.out.println("-executeresultsstructure           Create results structure on startup");
 		System.out.println("-executeresultsdata                Load results data on startup");
 		System.out.println("-executeresultsindices             Create results indices on startup");
 		System.out.println("-continueonerror                   Continue after error during ETL, creating");
