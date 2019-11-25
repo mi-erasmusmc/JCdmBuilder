@@ -15,6 +15,7 @@ import org.apache.commons.io.FileUtils;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
 import org.ohdsi.jCdmBuilder.ErrorReport;
+import org.ohdsi.jCdmBuilder.JCdmBuilderMain;
 import org.ohdsi.jCdmBuilder.cdm.Cdm;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadCSVFileWithHeader;
@@ -22,7 +23,7 @@ import org.ohdsi.utilities.files.Row;
 
 public class CdmEtl {
 	
-	public void process(int currentStructure, String folder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder) throws Exception {
+	public void process(int currentStructure, String folder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 		
@@ -37,10 +38,11 @@ public class CdmEtl {
 		}
 
 		for (File file : new File(folder).listFiles()) {
+			String table = "";
 			try {
 				System.out.println("  " + file.getAbsolutePath());
 				if (file.getName().toLowerCase().endsWith(".csv")) {
-					String table = file.getName().substring(0, file.getName().length() - 4);
+					table = file.getName().substring(0, file.getName().length() - 4);
 					if (tables.contains(table.toLowerCase())) {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
 						connection.execute("TRUNCATE " + table);
@@ -50,20 +52,27 @@ public class CdmEtl {
 					}
 				}
 			} catch (Exception e) {
-				handleError(e, frame, errorFolder);
-				if (JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+				if (continueOnError) {
+					JCdmBuilderMain.errors.add(table);
 					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 					connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 				}
 				else {
-					throw new Exception("NO ERROR");
+					handleError(e, frame, errorFolder);
+					if (JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+						connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+						connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
+					}
+					else {
+						throw new Exception("NO ERROR");
+					}
 				}
 			}
 		}
 		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 	
-	public void process(int currentStructure, String folder, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder) throws Exception {
+	public void process(int currentStructure, String folder, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 		
@@ -78,9 +87,10 @@ public class CdmEtl {
 		}
 
 		for (File file : new File(folder).listFiles()) {
+			String table = "";
 			try {
 				if (file.getName().toLowerCase().endsWith(".csv")) {
-					String table = file.getName().substring(0, file.getName().length() - 4);
+					table = file.getName().substring(0, file.getName().length() - 4);
 					if (tables.contains(table.toLowerCase())) {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
 						connection.execute("TRUNCATE " + table);
@@ -116,13 +126,20 @@ public class CdmEtl {
 					}
 				}
 			} catch (Exception e) {
-				handleError(e, frame, errorFolder);
-				if (JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+				if (continueOnError) {
+					JCdmBuilderMain.errors.add(table);
 					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 					connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 				}
 				else {
-					throw new Exception("NO ERROR");
+					handleError(e, frame, errorFolder);
+					if (JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+						connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+						connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
+					}
+					else {
+						throw new Exception("NO ERROR");
+					}
 				}
 			}
 		}
