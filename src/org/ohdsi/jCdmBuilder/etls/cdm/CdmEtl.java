@@ -40,7 +40,7 @@ public class CdmEtl {
 		for (File file : new File(folder).listFiles()) {
 			String table = "";
 			try {
-				System.out.println("  " + file.getAbsolutePath());
+				//System.out.println("  " + file.getAbsolutePath());
 				if (file.getName().toLowerCase().endsWith(".csv")) {
 					table = file.getName().substring(0, file.getName().length() - 4);
 					if (tables.contains(table.toLowerCase())) {
@@ -52,20 +52,13 @@ public class CdmEtl {
 					}
 				}
 			} catch (Exception e) {
-				if (continueOnError) {
-					JCdmBuilderMain.errors.add(table);
+				handleError(e, frame, errorFolder, "Table " + table, continueOnError);
+				if (continueOnError || JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 					connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 				}
 				else {
-					handleError(e, frame, errorFolder);
-					if (JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-						connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-						connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
-					}
-					else {
-						throw new Exception("NO ERROR");
-					}
+					throw new Exception("NO ERROR");
 				}
 			}
 		}
@@ -126,33 +119,29 @@ public class CdmEtl {
 					}
 				}
 			} catch (Exception e) {
-				if (continueOnError) {
-					JCdmBuilderMain.errors.add(table);
+				handleError(e, frame, errorFolder, "Table " + table, continueOnError);
+				if (continueOnError || JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 					connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 				}
 				else {
-					handleError(e, frame, errorFolder);
-					if (JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-						connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-						connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
-					}
-					else {
-						throw new Exception("NO ERROR");
-					}
+					throw new Exception("NO ERROR");
 				}
 			}
 		}
 		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 	
-	private void handleError(Exception e, JFrame frame, String errorFolder) {
+	private void handleError(Exception e, JFrame frame, String errorFolder, String item, boolean continueOnError) {
+		JCdmBuilderMain.errors.add(item);
 		System.err.println("Error: " + e.getMessage());
-		String errorReportFilename = ErrorReport.generate(errorFolder, e);
+		String errorReportFilename = ErrorReport.generate(errorFolder, e, item);
 		String message = "Error: " + e.getLocalizedMessage();
 		message += "\nAn error report has been generated:\n" + errorReportFilename;
 		System.out.println(message);
-		JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error", JOptionPane.ERROR_MESSAGE);
+		if (!continueOnError) {
+			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	
 	private static class RowFilterIterator implements Iterator<Row> {

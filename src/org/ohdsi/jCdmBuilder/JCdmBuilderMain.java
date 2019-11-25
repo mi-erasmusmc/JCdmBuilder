@@ -97,7 +97,7 @@ public class JCdmBuilderMain {
 	private JCheckBox			executeStructureCheckBox;
 	private JCheckBox			executeVocabCheckBox;
 	private JCheckBox			executeETLCheckBox;
-	private JCheckBox           continueOnETLErrorCheckBox;
+	private JCheckBox           continueOnErrorCheckBox;
 	private JCheckBox			executeIndicesCheckBox;
 	private JCheckBox			executeConstraintsCheckBox;
 	private JCheckBox			executeConditionErasCheckBox;
@@ -137,7 +137,7 @@ public class JCdmBuilderMain {
 	private boolean				executeResultsDataWhenReady		        = false;
 	private boolean				executeResultsIndicesWhenReady		    = false;
 	private boolean				idsToBigInt							    = false;
-	private boolean             continueOnETLError                         = false;
+	private boolean             continueOnError                         = false;
 	private PropertiesManager	propertiesManager					    = new PropertiesManager();
 	
 	private List<JComponent>	componentsToDisableWhenRunning	        = new ArrayList<JComponent>();
@@ -774,8 +774,6 @@ public class JCdmBuilderMain {
 		checkboxPanel.add(executeVocabCheckBox);
 		executeETLCheckBox = new JCheckBox("Perform ETL");
 		checkboxPanel.add(executeETLCheckBox);
-		continueOnETLErrorCheckBox = new JCheckBox("Continue on ETL error");
-		checkboxPanel.add(continueOnETLErrorCheckBox);
 		executeIndicesCheckBox = new JCheckBox("Create CDM indices");
 		checkboxPanel.add(executeIndicesCheckBox);
 		executeConstraintsCheckBox = new JCheckBox("Create CDM constraints");
@@ -790,6 +788,8 @@ public class JCdmBuilderMain {
 		checkboxPanel.add(executeResultsDataCheckBox);
 		executeResultsIndicesCheckBox = new JCheckBox("Create Results indices");
 		checkboxPanel.add(executeResultsIndicesCheckBox);
+		continueOnErrorCheckBox = new JCheckBox("Continue on ETL, indices, and constraints errors");
+		checkboxPanel.add(continueOnErrorCheckBox);
 		c.gridy = 0;
 		panel.add(checkboxPanel, c);
 		
@@ -807,7 +807,7 @@ public class JCdmBuilderMain {
 					executeCdmStructureWhenReady = executeStructureCheckBox.isSelected();
 					executeVocabWhenReady = executeVocabCheckBox.isSelected();
 					executeEtlWhenReady = executeETLCheckBox.isSelected();
-					continueOnETLError = continueOnETLErrorCheckBox.isSelected();
+					continueOnError = continueOnErrorCheckBox.isSelected();
 					executeIndicesWhenReady = executeIndicesCheckBox.isSelected();
 					executeConstraintsWhenReady = executeConstraintsCheckBox.isSelected();
 					executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
@@ -964,7 +964,6 @@ public class JCdmBuilderMain {
 		System.out.println("-executecdmstructure               Create default CDM structure on startup");
 		System.out.println("-executevocab                      Insert vocabulary on startup");
 		System.out.println("-executeetl                        Execute ETL on startup");
-		System.out.println("-continueonetlerror                Continue after error during ETL.");
 		System.out.println("-executeindices                    Create required indices on startup");
 		System.out.println("-executeconstraints                Add constraints on startup");
 		System.out.println("-executeconditioneras              Create condition eras on startup");
@@ -972,6 +971,8 @@ public class JCdmBuilderMain {
 		System.out.println("-executereseultsstructure          Create results structure on startup");
 		System.out.println("-executeresultsdata                Load results data on startup");
 		System.out.println("-executeresultsindices             Create results indices on startup");
+		System.out.println("-continueonerror                   Continue after error during ETL, creating");
+		System.out.println("                                   indices, and creating constraints.");
 	}
 	
 	private void executeParameters(String[] args) {
@@ -1109,8 +1110,6 @@ public class JCdmBuilderMain {
 					executeVocabWhenReady = true;
 				if (parameter.equals("-executeetl"))
 					executeEtlWhenReady = true;
-				if (parameter.equals("-continueonetlerror"))
-					continueOnETLError = true;
 				if (parameter.equals("-executeindices"))
 					executeIndicesWhenReady = true;
 				if (parameter.equals("-executeconstraints"))
@@ -1125,6 +1124,8 @@ public class JCdmBuilderMain {
 					executeResultsDataWhenReady = true;
 				if (parameter.equals("-executeresultsindices"))
 					executeResultsIndicesWhenReady = true;
+				if (parameter.equals("-continueonerror"))
+					continueOnError = true;
 				if (parameter.equals("-idstobigint")) {
 					idsToBigInt = true;
 					System.out.println("IDs will be converted to BIGINT");
@@ -1341,7 +1342,7 @@ public class JCdmBuilderMain {
 				IndexThread indexThread = new IndexThread(Cdm.RESULTS);
 				indexThread.run();
 			}
-			if (continueOnETLError && (errors.size() > 0)) { // Tables with error at the end.
+			if (continueOnError && (errors.size() > 0)) { // Tables with error at the end.
 				String errorMessage = "The following tables had errors:\n";
 				for (String table : errors) {
 					errorMessage += "\n    " + table;
@@ -1371,7 +1372,7 @@ public class JCdmBuilderMain {
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnETLError);
+						etl.process(structure, sourceFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
 				if (etlType.getSelectedItem().equals("2. ARS -> OMOP CDM V4")) {
 					ARSETL etl = new ARSETL();
@@ -1405,7 +1406,7 @@ public class JCdmBuilderMain {
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceServerFolderField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnETLError);
+						etl.process(structure, sourceServerFolderField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
 				
 			} catch (Exception e) {
@@ -1556,8 +1557,8 @@ public class JCdmBuilderMain {
 				default:
 					break;
 				}
-				Cdm.createIndices(structure, dbSettings, version, sourceFolderField.getText());
-				Cdm.patchIndices(structure, dbSettings, version, sourceFolderField.getText());
+				Cdm.createIndices(structure, dbSettings, version, sourceFolderField.getText(), frame, folderField.getText(), continueOnError);
+				Cdm.patchIndices(structure, dbSettings, version, sourceFolderField.getText(), frame, folderField.getText(), continueOnError);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1596,7 +1597,7 @@ public class JCdmBuilderMain {
 				default:
 					break;
 				}
-				Cdm.createConstraints(structure, dbSettings, version, sourceFolderField.getText());
+				Cdm.createConstraints(structure, dbSettings, version, sourceFolderField.getText(), frame, folderField.getText(), continueOnError);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1649,7 +1650,7 @@ public class JCdmBuilderMain {
 	private void handleError(Exception e) {
 		if (!e.getMessage().equals("NO ERROR")) {
 			System.err.println("Error: " + e.getMessage());
-			String errorReportFilename = ErrorReport.generate(folderField.getText(), e);
+			String errorReportFilename = ErrorReport.generate(folderField.getText(), e, null);
 			String message = "Error: " + e.getLocalizedMessage();
 			message += "\nAn error report has been generated:\n" + errorReportFilename;
 			System.out.println(message);

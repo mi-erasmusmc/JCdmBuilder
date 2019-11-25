@@ -32,11 +32,11 @@ import org.ohdsi.utilities.files.WriteTextFile;
  *
  */
 public class ErrorReport {
-	public static String generate(String folder, Exception e) {
-		String filename = folder + "/Error.txt";
+	public static String generate(String folder, Exception e, String table) {
+		String filename = folder + (table == null ? "/Error.txt" : "/Error " + table + ".txt");
 		int i = 1;
 		while (new File(filename).exists())
-			filename = folder + "/Error" + (i++) + ".txt";
+			filename = folder + (table == null ? "/Error" + (i++) + ".txt" : "/Error " + table + (i++) + ".txt");
 		DecimalFormat df = new DecimalFormat();
 		DecimalFormatSymbols dfs = new DecimalFormatSymbols();
 		dfs.setGroupingSeparator(',');

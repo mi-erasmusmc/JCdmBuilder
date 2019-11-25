@@ -25,9 +25,14 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+
 import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
+import org.ohdsi.jCdmBuilder.ErrorReport;
+import org.ohdsi.jCdmBuilder.JCdmBuilderMain;
 import org.ohdsi.jCdmBuilder.cdm.v4.CdmV4;
 import org.ohdsi.jCdmBuilder.cdm.v5.CdmV5;
 import org.ohdsi.jCdmBuilder.cdm.v6.CdmV6;
@@ -499,7 +504,7 @@ public class Cdm {
 		}
 	}
 	
-	public static void createIndices(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
+	public static void createIndices(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
@@ -517,47 +522,57 @@ public class Cdm {
 			resourceName = currentStructure == CDM ? cdm.indexesPostgreSQL() : cdm.resultsIndexesPostgreSQL();
 		}
 		
+		RichConnection connection = null;
 		if (resourceName != null) {
-			boolean localDefinition = false;
-			if (sourceFolder != null) {
-				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
-				if (localFile.exists()) {
-					if (localFile.canRead()) {
-						StringUtilities.outputWithTime("Using local definition: " + resourceName);
-						resourceName = sourceFolder + "/Scripts/" + resourceName;
-						localDefinition = true;
-					}
-					else {
-						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+			try {
+				boolean localDefinition = false;
+				if (sourceFolder != null) {
+					File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+					if (localFile.exists()) {
+						if (localFile.canRead()) {
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
+							resourceName = sourceFolder + "/Scripts/" + resourceName;
+							localDefinition = true;
+						}
+						else {
+							throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+						}
 					}
 				}
-			}
-			
-			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-			connection.setContext(cdm.getClass());
-			
-			StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " indices");
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-			if (localDefinition) {
-				connection.executeLocalFile(resourceName);
-			}
-			else {
-				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
-				URL resourceURL = cdm.getClass().getResource(resourceName);
-				if (resourceURL != null) {
-					connection.executeResource(resourceName);
+				
+				connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				
+				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " indices");
+				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				if (localDefinition) {
+					connection.executeLocalFile(resourceName);
 				}
 				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " indices defintion not found.");
+					resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
+					URL resourceURL = cdm.getClass().getResource(resourceName);
+					if (resourceURL != null) {
+						connection.executeResource(resourceName);
+					}
+					else {
+						StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " indices defintion not found.");
+					}
+				}
+			} catch (Exception e) {
+				handleError(e, frame, errorFolder, "Creating Indices", continueOnError);
+				if (!continueOnError && (JOptionPane.showConfirmDialog(frame, "Do you want to continue?","Continue?",JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)) {
+					throw new Exception("NO ERROR");
+				}
+			} finally {
+				if (connection != null) {
+					connection.close();
+					StringUtilities.outputWithTime("Done");
 				}
 			}
-			
-			connection.close();
-			StringUtilities.outputWithTime("Done");
 		}
 	}
 	
-	public static void patchIndices(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
+	public static void patchIndices(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
@@ -576,44 +591,54 @@ public class Cdm {
 		}
 
 		if (resourceName != null) {
-			int lastDotPosition = resourceName.lastIndexOf(".", resourceName.length());
-			if (lastDotPosition == -1) {
-				resourceName = resourceName + " - Patch";
-			}
-			else {
-				resourceName = resourceName.substring(0, lastDotPosition) + " - Patch" + resourceName.substring(lastDotPosition);
-			}
-			
-			boolean patchFound = false;
-			if (sourceFolder != null) {
-				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
-				if (localFile.exists()) {
-					if (localFile.canRead()) {
-						StringUtilities.outputWithTime("Using local definition: " + resourceName);
-						resourceName = sourceFolder + "/Scripts/" + resourceName;
-						patchFound = true;
-					}
-					else {
-						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+			RichConnection connection = null;
+			try {
+				int lastDotPosition = resourceName.lastIndexOf(".", resourceName.length());
+				if (lastDotPosition == -1) {
+					resourceName = resourceName + " - Patch";
+				}
+				else {
+					resourceName = resourceName.substring(0, lastDotPosition) + " - Patch" + resourceName.substring(lastDotPosition);
+				}
+				
+				boolean patchFound = false;
+				if (sourceFolder != null) {
+					File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+					if (localFile.exists()) {
+						if (localFile.canRead()) {
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
+							resourceName = sourceFolder + "/Scripts/" + resourceName;
+							patchFound = true;
+						}
+						else {
+							throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+						}
 					}
 				}
+				
+				connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				
+				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results")+ " indices");
+				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				if (patchFound) {
+					connection.executeLocalFile(resourceName);
+				}
+			} catch (Exception e) {
+				handleError(e, frame, errorFolder, "Patching Indices", continueOnError);
+				if (!continueOnError && (JOptionPane.showConfirmDialog(frame, "Do you want to continue?","Continue?",JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)) {
+					throw new Exception("NO ERROR");
+				}
+			} finally {
+				if (connection != null) {
+					connection.close();
+					StringUtilities.outputWithTime("Done");
+				}
 			}
-			
-			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-			connection.setContext(cdm.getClass());
-			
-			StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results")+ " indices");
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-			if (patchFound) {
-				connection.executeLocalFile(resourceName);
-			}
-			
-			connection.close();
-			StringUtilities.outputWithTime("Done");
 		}
 	}
 	
-	public static void createConstraints(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
+	public static void createConstraints(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		CdmVx cdm;
 		if (version == VERSION_4)
 			cdm = new CdmV4();
@@ -647,27 +672,49 @@ public class Cdm {
 				}
 			}
 			
-			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-			connection.setContext(cdm.getClass());
-			
-			StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " constraints");
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-			if (localDefinition) {
-				connection.executeLocalFile(resourceName);
-			}
-			else {
-				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
-				URL resourceURL = cdm.getClass().getResource(resourceName);
-				if (resourceURL != null) {
-					connection.executeResource(resourceName);
+			RichConnection connection = null;
+			try {
+				connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				
+				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " constraints");
+				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				if (localDefinition) {
+					connection.executeLocalFile(resourceName);
 				}
 				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " indices defintion not found.");
+					resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
+					URL resourceURL = cdm.getClass().getResource(resourceName);
+					if (resourceURL != null) {
+						connection.executeResource(resourceName);
+					}
+					else {
+						StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " indices defintion not found.");
+					}
+				}
+			} catch (Exception e) {
+				handleError(e, frame, errorFolder, "Creating Constraints", continueOnError);
+				if (!continueOnError && (JOptionPane.showConfirmDialog(frame, "Do you want to continue?","Continue?",JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)) {
+					throw new Exception("NO ERROR");
+				}
+			} finally {
+				if (connection != null) {
+					connection.close();
+					StringUtilities.outputWithTime("Done");
 				}
 			}
-			
-			connection.close();
-			StringUtilities.outputWithTime("Done");
+		}
+	}
+	
+	private static void handleError(Exception e, JFrame frame, String errorFolder, String item, boolean continueOnError) {
+		JCdmBuilderMain.errors.add(item);
+		System.err.println("Error: " + e.getMessage());
+		String errorReportFilename = ErrorReport.generate(errorFolder, e, item);
+		String message = "Error: " + e.getLocalizedMessage();
+		message += "\nAn error report has been generated:\n" + errorReportFilename;
+		System.out.println(message);
+		if (!continueOnError) {
+			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 }
