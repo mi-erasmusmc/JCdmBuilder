@@ -74,7 +74,7 @@ import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
-	private static final String VERSION = "0.3.2";
+	public static final String VERSION = "0.3.3";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
 	
@@ -141,6 +141,7 @@ public class JCdmBuilderMain {
 	private PropertiesManager	propertiesManager					    = new PropertiesManager();
 	
 	private List<JComponent>	componentsToDisableWhenRunning	        = new ArrayList<JComponent>();
+	private boolean             autoStart                               = false;
 	
 	
 	public static void main(String[] args) {
@@ -206,6 +207,7 @@ public class JCdmBuilderMain {
 				executeResultsStructureWhenReady ||
 				executeResultsDataWhenReady ||
 				executeResultsIndicesWhenReady) {
+			autoStart = true;
 			ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
 			AutoRunThread autoRunThread = new AutoRunThread();
 			autoRunThread.start();
@@ -1294,6 +1296,9 @@ public class JCdmBuilderMain {
 	
 	private class AutoRunThread extends Thread {
 		public void run() {
+			System.out.println("JCDMBuider Version " + JCdmBuilderMain.VERSION);
+			System.out.println();
+			
 			if (executeResultsStructureWhenReady) {
 				DropStructureThread dropStructureThread = new DropStructureThread(Cdm.RESULTS);
 				dropStructureThread.run();
@@ -1342,12 +1347,17 @@ public class JCdmBuilderMain {
 				IndexThread indexThread = new IndexThread(Cdm.RESULTS);
 				indexThread.run();
 			}
-			if (continueOnError && (errors.size() > 0)) { // Tables with error at the end.
-				String errorMessage = "The following tables had errors:\n";
-				for (String table : errors) {
-					errorMessage += "\n    " + table;
+			if (continueOnError) {
+				if (errors.size() > 0) { // Show error overview
+					String errorMessage = "The following tables had errors:\n";
+					for (String table : errors) {
+						errorMessage += "\n    " + table;
+					}
+					JOptionPane.showMessageDialog(frame, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
 				}
-				JOptionPane.showMessageDialog(frame, errorMessage, "Error", JOptionPane.ERROR_MESSAGE);
+				else if (autoStart) {
+					System.exit(0);
+				}
 			}
 		}
 	}

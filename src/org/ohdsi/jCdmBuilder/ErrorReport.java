@@ -59,6 +59,9 @@ public class ErrorReport {
 		out.writeln("OS version: " + System.getProperty("os.version"));
 		out.writeln("OS patch level: " + System.getProperty("sun.os.patch.level"));
 		out.writeln("");
+		out.writeln("*** JCDMBuilder ***");
+		out.writeln("Version: " + JCdmBuilderMain.VERSION);
+		out.writeln("");
 		out.writeln("*** Stack trace ***");
 		for (StackTraceElement element : e.getStackTrace())
 			out.writeln(element.toString());
