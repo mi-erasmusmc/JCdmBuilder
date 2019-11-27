@@ -550,8 +550,10 @@ public class JCdmBuilderMain {
 	}
 	
 	private JPanel createEtlPanel() {
-		JPanel panel = new JPanel();
-		panel.setLayout(new GridBagLayout());
+		JPanel panel = new JPanel(new BorderLayout());
+		
+		JPanel mainPanel = new JPanel();
+		mainPanel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 0.5;
@@ -580,7 +582,7 @@ public class JCdmBuilderMain {
 		c.gridx = 0;
 		c.gridy = 0;
 		c.gridwidth = 1;
-		panel.add(etlTypePanel, c);
+		mainPanel.add(etlTypePanel, c);
 		
 		// Ugly but needed for ETLs at JnJ: Allow user to specify a version ID to insert into _version table:
 		JPanel versionIdPanel = new JPanel();
@@ -593,7 +595,7 @@ public class JCdmBuilderMain {
 		c.gridx = 1;
 		c.gridy = 0;
 		c.gridwidth = 1;
-		panel.add(versionIdPanel, c);
+		mainPanel.add(versionIdPanel, c);
 		
 		
 		// ETL-Type 1 and 2 Panel
@@ -738,7 +740,7 @@ public class JCdmBuilderMain {
 		c.gridx = 0;
 		c.gridy = 1;
 		c.gridwidth = 2;
-		panel.add(sourceCards, c);
+		mainPanel.add(sourceCards, c);
 		sourceCards.setMaximumSize(new Dimension(Integer.MAX_VALUE, sourceCards.getPreferredSize().height));
 		
 		JPanel etlButtonPanel = new JPanel();
@@ -756,6 +758,8 @@ public class JCdmBuilderMain {
 		componentsToDisableWhenRunning.add(etl10kButton);
 		etlButtonPanel.add(etl10kButton);
 		
+		panel.add(mainPanel, BorderLayout.NORTH);
+		
 		return panel;
 	}
 	
@@ -763,37 +767,48 @@ public class JCdmBuilderMain {
 		JPanel panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.HORIZONTAL;
+		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 0.5;
 		
-		JPanel checkboxPanel = new JPanel();
-		checkboxPanel.setBorder(BorderFactory.createTitledBorder("Steps to execute"));
-		checkboxPanel.setLayout(new BoxLayout(checkboxPanel, BoxLayout.Y_AXIS));
+		JPanel executeCheckboxPanel = new JPanel();
+		executeCheckboxPanel.setBorder(BorderFactory.createTitledBorder("Steps to execute"));
+		executeCheckboxPanel.setLayout(new BoxLayout(executeCheckboxPanel, BoxLayout.Y_AXIS));
 		
 		executeStructureCheckBox = new JCheckBox("Create CDM Structure");
-		checkboxPanel.add(executeStructureCheckBox);
+		executeCheckboxPanel.add(executeStructureCheckBox);
 		executeVocabCheckBox = new JCheckBox("Insert vocabulary");
-		checkboxPanel.add(executeVocabCheckBox);
+		executeCheckboxPanel.add(executeVocabCheckBox);
 		executeETLCheckBox = new JCheckBox("Perform ETL");
-		checkboxPanel.add(executeETLCheckBox);
+		executeCheckboxPanel.add(executeETLCheckBox);
 		executeIndicesCheckBox = new JCheckBox("Create CDM indices");
-		checkboxPanel.add(executeIndicesCheckBox);
+		executeCheckboxPanel.add(executeIndicesCheckBox);
 		executeConstraintsCheckBox = new JCheckBox("Create CDM constraints");
-		checkboxPanel.add(executeConstraintsCheckBox);
+		executeCheckboxPanel.add(executeConstraintsCheckBox);
 		executeConditionErasCheckBox = new JCheckBox("Create condition eras");
-		checkboxPanel.add(executeConditionErasCheckBox);
+		executeCheckboxPanel.add(executeConditionErasCheckBox);
 		executeDrugErasCheckBox = new JCheckBox("Create drug eras");
-		checkboxPanel.add(executeDrugErasCheckBox);
+		executeCheckboxPanel.add(executeDrugErasCheckBox);
 		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
-		checkboxPanel.add(executeResultsStructureCheckBox);
+		executeCheckboxPanel.add(executeResultsStructureCheckBox);
 		executeResultsDataCheckBox = new JCheckBox("Load Results Data");
-		checkboxPanel.add(executeResultsDataCheckBox);
+		executeCheckboxPanel.add(executeResultsDataCheckBox);
 		executeResultsIndicesCheckBox = new JCheckBox("Create Results indices");
-		checkboxPanel.add(executeResultsIndicesCheckBox);
-		continueOnErrorCheckBox = new JCheckBox("Continue on ETL, indices, and constraints errors");
-		checkboxPanel.add(continueOnErrorCheckBox);
+		executeCheckboxPanel.add(executeResultsIndicesCheckBox);
+		c.gridx = 0;
 		c.gridy = 0;
-		panel.add(checkboxPanel, c);
+		panel.add(executeCheckboxPanel, c);
+		
+		JPanel optionsCheckboxPanel = new JPanel();
+		optionsCheckboxPanel.setBorder(BorderFactory.createTitledBorder("Execute options"));
+		optionsCheckboxPanel.setLayout(new BoxLayout(optionsCheckboxPanel, BoxLayout.Y_AXIS));
+		
+		continueOnErrorCheckBox = new JCheckBox("Continue on ETL, indices, and constraints errors");
+		optionsCheckboxPanel.add(continueOnErrorCheckBox);
+		optionsCheckboxPanel.add(Box.createVerticalGlue());
+		c.gridx = 1;
+		c.gridy = 0;
+		panel.add(optionsCheckboxPanel, c);
+		
 		
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
@@ -843,6 +858,7 @@ public class JCdmBuilderMain {
 			}
 		});
 		componentsToDisableWhenRunning.add(executeButton);
+		c.gridx = 1;
 		c.gridy = 1;
 		panel.add(buttonPanel, c);
 		
