@@ -334,7 +334,7 @@ public class Cdm {
 					if (line.contains(" REFERENCES ")) {
 						String tableName = StringUtilities.findBetween(line, " REFERENCES ", "(");
 						String searchTableName = tableName.trim().toLowerCase();
-						if (connection.getTableNames(dbSettings.database).contains(searchTableName)) {
+						if (!connection.getTableNames(dbSettings.resultsDatabase).contains(searchTableName)) {
 							String schemaPrefix = dbSettings.database + ".";
 							sqlLines.set(i, line.replace(" REFERENCES " + tableName + "(", " REFERENCES " + schemaPrefix + tableName.trim() + " ("));
 						}
