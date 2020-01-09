@@ -74,7 +74,7 @@ import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "0.3.5";
+	public static final String VERSION = "0.3.6";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
 	
@@ -1327,6 +1327,10 @@ public class JCdmBuilderMain {
 				StructureThread structureThread = new StructureThread(Cdm.CDM);
 				structureThread.run();
 			}
+			if (executeResultsStructureWhenReady) {
+				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
+				structureThread.run();
+			}
 			if (executeVocabWhenReady) {
 				VocabRunThread vocabRunThread = new VocabRunThread();
 				vocabRunThread.run();
@@ -1350,10 +1354,6 @@ public class JCdmBuilderMain {
 			if (executeDrugErasWhenReady) {
 				EraThread eraThread = new EraThread(EraThread.DRUGS);
 				eraThread.run();
-			}
-			if (executeResultsStructureWhenReady) {
-				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
-				structureThread.run();
 			}
 			if (executeResultsDataWhenReady) {
 				EtlThread etlThread = new EtlThread(Cdm.RESULTS, Integer.MAX_VALUE);
