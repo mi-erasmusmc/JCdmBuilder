@@ -784,12 +784,12 @@ public class JCdmBuilderMain {
 		executeCheckboxPanel.add(executeIndicesCheckBox);
 		executeConstraintsCheckBox = new JCheckBox("Create CDM constraints");
 		executeCheckboxPanel.add(executeConstraintsCheckBox);
+		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
+		executeCheckboxPanel.add(executeResultsStructureCheckBox);
 		executeConditionErasCheckBox = new JCheckBox("Create condition eras");
 		executeCheckboxPanel.add(executeConditionErasCheckBox);
 		executeDrugErasCheckBox = new JCheckBox("Create drug eras");
 		executeCheckboxPanel.add(executeDrugErasCheckBox);
-		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
-		executeCheckboxPanel.add(executeResultsStructureCheckBox);
 		executeResultsDataCheckBox = new JCheckBox("Load Results Data");
 		executeCheckboxPanel.add(executeResultsDataCheckBox);
 		executeResultsIndicesCheckBox = new JCheckBox("Create Results indices");
@@ -1327,10 +1327,6 @@ public class JCdmBuilderMain {
 				StructureThread structureThread = new StructureThread(Cdm.CDM);
 				structureThread.run();
 			}
-			if (executeResultsStructureWhenReady) {
-				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
-				structureThread.run();
-			}
 			if (executeVocabWhenReady) {
 				VocabRunThread vocabRunThread = new VocabRunThread();
 				vocabRunThread.run();
@@ -1346,6 +1342,10 @@ public class JCdmBuilderMain {
 			if (executeConstraintsWhenReady) {
 				ConstraintThread constraintThread = new ConstraintThread(Cdm.CDM);
 				constraintThread.run();
+			}
+			if (executeResultsStructureWhenReady) {
+				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
+				structureThread.run();
 			}
 			if (executeConditionErasWhenReady) {
 				EraThread eraThread = new EraThread(EraThread.CONDITIONS);
