@@ -86,7 +86,7 @@ public class CdmEtl {
 					table = file.getName().substring(0, file.getName().length() - 4);
 					if (tables.contains(table.toLowerCase())) {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
-						connection.execute("TRUNCATE " + table);
+						connection.execute("TRUNCATE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
 
 						String temporarySourceFileName = file.getName();
 						String temporarySourceFileNamePath = file.getAbsolutePath();
@@ -108,10 +108,10 @@ public class CdmEtl {
 						
 						// Postgresql
 						StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + temporarySourceFileName + " into table " + table);
-						connection.execute("COPY " + dbSettings.database + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH DELIMITER '" + dbSettings.delimiter + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
+						connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH DELIMITER '" + dbSettings.delimiter + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
 						
 						// SQL Server
-						//connection.execute("BULK INSERT " + dbSettings.database + "." + table + " FROM '" + temporarySourceFileName + "' WITH (FORMAT = 'CSV', FIELDTERMINATOR = '" + dbSettings.delimiter + "', FIELDQUOTE = '\"', ROWTERMINATOR = '\n');");
+						//connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporarySourceFileName + "' WITH (FORMAT = 'CSV', FIELDTERMINATOR = '" + dbSettings.delimiter + "', FIELDQUOTE = '\"', ROWTERMINATOR = '\n');");
 
 						if (temporarySourceFile != null) {
 							FileUtils.forceDelete(temporarySourceFile);
