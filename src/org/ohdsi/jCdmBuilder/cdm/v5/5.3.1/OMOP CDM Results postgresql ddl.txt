@@ -72,12 +72,12 @@ CREATE INDEX idx_cohort_subject_id ON cohort (subject_id ASC);
 CREATE INDEX idx_cohort_c_definition_id ON cohort (cohort_definition_id ASC);
 
 
-ALTER TABLE cohort_definition ADD CONSTRAINT fpk_cohort_definition_concept FOREIGN KEY (definition_type_concept_id)  REFERENCES concept (concept_id);
+--ALTER TABLE cohort_definition ADD CONSTRAINT fpk_cohort_definition_concept FOREIGN KEY (definition_type_concept_id)  REFERENCES concept (concept_id);
 
-ALTER TABLE cohort_definition ADD CONSTRAINT fpk_subject_concept FOREIGN KEY (subject_concept_id)  REFERENCES concept (concept_id);
+--ALTER TABLE cohort_definition ADD CONSTRAINT fpk_subject_concept FOREIGN KEY (subject_concept_id)  REFERENCES concept (concept_id);
 
 
-ALTER TABLE cohort ADD CONSTRAINT fpk_cohort_definition FOREIGN KEY (cohort_definition_id)  REFERENCES cohort_definition (cohort_definition_id);
+--ALTER TABLE cohort ADD CONSTRAINT fpk_cohort_definition FOREIGN KEY (cohort_definition_id)  REFERENCES cohort_definition (cohort_definition_id);
 
 
 
