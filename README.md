@@ -18,7 +18,7 @@ Features
 
 Screenshot
 ===========
-<img src="https://github.com/OHDSI/JCdmBuilder/blob/master/man/Screenshot.png" alt="JCdmBuilder" title="JCdmBuilder" />
+<img src="https://github.com/mi-erasmusmc/JCdmBuilder/blob/master/man/Screenshot.png" alt="JCdmBuilder" title="JCdmBuilder" />
 
 Technology
 ============
