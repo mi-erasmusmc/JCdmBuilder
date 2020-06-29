@@ -6,13 +6,14 @@ The JCdmBuilder is a Java program that offers various tools that can be used whe
 Features
 ========
 * This builder supports the following ETLs:
-  * Healthcare Cost and Utilization Project (HCUP) - Nationwide Inpatient Sample (NIS) to CDM version 4
-  * Healthcare Cost and Utilization Project (HCUP) - Nationwide Inpatient Sample (NIS) to CDM version 5
+* Healthcare Cost and Utilization Project (HCUP) - Nationwide Inpatient Sample (NIS) to CDM version 4
+* Healthcare Cost and Utilization Project (HCUP) - Nationwide Inpatient Sample (NIS) to CDM version 5
 * You can also load data in CDM format from CSV files into the database
-* Creating the database structure and indices for CDM versions 4 or 5
+* Creating the database structure and indices for CDM versions 4 or 5, prepared for version 6
 * Loading the vocabulary from files into the database
 * Automatically creating condition and drug eras 
 * Supports SQL Server, Oracle and PostgreSQL
+* Supports bulk load from CDV files for PostgreSQL
 * Command line interface for automated execution
 
 Screenshot
