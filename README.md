@@ -13,7 +13,7 @@ Features
 * Loading the vocabulary from files into the database
 * Automatically creating condition and drug eras 
 * Supports SQL Server, Oracle and PostgreSQL
-* Supports bulk load from CDV files for PostgreSQL
+* Supports bulk load from CSV files for PostgreSQL
 * Command line interface for automated execution
 
 Screenshot
