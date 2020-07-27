@@ -33,7 +33,6 @@ import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
 import org.ohdsi.jCdmBuilder.ErrorReport;
 import org.ohdsi.jCdmBuilder.JCdmBuilderMain;
-import org.ohdsi.jCdmBuilder.cdm.v4.CdmV4;
 import org.ohdsi.jCdmBuilder.cdm.v5.CdmV5;
 import org.ohdsi.jCdmBuilder.cdm.v6.CdmV6;
 import org.ohdsi.utilities.StringUtilities;
@@ -47,7 +46,6 @@ import org.ohdsi.utilities.files.ReadTextFile;
  */
 public class Cdm {
 	
-	public static final int	VERSION_4	= 400;
 	public static final int	VERSION_501	= 501;
 	public static final int	VERSION_530	= 530;
 	public static final int	VERSION_531	= 531;
@@ -66,9 +64,7 @@ public class Cdm {
 	public static void dropConstraints(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
 		if (currentStructure == CDM) {
 			CdmVx cdm;
-			if (version == VERSION_4)
-				cdm = new CdmV4();
-			else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+			if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 				cdm = new CdmV5();
 			else
 				cdm = new CdmV6();
@@ -102,7 +98,7 @@ public class Cdm {
 				}
 				
 				if (resourceStream == null) {
-					resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
+					resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
 					URL resourceURL = cdm.getClass().getResource(resourceName);
 					if (resourceURL != null) {
 						resourceStream = cdm.getClass().getResourceAsStream(resourceName);
@@ -148,9 +144,7 @@ public class Cdm {
 	
 	public static void dropTables(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
 		CdmVx cdm;
-		if (version == VERSION_4)
-			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -184,7 +178,7 @@ public class Cdm {
 			}
 			
 			if (resourceStream == null) {
-				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
+				resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
 				URL resourceURL = cdm.getClass().getResource(resourceName);
 				if (resourceURL != null) {
 					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
@@ -217,9 +211,7 @@ public class Cdm {
 	
 	public static void dropSchema(int currentStructure, DbSettings dbSettings, int version) {
 		CdmVx cdm;
-		if (version == VERSION_4)
-			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -237,9 +229,7 @@ public class Cdm {
 	
 	public static void createSchema(int currentStructure, DbSettings dbSettings, int version) {
 		CdmVx cdm;
-		if (version == VERSION_4)
-			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -257,9 +247,7 @@ public class Cdm {
 	
 	public static void createStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, boolean idsToBigInt) {
 		CdmVx cdm;
-		if (version == VERSION_4)
-			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -293,7 +281,7 @@ public class Cdm {
 			}
 			
 			if (resourceStream == null) {
-				resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
+				resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
 				URL resourceURL = cdm.getClass().getResource(resourceName);
 				if (resourceURL != null) {
 					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
@@ -351,9 +339,7 @@ public class Cdm {
 	
 	public static void dropPatchStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
 		CdmVx cdm;
-		if (version == VERSION_4)
-			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -430,9 +416,7 @@ public class Cdm {
 	
 	public static void patchStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, boolean idsToBigInt) {
 		CdmVx cdm;
-		if (version == VERSION_4)
-			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -506,9 +490,7 @@ public class Cdm {
 	
 	public static void createIndices(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		CdmVx cdm;
-		if (version == VERSION_4)
-			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -549,7 +531,7 @@ public class Cdm {
 					connection.executeLocalFile(resourceName);
 				}
 				else {
-					resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
+					resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
 					URL resourceURL = cdm.getClass().getResource(resourceName);
 					if (resourceURL != null) {
 						connection.executeResource(resourceName);
@@ -574,9 +556,7 @@ public class Cdm {
 	
 	public static void patchIndices(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		CdmVx cdm;
-		if (version == VERSION_4)
-			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -640,9 +620,7 @@ public class Cdm {
 	
 	public static void createConstraints(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		CdmVx cdm;
-		if (version == VERSION_4)
-			cdm = new CdmV4();
-		else if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
+		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
 			cdm = new CdmV5();
 		else
 			cdm = new CdmV6();
@@ -683,7 +661,7 @@ public class Cdm {
 					connection.executeLocalFile(resourceName);
 				}
 				else {
-					resourceName = (version == VERSION_4 ? "" : (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/")))) + resourceName;
+					resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
 					URL resourceURL = cdm.getClass().getResource(resourceName);
 					if (resourceURL != null) {
 						connection.executeResource(resourceName);

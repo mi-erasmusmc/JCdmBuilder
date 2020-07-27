@@ -64,17 +64,14 @@ import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.cdm.Cdm;
 import org.ohdsi.jCdmBuilder.cdm.EraBuilder;
-import org.ohdsi.jCdmBuilder.etls.ars.ARSETL;
 import org.ohdsi.jCdmBuilder.etls.cdm.CdmEtl;
-import org.ohdsi.jCdmBuilder.etls.hcup.HCUPETL;
-import org.ohdsi.jCdmBuilder.etls.hcup.HCUPETLToV5;
 import org.ohdsi.jCdmBuilder.vocabulary.CopyVocabularyFromSchema;
 import org.ohdsi.jCdmBuilder.vocabulary.InsertVocabularyInServer;
 import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "0.3.7";
+	public static final String VERSION = "1.0.0";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
 	
@@ -106,7 +103,7 @@ public class JCdmBuilderMain {
 	private JCheckBox			executeResultsDataCheckBox;
 	private JCheckBox			executeResultsIndicesCheckBox;
 	private JComboBox<String>	etlType;
-	private JComboBox<String>	sourceType;
+	//private JComboBox<String>	sourceType;
 	private JComboBox<String>	targetType;
 	private JTextField			versionIdField;
 	private JTextField			targetUserField;
@@ -117,10 +114,10 @@ public class JCdmBuilderMain {
 	private JComboBox<String>	targetCdmVersion;
 	private JTextField			sourceDelimiterField;
 	private JTextField			sourceFolderField;
-	private JTextField			sourceServerField;
-	private JTextField			sourceUserField;
-	private JTextField			sourcePasswordField;
-	private JTextField			sourceDatabaseField;
+	//private JTextField			sourceServerField;
+	//private JTextField			sourceUserField;
+	//private JTextField			sourcePasswordField;
+	//private JTextField			sourceDatabaseField;
 	private JTextField			sourceServerDelimiterField;
 	private JTextField			sourceServerFolderField;
 	private JTextField			sourceServerTempFolderField;
@@ -320,9 +317,9 @@ public class JCdmBuilderMain {
 		targetResultsDatabaseField = new JTextField("");
 		targetPanel.add(targetResultsDatabaseField);
 		targetPanel.add(new JLabel("CDM version"));
-		targetCdmVersion = new JComboBox<String>(new String[] { "4.0", "5.0.1", "5.3.0", "5.3.1", "6.0.0" });
+		targetCdmVersion = new JComboBox<String>(new String[] { "5.0.1", "5.3.0", "5.3.1", "6.0.0" });
 		targetCdmVersion.setToolTipText("Select the CMD version");
-		targetCdmVersion.setSelectedIndex(1);
+		targetCdmVersion.setSelectedIndex(2);
 		
 		targetType.addItemListener(new ItemListener() {
 			
@@ -431,10 +428,11 @@ public class JCdmBuilderMain {
 		// ETL
 		versionIdField.setText(propertiesManager.get("VersionIdField"));
 		etlType.setSelectedItem(propertiesManager.get("EtlType"));
-		sourceType.setSelectedItem(propertiesManager.get("SourceDataType"));
-		sourceServerField.setText(propertiesManager.get("SourceServerLocation"));
-		sourceUserField.setText(propertiesManager.get("SourceUserName"));
-		sourceDatabaseField.setText(propertiesManager.get("SourceDatabaseName"));
+		//TODO
+		//sourceType.setSelectedItem(propertiesManager.get("SourceDataType"));
+		//sourceServerField.setText(propertiesManager.get("SourceServerLocation"));
+		//sourceUserField.setText(propertiesManager.get("SourceUserName"));
+		//sourceDatabaseField.setText(propertiesManager.get("SourceDatabaseName"));
 		sourceDelimiterField.setText(propertiesManager.get("SourceDelimiter"));
 		sourceFolderField.setText(propertiesManager.get("SourceFolder"));
 		sourceServerDelimiterField.setText(propertiesManager.get("SourceServerDelimiter"));
@@ -465,10 +463,11 @@ public class JCdmBuilderMain {
 		// ETL
 		propertiesManager.set("VersionIdField", versionIdField.getText());
 		propertiesManager.set("EtlType", etlType.getSelectedItem().toString());
-		propertiesManager.set("SourceDataType", sourceType.getSelectedItem().toString());
-		propertiesManager.set("SourceServerLocation", sourceServerField.getText());
-		propertiesManager.set("SourceUserName", sourceUserField.getText());
-		propertiesManager.set("SourceDatabaseName", sourceDatabaseField.getText());
+		//TODO
+		//propertiesManager.set("SourceDataType", sourceType.getSelectedItem().toString());
+		//propertiesManager.set("SourceServerLocation", sourceServerField.getText());
+		//propertiesManager.set("SourceUserName", sourceUserField.getText());
+		//propertiesManager.set("SourceDatabaseName", sourceDatabaseField.getText());
 		propertiesManager.set("SourceDelimiter", sourceDelimiterField.getText());
 		propertiesManager.set("SourceFolder", sourceFolderField.getText());
 		propertiesManager.set("SourceServerDelimiter", sourceServerDelimiterField.getText());
@@ -562,16 +561,16 @@ public class JCdmBuilderMain {
 		etlTypePanel.setLayout(new BoxLayout(etlTypePanel, BoxLayout.X_AXIS));
 		etlTypePanel.setBorder(BorderFactory.createTitledBorder("ETL type"));
 		etlType = new JComboBox<String>(
-				new String[] { "1. Load CSV files in CDM format to server", "2. ARS -> OMOP CDM V4", "3. HCUP -> OMOP CDM V4", "4. HCUP -> OMOP CDM V5", "5. PostgreSQL only: Load CSV files from server in CDM format to server" });
+				new String[] { "1. Load CSV files in CDM format to server", "2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server" });
 		etlType.setToolTipText("Select the appropriate ETL process");
 		etlType.addItemListener(new ItemListener() {
 			
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
 				String selection = arg0.getItem().toString();
-				if (selection.equals("1. Load CSV files in CDM format to server") || selection.equals("2. ARS -> OMOP CDM V4"))
+				if (selection.equals("1. Load CSV files in CDM format to server"))
 					((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEFOLDER);
-				else if (selection.equals("5. PostgreSQL only: Load CSV files from server in CDM format to server"))
+				else if (selection.equals("2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server"))
 						((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEVIASERVERFOLDER);
 				else
 					((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEDATABASE);
@@ -631,7 +630,7 @@ public class JCdmBuilderMain {
 		sourceFolderPanel.add(Box.createHorizontalGlue());
 		
 
-		// ETL-Type 5 Panel
+		// ETL-Type 2 Panel
 		JPanel sourceServerFolderPanel = new JPanel();
 		sourceServerFolderPanel.setLayout(new GridLayout(5, 2));
 		sourceServerFolderPanel.setBorder(BorderFactory.createTitledBorder("Folder locations"));
@@ -683,58 +682,8 @@ public class JCdmBuilderMain {
 		sourceServerFolderPanel.add(sourceServerDelimiterField);
 		
 		
-		// ETL-Type 3 and 4 Panel
-		JPanel sourceDatabasePanel = new JPanel();
-		sourceDatabasePanel.setLayout(new GridLayout(0, 2));
-		sourceDatabasePanel.setBorder(BorderFactory.createTitledBorder("Source database location"));
-		sourceDatabasePanel.add(new JLabel("Data type"));
-		sourceType = new JComboBox<String>(new String[] { "Oracle", "SQL Server", "PostgreSQL" });
-		sourceType.setToolTipText("Select the source database platform");
-		sourceType.addItemListener(new ItemListener() {
-			
-			@Override
-			public void itemStateChanged(ItemEvent arg0) {
-				if (arg0.getItem().toString().equals("Oracle")) {
-					sourceServerField.setToolTipText(
-							"For Oracle servers this field contains the SID, servicename, and optionally the port: '<host>/<sid>', '<host>:<port>/<sid>', '<host>/<service name>', or '<host>:<port>/<service name>'");
-					sourceUserField.setToolTipText("For Oracle servers this field contains the name of the user used to log in");
-					sourcePasswordField.setToolTipText("For Oracle servers this field contains the password corresponding to the user");
-					sourceDatabaseField
-							.setToolTipText("For Oracle servers this field contains the schema (i.e. 'user' in Oracle terms) containing the source tables");
-				} else if (arg0.getItem().toString().equals("PostgreSQL")) {
-					sourceServerField.setToolTipText("For PostgreSQL servers this field contains the host name and database name (<host>/<database>)");
-					sourceUserField.setToolTipText("The user used to log in to the server");
-					sourcePasswordField.setToolTipText("The password used to log in to the server");
-					sourceDatabaseField.setToolTipText("For PostgreSQL servers this field contains the schema containing the source tables");
-				} else {
-					sourceServerField.setToolTipText("This field contains the name or IP address of the database server");
-					if (arg0.getItem().toString().equals("SQL Server"))
-						sourceUserField.setToolTipText(
-								"The user used to log in to the server. Optionally, the domain can be specified as <domain>/<user> (e.g. 'MyDomain/Joe')");
-					else
-						sourceUserField.setToolTipText("The user used to log in to the server");
-					sourcePasswordField.setToolTipText("The password used to log in to the server");
-					sourceDatabaseField.setToolTipText("The name of the database containing the source tables");
-				}
-			}
-		});
-		sourceDatabasePanel.add(sourceType);
-		sourceDatabasePanel.add(new JLabel("Server location"));
-		sourceServerField = new JTextField("");
-		sourceDatabasePanel.add(sourceServerField);
-		sourceDatabasePanel.add(new JLabel("User name"));
-		sourceUserField = new JTextField("");
-		sourceDatabasePanel.add(sourceUserField);
-		sourceDatabasePanel.add(new JLabel("Password"));
-		sourcePasswordField = new JPasswordField("");
-		sourceDatabasePanel.add(sourcePasswordField);
-		sourceDatabasePanel.add(new JLabel("Database name"));
-		sourceDatabaseField = new JTextField("");
-		sourceDatabasePanel.add(sourceDatabaseField);
-		
 		sourceCards = new JPanel(new CardLayout());
 		sourceCards.add(sourceFolderPanel, SOURCEFOLDER);
-		sourceCards.add(sourceDatabasePanel, SOURCEDATABASE);
 		sourceCards.add(sourceServerFolderPanel, SOURCEVIASERVERFOLDER);
 		
 		c.gridx = 0;
@@ -1044,6 +993,8 @@ public class JCdmBuilderMain {
 					parameterValue = args[argNr];
 					targetUserField.setText(parameterValue);
 				}
+				//TODO
+				/*S
 				if (parameter.equals("-sourceserver")) {
 					argNr++;
 					parameterValue = args[argNr];
@@ -1069,6 +1020,7 @@ public class JCdmBuilderMain {
 					parameterValue = args[argNr];
 					sourcePasswordField.setText(parameterValue);
 				}
+				*/
 				if (parameter.equals("-vocabsourcetype")) {
 					argNr++;
 					parameterValue = args[argNr];
@@ -1210,40 +1162,6 @@ public class JCdmBuilderMain {
 		int returnVal = fileChooser.showDialog(frame, "Select temporary server folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			sourceServerTempFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
-	}
-	
-	private DbSettings getSourceDbSettings() {
-		DbSettings dbSettings = new DbSettings();
-		dbSettings.dataType = DbSettings.DATABASE;
-		dbSettings.user = sourceUserField.getText();
-		dbSettings.password = sourcePasswordField.getText();
-		dbSettings.server = sourceServerField.getText();
-		dbSettings.database = sourceDatabaseField.getText().trim().length() == 0 ? null : sourceDatabaseField.getText();
-		if (sourceType.getSelectedItem().toString().equals("MySQL"))
-			dbSettings.dbType = DbType.MYSQL;
-		else if (sourceType.getSelectedItem().toString().equals("Oracle"))
-			dbSettings.dbType = DbType.ORACLE;
-		else if (sourceType.getSelectedItem().toString().equals("PostgreSQL"))
-			dbSettings.dbType = DbType.POSTGRESQL;
-		else if (sourceType.getSelectedItem().toString().equals("SQL Server")) {
-			dbSettings.dbType = DbType.MSSQL;
-			if (sourceUserField.getText().length() != 0) { // Not using windows authentication
-				String[] parts = sourceUserField.getText().split("/");
-				if (parts.length < 2) {
-					dbSettings.user = sourceUserField.getText();
-					dbSettings.domain = null;
-				} else {
-					dbSettings.user = parts[1];
-					dbSettings.domain = parts[0];
-				}
-			}
-		}
-		if (dbSettings.database == null) {
-			String message = "Please specify a name for the source database";
-			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Database error", JOptionPane.ERROR_MESSAGE);
-			return null;
-		}
-		return dbSettings;
 	}
 	
 	private void testConnection(DbSettings dbSettings, boolean testConnectionToDb) {
@@ -1398,41 +1316,14 @@ public class JCdmBuilderMain {
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
+						etl.process(structure, sourceFolderField.getText(), sourceDelimiterField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
-				if (etlType.getSelectedItem().equals("2. ARS -> OMOP CDM V4")) {
-					ARSETL etl = new ARSETL();
-					DbSettings dbSettings = getTargetDbSettings();
-					testConnection(dbSettings, false);
-					if (dbSettings != null)
-						etl.process(sourceFolderField.getText(), dbSettings, maxPersons);
-				}
-				if (etlType.getSelectedItem().equals("3. HCUP -> OMOP CDM V4")) {
-					HCUPETL etl = new HCUPETL();
-					DbSettings sourceDbSettings = getSourceDbSettings();
-					DbSettings targetDbSettings = getTargetDbSettings();
-					if (sourceDbSettings != null && targetDbSettings != null) {
-						testConnection(sourceDbSettings, true);
-						testConnection(targetDbSettings, false);
-						etl.process(folderField.getText(), sourceDbSettings, targetDbSettings, maxPersons);
-					}
-				}
-				if (etlType.getSelectedItem().equals("4. HCUP -> OMOP CDM V5")) {
-					HCUPETLToV5 etl = new HCUPETLToV5();
-					DbSettings sourceDbSettings = getSourceDbSettings();
-					DbSettings targetDbSettings = getTargetDbSettings();
-					if (sourceDbSettings != null && targetDbSettings != null) {
-						testConnection(sourceDbSettings, true);
-						testConnection(targetDbSettings, false);
-						etl.process(folderField.getText(), sourceDbSettings, targetDbSettings, maxPersons, Integer.parseInt(versionIdField.getText()));
-					}
-				}
-				if (etlType.getSelectedItem().equals("5. PostgreSQL only: Load CSV files from server in CDM format to server")) {
+				if (etlType.getSelectedItem().equals("2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server")) {
 					CdmEtl etl = new CdmEtl();
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceServerFolderField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
+						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
 				
 			} catch (Exception e) {
@@ -1485,7 +1376,7 @@ public class JCdmBuilderMain {
 				component.setEnabled(false);
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
-				int version = Cdm.VERSION_4;
+				int version = Cdm.VERSION_531;
 				switch (targetCdmVersion.getSelectedItem().toString()) {
 				case "5.0.1":
 					version = Cdm.VERSION_501;
@@ -1525,7 +1416,7 @@ public class JCdmBuilderMain {
 				component.setEnabled(false);
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
-				int version = Cdm.VERSION_4;
+				int version = Cdm.VERSION_531;
 				switch (targetCdmVersion.getSelectedItem().toString()) {
 				case "5.0.1":
 					version = Cdm.VERSION_501;
@@ -1566,7 +1457,7 @@ public class JCdmBuilderMain {
 				component.setEnabled(false);
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
-				int version = Cdm.VERSION_4;
+				int version = Cdm.VERSION_531;
 				switch (targetCdmVersion.getSelectedItem().toString()) {
 				case "5.0.1":
 					version = Cdm.VERSION_501;
@@ -1606,7 +1497,7 @@ public class JCdmBuilderMain {
 				component.setEnabled(false);
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
-				int version = Cdm.VERSION_4;
+				int version = Cdm.VERSION_531;
 				switch (targetCdmVersion.getSelectedItem().toString()) {
 				case "5.0.1":
 					version = Cdm.VERSION_501;
@@ -1649,7 +1540,7 @@ public class JCdmBuilderMain {
 				component.setEnabled(false);
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
-				int version = EraBuilder.VERSION_4;
+				int version = EraBuilder.VERSION_5;
 				switch (targetCdmVersion.getSelectedItem().toString()) {
 				case "5.0.1":
 				case "5.3.0":

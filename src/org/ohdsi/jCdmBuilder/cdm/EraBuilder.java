@@ -16,7 +16,6 @@ public class EraBuilder {
 	public static int	DRUG_ERA		= 1;
 	public static int	CONDITION_ERA	= 2;
 
-	public static int	VERSION_4		= 4;
 	public static int	VERSION_5		= 5;
 	public static int	VERSION_6		= 6;
 
@@ -27,14 +26,10 @@ public class EraBuilder {
 			StringUtilities.outputWithTime("Constructing condition eras");
 
 		String resourceName = null;
-		if (cdmVersion == VERSION_4 && domain == DRUG_ERA)
-			resourceName = "drugEraV4.sql";
 		if (cdmVersion == VERSION_5 && domain == DRUG_ERA)
 			resourceName = "drugEraV5.sql";
 		if (cdmVersion == VERSION_6 && domain == DRUG_ERA)
 			resourceName = "drugEraV6.sql";
-		if (cdmVersion == VERSION_4 && domain == CONDITION_ERA)
-			resourceName = "conditionEraV4.sql";
 		if (cdmVersion == VERSION_5 && domain == CONDITION_ERA)
 			resourceName = "conditionEraV5.sql";
 		if (cdmVersion == VERSION_6 && domain == CONDITION_ERA)
