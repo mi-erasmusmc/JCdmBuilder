@@ -123,9 +123,9 @@ public class Cdm {
 				String currentConstraint = "";
 				for (String line : sqlLines) {
 					currentConstraint += line;
-					if (currentConstraint.contains("ALTER TABLE ") && currentConstraint.contains(" ADD CONSTAINT ") && currentConstraint.contains(" FOREIGN KEY ")) {
-						String tableName = StringUtilities.findBetween(currentConstraint, "ALTER TABLE ", " ADD CONSTAINT ").trim();
-						String constraintName = StringUtilities.findBetween(currentConstraint, " ADD CONSTAINT ", " FOREIGN KEY ").trim();
+					if (currentConstraint.contains("ALTER TABLE ") && currentConstraint.contains(" ADD CONSTRAINT ") && currentConstraint.contains(" FOREIGN KEY ")) {
+						String tableName = StringUtilities.findBetween(currentConstraint, "ALTER TABLE ", " ADD CONSTRAINT ").trim();
+						String constraintName = StringUtilities.findBetween(currentConstraint, " ADD CONSTRAINT ", " FOREIGN KEY ").trim();
 						if (tableName.length() != 0) {
 							connection.dropConstraintIfExists(tableName, constraintName);
 							currentConstraint = "";
@@ -197,11 +197,18 @@ public class Cdm {
 
 			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 			connection.setContext(cdm.getClass());
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-			
-			StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " tables if they exist");
-			for (String tableName : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase)) {
-				connection.dropTableIfExists(tableName);
+			try {
+				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				
+				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " tables if they exist");
+				for (String tableName : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase)) {
+					connection.dropTableIfExists(dbSettings.database, tableName);
+				}
+			}
+			catch (Exception e) {
+				if (dbSettings.dbType != DbType.MSSQL) {
+					throw e;
+				}
 			}
 
 			connection.close();
@@ -218,10 +225,17 @@ public class Cdm {
 
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.setContext(cdm.getClass());
-		connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-		
-		StringUtilities.outputWithTime("Deleting " + (currentStructure == CDM ? "CDM" : "Results") + " schema if it exists");
-		connection.dropSchemaIfExists(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		try {
+			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			
+			StringUtilities.outputWithTime("Deleting " + (currentStructure == CDM ? "CDM" : "Results") + " schema if it exists");
+			connection.dropSchemaIfExists(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		}
+		catch (Exception e) {
+			if (dbSettings.dbType != DbType.MSSQL) {
+				throw e;
+			}
+		}
 		
 		connection.close();
 		StringUtilities.outputWithTime("Done");
@@ -399,7 +413,7 @@ public class Cdm {
 					if (currentCreate.contains("CREATE TABLE ")) {
 						String tableName = StringUtilities.findBetween(currentCreate, "CREATE TABLE", "(").trim();
 						if (tableName.length() != 0) {
-							connection.dropTableIfExists(tableName);
+							connection.dropTableIfExists(dbSettings.database, tableName);
 							currentCreate = "";
 						}
 					}

@@ -335,7 +335,13 @@ public class RichConnection {
 			else
 				query = "SHOW TABLES IN " + database;
 		} else if (dbType == DbType.MSSQL) {
-			query = "SELECT name FROM " + database + ".sys.tables ";
+			query = "if SCHEMA_ID('cdm') IS NOT NULL" + 
+					"    SELECT TABLE_NAME" + 
+					"    FROM INFORMATION_SCHEMA.TABLES" + 
+					"    WHERE TABLE_TYPE = 'BASE TABLE'" + 
+					"      AND TABLE_SCHEMA = '" + database + "' " + 
+					"ELSE" + 
+					"    SELECT '' AS TABLE_NAME";
 		} else if (dbType == DbType.ORACLE) {
 			query = "SELECT table_name FROM all_tables WHERE owner='" + database.toUpperCase() + "'";
 		} else if (dbType == DbType.POSTGRESQL) {
@@ -387,7 +393,7 @@ public class RichConnection {
 		}
 	}
 
-	public void dropTableIfExists(String table) {
+	public void dropTableIfExists(String database, String table) {
 		if (dbType == DbType.ORACLE || dbType == DbType.POSTGRESQL) {
 			try {
 				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -413,7 +419,7 @@ public class RichConnection {
 					System.out.println(e.getMessage());
 			}
 		} else if (dbType == DbType.MSSQL) {
-			execute("IF OBJECT_ID('" + table + "', 'U') IS NOT NULL DROP TABLE " + table + ";");
+			execute("IF OBJECT_ID('" + database + "." + table + "') IS NOT NULL DROP TABLE " + database + "." + table + ";");
 		} else {
 			execute("DROP TABLE " + table + " IF EXISTS");
 		}
@@ -429,7 +435,8 @@ public class RichConnection {
 				query = "DROP SCHEMA IF EXISTS " + schema + " CASCADE;";
 			}
 			else if (dbType == DbType.MSSQL) {
-				query = "DROP SCHEMA IF EXISTS " + schema + ";";
+				query = "IF SCHEMA_ID('" + schema + "') IS NOT NULL" + 
+						"    EXECUTE ('DROP SCHEMA " + schema + "') " + ";";
 			}
 			else {
 				query = "DROP SCHEMA " + schema + ";";
