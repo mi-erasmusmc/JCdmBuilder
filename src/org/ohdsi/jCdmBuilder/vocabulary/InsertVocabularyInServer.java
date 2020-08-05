@@ -47,7 +47,7 @@ public class InsertVocabularyInServer {
 					StringUtilities.outputWithTime("Inserting data for table " + table);
 					connection.execute("TRUNCATE " + table);
 					Iterator<Row> iterator = new ReadAthenaFile(file.getAbsolutePath()).iterator();
-					Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(table), table);
+					Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
 					connection.insertIntoTable(filteredIterator, table, false, true);
 				}
 			}

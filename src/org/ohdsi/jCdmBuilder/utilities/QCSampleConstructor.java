@@ -119,7 +119,7 @@ public class QCSampleConstructor {
 			WriteCSVFile out = new WriteCSVFile(folder + "/" + personId + "_CDM.csv");
 			for (String table : tables) {
 				String sortField = null;
-				for (String fieldName : connection.getFieldNames(table))
+				for (String fieldName : connection.getFieldNames(database, table))
 					if (fieldName.endsWith("_DATE")) {
 						sortField = fieldName;
 						break;
@@ -172,7 +172,7 @@ public class QCSampleConstructor {
 	private List<String> getTablesWithPersonIdField(RichConnection connection, String database) {
 		List<String> tables = new ArrayList<String>();
 		for (String table : connection.getTableNames(database))
-			if (connection.getFieldNames(table).contains("PERSON_ID"))
+			if (connection.getFieldNames(database, table).contains("PERSON_ID"))
 				tables.add(table);
 		return tables;
 	}

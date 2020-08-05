@@ -19,7 +19,7 @@ import org.ohdsi.jCdmBuilder.cdm.CdmVx;
 
 public class CdmV5 implements CdmVx {
 	public String structureMSSQL() {
-		return "OMOP CDM sql server ddl.txt";
+		return "OMOP CDM Test sql server ddl.txt"; //TODO "OMOP CDM sql server ddl.txt";
 	}
 
 	public String structurePostgreSQL() {
@@ -31,7 +31,7 @@ public class CdmV5 implements CdmVx {
 	}
 
 	public String constraintsMSSQL() {
-		return "OMOP CDM sql server constraints.txt";
+		return "OMOP CDM Test sql server constraints.txt"; //TODO "OMOP CDM sql server constraints.txt";
 	}
 
 	public String constraintsPostgreSQL() {
@@ -43,7 +43,7 @@ public class CdmV5 implements CdmVx {
 	}
 
 	public String indexesMSSQL() {
-		return "OMOP CDM sql server pk indexes.txt";
+		return "OMOP CDM Test sql server pk indexes.txt"; //TODO "OMOP CDM sql server pk indexes.txt";
 	}
 
 	public String indexesPostgreSQL() {

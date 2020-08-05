@@ -127,7 +127,7 @@ public class Cdm {
 						String tableName = StringUtilities.findBetween(currentConstraint, "ALTER TABLE ", " ADD CONSTRAINT ").trim();
 						String constraintName = StringUtilities.findBetween(currentConstraint, " ADD CONSTRAINT ", " FOREIGN KEY ").trim();
 						if (tableName.length() != 0) {
-							connection.dropConstraintIfExists(tableName, constraintName);
+							connection.dropConstraintIfExists(dbSettings.database, tableName, constraintName);
 							currentConstraint = "";
 						}
 					}
@@ -304,10 +304,19 @@ public class Cdm {
 					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " data structure definition not found");
 				}
 			}
-			
+
+			String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
 			List<String> sqlLines = new ArrayList<>();
 			for (String line : new ReadTextFile(resourceStream)) {
 				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+					if (dbSettings.dbType == DbType.MSSQL) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("CREATE TABLE ")) {
+							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
+						}
+					}
 					sqlLines.add(line);
 				}
 			}
@@ -518,8 +527,61 @@ public class Cdm {
 			resourceName = currentStructure == CDM ? cdm.indexesPostgreSQL() : cdm.resultsIndexesPostgreSQL();
 		}
 		
-		RichConnection connection = null;
 		if (resourceName != null) {
+			InputStream resourceStream = null;
+			if (sourceFolder != null) {
+				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+				if (localFile.exists()) {
+					if (localFile.canRead()) {
+						try {
+							resourceStream = new FileInputStream(localFile);
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
+						} catch (FileNotFoundException e) {
+							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
+						}
+					}
+					else {
+						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+					}
+				}
+			}
+			
+			if (resourceStream == null) {
+				resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
+				URL resourceURL = cdm.getClass().getResource(resourceName);
+				if (resourceURL != null) {
+					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
+				}
+				else {
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " data structure definition not found");
+				}
+			}
+
+			String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+			List<String> sqlLines = new ArrayList<>();
+			for (String line : new ReadTextFile(resourceStream)) {
+				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+					if (dbSettings.dbType == DbType.MSSQL) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("ALTER TABLE ")) {
+							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+						}
+					}
+					sqlLines.add(line);
+				}
+			}
+			
+			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+			connection.setContext(cdm.getClass());
+			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			
+			connection.execute(StringUtilities.join(sqlLines, "\n"));
+			
+			connection.close();
+			StringUtilities.outputWithTime("Done");
+/*			
 			try {
 				boolean localDefinition = false;
 				if (sourceFolder != null) {
@@ -565,6 +627,7 @@ public class Cdm {
 					StringUtilities.outputWithTime("Done");
 				}
 			}
+*/
 		}
 	}
 	
@@ -649,6 +712,63 @@ public class Cdm {
 		}
 		
 		if (resourceName != null) {
+			InputStream resourceStream = null;
+			if (sourceFolder != null) {
+				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+				if (localFile.exists()) {
+					if (localFile.canRead()) {
+						try {
+							resourceStream = new FileInputStream(localFile);
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
+						} catch (FileNotFoundException e) {
+							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
+						}
+					}
+					else {
+						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+					}
+				}
+			}
+			
+			if (resourceStream == null) {
+				resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
+				URL resourceURL = cdm.getClass().getResource(resourceName);
+				if (resourceURL != null) {
+					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
+				}
+				else {
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " data structure definition not found");
+				}
+			}
+
+			String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+			List<String> sqlLines = new ArrayList<>();
+			for (String line : new ReadTextFile(resourceStream)) {
+				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+					if (dbSettings.dbType == DbType.MSSQL) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("ALTER TABLE ")) {
+							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+						}
+						if (line.contains("REFERENCES ")) {
+							line = line.replace("REFERENCES ", "REFERENCES " + schemaName + ".");
+						}
+					}
+					sqlLines.add(line);
+				}
+			}
+			
+			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+			connection.setContext(cdm.getClass());
+			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			
+			connection.execute(StringUtilities.join(sqlLines, "\n"));
+			
+			connection.close();
+			StringUtilities.outputWithTime("Done");
+/*			
 			boolean localDefinition = false;
 			if (sourceFolder != null) {
 				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
@@ -695,6 +815,7 @@ public class Cdm {
 					StringUtilities.outputWithTime("Done");
 				}
 			}
+*/
 		}
 	}
 	

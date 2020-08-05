@@ -49,7 +49,7 @@ public class CdmEtl {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
 						connection.execute("TRUNCATE " + table);
 						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath(), delimiter).iterator();
-						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(table), table);
+						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
 						connection.insertIntoTable(filteredIterator, table, false, true);
 					}
 				}

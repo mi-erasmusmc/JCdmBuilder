@@ -298,17 +298,17 @@ public class RichConnection {
 	/**
 	 * Switch the database to use.
 	 * 
-	 * @param database
+	 * @param schema
 	 */
-	public void use(String database) {
-		if (database == null)
+	public void use(String schema) {
+		if (schema == null)
 			return;
 		if (dbType == DbType.ORACLE)
-			execute("ALTER SESSION SET current_schema = " + database);
+			execute("ALTER SESSION SET current_schema = " + schema);
 		else if (dbType == DbType.POSTGRESQL)
-			execute("SET search_path TO " + database);
-		else
-			execute("USE " + database);
+			execute("SET search_path TO " + schema);
+		else if (dbType != DbType.MSSQL) // Not possible in MSSQL
+			execute("USE " + schema);
 	}
 
 	public List<String> getDatabaseNames() {
@@ -326,37 +326,41 @@ public class RichConnection {
 		return names;
 	}
 
-	public List<String> getTableNames(String database) {
+	public List<String> getTableNames(String schema) {
 		List<String> names = new ArrayList<String>();
 		String query = null;
 		if (dbType == DbType.MYSQL) {
-			if (database == null)
+			if (schema == null)
 				query = "SHOW TABLES";
 			else
-				query = "SHOW TABLES IN " + database;
+				query = "SHOW TABLES IN " + schema;
 		} else if (dbType == DbType.MSSQL) {
-			query = "if SCHEMA_ID('cdm') IS NOT NULL" + 
+			query = "IF SCHEMA_ID('" + schema + "') IS NOT NULL" + 
 					"    SELECT TABLE_NAME" + 
 					"    FROM INFORMATION_SCHEMA.TABLES" + 
 					"    WHERE TABLE_TYPE = 'BASE TABLE'" + 
-					"      AND TABLE_SCHEMA = '" + database + "' " + 
+					"      AND TABLE_SCHEMA = '" + schema + "' " + 
 					"ELSE" + 
 					"    SELECT '' AS TABLE_NAME";
 		} else if (dbType == DbType.ORACLE) {
-			query = "SELECT table_name FROM all_tables WHERE owner='" + database.toUpperCase() + "'";
+			query = "SELECT table_name FROM all_tables WHERE owner='" + schema.toUpperCase() + "'";
 		} else if (dbType == DbType.POSTGRESQL) {
-			query = "SELECT table_name FROM information_schema.tables WHERE table_schema = '" + database.toLowerCase() + "'";
+			query = "SELECT table_name FROM information_schema.tables WHERE table_schema = '" + schema.toLowerCase() + "'";
 		}
 
-		for (Row row : query(query))
-			names.add(row.get(row.getFieldNames().get(0)));
+		for (Row row : query(query)) {
+			String tableName = row.get(row.getFieldNames().get(0));
+			if (!tableName.equals("")) {
+				names.add(row.get(row.getFieldNames().get(0)));
+			}
+		}
 		return names;
 	}
 
-	public List<String> getFieldNames(String table) {
+	public List<String> getFieldNames(String schema, String table) {
 		List<String> names = new ArrayList<String>();
 		if (dbType == DbType.MSSQL) {
-			for (Row row : query("SELECT name FROM syscolumns WHERE id=OBJECT_ID('" + table + "')"))
+			for (Row row : query("SELECT name FROM syscolumns WHERE id=OBJECT_ID('" + schema + "." + table + "')"))
 				names.add(row.get("name"));
 		} else if (dbType == DbType.MYSQL)
 			for (Row row : query("SHOW COLUMNS FROM " + table))
@@ -370,7 +374,7 @@ public class RichConnection {
 		return names;
 	}
 	
-	public void dropConstraintIfExists(String table, String constraint) {
+	public void dropConstraintIfExists(String schema, String table, String constraint) {
 		if (dbType == DbType.ORACLE) {
 			try {
 				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -384,7 +388,7 @@ public class RichConnection {
 					System.out.println(e.getMessage());
 			}
 		} else if (dbType == DbType.MSSQL) {
-			execute("BEGIN EXECUTE IMMEDIATE 'ALTER TABLE " + table + " DROP CONSTRAINT " + constraint + "'; EXCEPTION WHEN OTHERS THEN NULL; END");
+			execute("IF OBJECT_ID('" + schema + "." + table + "') IS NOT NULL ALTER TABLE " + schema + "." + table + " DROP CONSTRAINT IF EXISTS " + constraint + ";");
 		} else if (dbType == DbType.POSTGRESQL) {
 			// Do nothing. The DROP CASCADE of the tables will take care of that.
 		}
@@ -393,7 +397,7 @@ public class RichConnection {
 		}
 	}
 
-	public void dropTableIfExists(String database, String table) {
+	public void dropTableIfExists(String schema,String table) {
 		if (dbType == DbType.ORACLE || dbType == DbType.POSTGRESQL) {
 			try {
 				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -419,7 +423,7 @@ public class RichConnection {
 					System.out.println(e.getMessage());
 			}
 		} else if (dbType == DbType.MSSQL) {
-			execute("IF OBJECT_ID('" + database + "." + table + "') IS NOT NULL DROP TABLE " + database + "." + table + ";");
+			execute("IF OBJECT_ID('" + schema + "." + table + "') IS NOT NULL DROP TABLE " + schema + "." + table + ";");
 		} else {
 			execute("DROP TABLE " + table + " IF EXISTS");
 		}
@@ -431,16 +435,15 @@ public class RichConnection {
 			if (dbType == DbType.ORACLE) {
 				query = "DROP SCHEMA " + schema + ";";
 			}
-			else if (dbType == DbType.POSTGRESQL) {
+			else {
 				query = "DROP SCHEMA IF EXISTS " + schema + " CASCADE;";
 			}
-			else if (dbType == DbType.MSSQL) {
-				query = "IF SCHEMA_ID('" + schema + "') IS NOT NULL" + 
-						"    EXECUTE ('DROP SCHEMA " + schema + "') " + ";";
-			}
-			else {
-				query = "DROP SCHEMA " + schema + ";";
-			}
+		}
+		else if (dbType == DbType.MSSQL) { // CASCADE is not possible!!
+			query = "DROP SCHEMA IF EXISTS " + schema + ";";
+		}
+		else {
+			query = "DROP SCHEMA " + schema + ";";
 		}
 		if (query != null) {
 			execute(query);
@@ -461,9 +464,9 @@ public class RichConnection {
 	 * @param tableName
 	 * @return
 	 */
-	public long getTableSize(String tableName) {
+	public long getTableSize(String schema, String tableName) {
 		if (dbType == DbType.MSSQL)
-			return Long.parseLong(query("SELECT COUNT(*) FROM [" + tableName + "];").iterator().next().getCells().get(0));
+			return Long.parseLong(query("SELECT COUNT(*) FROM " + schema + "." + tableName + ";").iterator().next().getCells().get(0));
 		else
 			return Long.parseLong(query("SELECT COUNT(*) FROM " + tableName + ";").iterator().next().getCells().get(0));
 	}
