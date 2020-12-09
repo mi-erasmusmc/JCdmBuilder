@@ -13,9 +13,9 @@
 	<classpathentry kind="lib" path="lib/poi-ooxml-schemas-3.9-20121203.jar"/>
 	<classpathentry kind="lib" path="lib/postgresql-9.3-1101.jdbc4.jar"/>
 	<classpathentry kind="lib" path="lib/postgresql-9.3-1101.jdbc41.jar"/>
-	<classpathentry kind="lib" path="lib/sqljdbc4.jar"/>
 	<classpathentry kind="lib" path="lib/SqlRender.jar"/>
 	<classpathentry kind="lib" path="lib/stax-api-1.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/xmlbeans-2.3.0.jar"/>
+	<classpathentry kind="lib" path="lib/mssql-jdbc-8.4.1.jre8.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
