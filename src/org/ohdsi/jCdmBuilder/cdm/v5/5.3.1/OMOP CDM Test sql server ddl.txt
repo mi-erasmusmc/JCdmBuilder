@@ -1,4 +1,4 @@
-CREATE TABLE concept (
+CREATE TABLE mees_concept (
   concept_id			    INTEGER			  NOT NULL ,
   concept_name			  VARCHAR(255)	NOT NULL ,
   domain_id				    VARCHAR(20)		NOT NULL ,
@@ -13,7 +13,7 @@ CREATE TABLE concept (
 ;
 
 
-CREATE TABLE domain (
+CREATE TABLE mees_domain (
   domain_id			    VARCHAR(20)		NOT NULL,
   domain_name		    VARCHAR(255)	NOT NULL,
   domain_concept_id	INTEGER			  NOT NULL
