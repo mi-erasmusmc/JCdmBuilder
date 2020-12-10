@@ -19,8 +19,8 @@ import org.ohdsi.jCdmBuilder.cdm.CdmVx;
 
 public class CdmV5 implements CdmVx {
 	public String structureMSSQL() {
-		return "OMOP CDM Test sql server ddl.txt";
-		//return "OMOP CDM sql server ddl.txt";
+		//return "OMOP CDM Test sql server ddl.txt";
+		return "OMOP CDM sql server ddl.txt";
 	}
 
 	public String structurePostgreSQL() {

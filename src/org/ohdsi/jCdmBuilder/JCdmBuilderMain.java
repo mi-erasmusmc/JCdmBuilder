@@ -792,12 +792,12 @@ public class JCdmBuilderMain {
 							executeResultsDataWhenReady || 
 							executeResultsIndicesWhenReady) {
 						if (
-								(!etlType.getSelectedItem().equals("5. PostgreSQL only: Load CSV files from server in CDM format to server")) ||
+								(!etlType.getSelectedItem().equals("2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server")) ||
 								(targetType.getSelectedItem().equals("PostgreSQL"))) {
 							runAll();
 						}
 						else {
-							JOptionPane.showMessageDialog(frame, "ETL-Type 5 is only available for PostgreSQL", "Incorrect settings", JOptionPane.ERROR_MESSAGE);
+							JOptionPane.showMessageDialog(frame, "ETL-Type 2 is only available for PostgreSQL", "Incorrect settings", JOptionPane.ERROR_MESSAGE);
 						}
 					}
 				}

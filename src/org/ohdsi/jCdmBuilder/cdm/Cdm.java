@@ -204,6 +204,7 @@ public class Cdm {
 				for (String tableName : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase)) {
 					connection.dropTableIfExists(dbSettings.database, tableName);
 				}
+				StringUtilities.outputWithTime("Done");
 			}
 			catch (Exception e) {
 				if (dbSettings.dbType != DbType.MSSQL) {
@@ -212,7 +213,6 @@ public class Cdm {
 			}
 
 			connection.close();
-			StringUtilities.outputWithTime("Done");
 		}
 	}
 	
@@ -230,6 +230,7 @@ public class Cdm {
 			
 			StringUtilities.outputWithTime("Deleting " + (currentStructure == CDM ? "CDM" : "Results") + " schema if it exists");
 			connection.dropSchemaIfExists(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			StringUtilities.outputWithTime("Done");
 		}
 		catch (Exception e) {
 			if (dbSettings.dbType != DbType.MSSQL) {
@@ -238,7 +239,6 @@ public class Cdm {
 		}
 		
 		connection.close();
-		StringUtilities.outputWithTime("Done");
 	}
 	
 	public static void createSchema(int currentStructure, DbSettings dbSettings, int version) {
@@ -492,7 +492,7 @@ public class Cdm {
 				connection.setContext(cdm.getClass());
 				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
 				
-				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results")+ " data structure");
+				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results") + " data structure");
 				if (idsToBigInt) {
 					System.out.println("- Converting IDs to BIGINT");
 					Pattern pattern = Pattern.compile("[^t]_id\\s+integer");
@@ -553,10 +553,11 @@ public class Cdm {
 					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
 				}
 				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " data structure definition not found");
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " data structure definition not found");
 				}
 			}
 
+			StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " indices");
 			String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
 			List<String> sqlLines = new ArrayList<>();
 			for (String line : new ReadTextFile(resourceStream)) {
@@ -682,7 +683,7 @@ public class Cdm {
 					connection.executeLocalFile(resourceName);
 				}
 			} catch (Exception e) {
-				handleError(e, frame, errorFolder, "Patching Indices", continueOnError);
+				handleError(e, frame, errorFolder, "Patching indices", continueOnError);
 				if (!continueOnError && (JOptionPane.showConfirmDialog(frame, "Do you want to continue?","Continue?",JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)) {
 					throw new Exception("NO ERROR");
 				}
@@ -741,6 +742,7 @@ public class Cdm {
 				}
 			}
 
+			StringUtilities.outputWithTime("Creating constraints");
 			String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
 			List<String> sqlLines = new ArrayList<>();
 			for (String line : new ReadTextFile(resourceStream)) {

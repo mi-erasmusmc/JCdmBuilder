@@ -45,10 +45,10 @@ public class InsertVocabularyInServer {
 				String table = file.getName().substring(0, file.getName().length() - 4);
 				if (tables.contains(table.toLowerCase())) {
 					StringUtilities.outputWithTime("Inserting data for table " + table);
-					connection.execute("TRUNCATE " + table);
+					connection.execute("TRUNCATE TABLE " + dbSettings.database + "." + table);
 					Iterator<Row> iterator = new ReadAthenaFile(file.getAbsolutePath()).iterator();
 					Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
-					connection.insertIntoTable(filteredIterator, table, false, true);
+					connection.insertIntoTable(filteredIterator, dbSettings.database + "." + table, false, true);
 				}
 			}
 		}
