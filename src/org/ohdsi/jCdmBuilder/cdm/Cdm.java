@@ -569,6 +569,9 @@ public class Cdm {
 						if (line.contains("ALTER TABLE ")) {
 							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
 						}
+						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
+							line = line.replace(" ON ", " ON " + schemaName + ".");
+						}
 					}
 					sqlLines.add(line);
 				}
