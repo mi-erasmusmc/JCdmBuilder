@@ -34,9 +34,9 @@ public class CdmEtl {
 			tables.add(table.toLowerCase());
 		
 		if (targetCmdVersion.equals("5.0.1")) {
-			connection.execute("TRUNCATE TABLE _version");
+			connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + "_version");
 			String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-			connection.execute("INSERT INTO _version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
+			connection.execute("INSERT INTO " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + "_version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
 		}
 
 		for (File file : new File(folder).listFiles()) {
@@ -47,7 +47,7 @@ public class CdmEtl {
 					table = file.getName().substring(0, file.getName().length() - 4);
 					if (tables.contains(table.toLowerCase())) {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
-						connection.execute("TRUNCATE " + table);
+						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
 						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath(), delimiter).iterator();
 						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
 						connection.insertIntoTable(filteredIterator, table, false, true);
@@ -90,7 +90,7 @@ public class CdmEtl {
 					table = file.getName().substring(0, file.getName().length() - 4);
 					if (tables.contains(table.toLowerCase())) {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
-						connection.execute("TRUNCATE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
+						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
 
 						String temporarySourceFileName = file.getName();
 						String temporarySourceFileNamePath = file.getAbsolutePath();
