@@ -23,7 +23,7 @@ import org.ohdsi.utilities.files.Row;
 
 public class CdmEtl {
 	
-	public void process(int currentStructure, String folder, String delimiterString, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
+	public void process(int currentStructure, String folder, String delimiterString, String nullValueString, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 		
@@ -50,7 +50,7 @@ public class CdmEtl {
 						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
 						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath(), delimiter).iterator();
 						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
-						connection.insertIntoTable(filteredIterator, table, false, true);
+						connection.insertIntoTable(filteredIterator, table, false, nullValueString);
 					}
 				}
 			} catch (Exception e) {
@@ -67,7 +67,7 @@ public class CdmEtl {
 		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 	
-	public void process(int currentStructure, String folder, String delimiterString, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
+	public void process(int currentStructure, String folder, String delimiterString, String nullValueString, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 		
@@ -112,7 +112,7 @@ public class CdmEtl {
 						
 						// Postgresql
 						StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + temporarySourceFileName + " into table " + table);
-						connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH DELIMITER '" + delimiter + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
+						connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH DELIMITER '" + delimiter + "' NULL '" + (nullValueString == null ? "" : nullValueString) + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
 						
 						// SQL Server
 						//connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporarySourceFileName + "' WITH (FORMAT = 'CSV', FIELDTERMINATOR = '" + delimiter + "', FIELDQUOTE = '\"', ROWTERMINATOR = '\n');");

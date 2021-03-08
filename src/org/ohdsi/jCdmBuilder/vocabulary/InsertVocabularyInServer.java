@@ -48,7 +48,7 @@ public class InsertVocabularyInServer {
 					connection.execute("TRUNCATE TABLE " + dbSettings.database + "." + table);
 					Iterator<Row> iterator = new ReadAthenaFile(file.getAbsolutePath()).iterator();
 					Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
-					connection.insertIntoTable(filteredIterator, dbSettings.database + "." + table, false, true);
+					connection.insertIntoTable(filteredIterator, dbSettings.database + "." + table, false, "");
 				}
 			}
 		}

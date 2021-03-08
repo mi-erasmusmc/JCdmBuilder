@@ -71,7 +71,7 @@ import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "1.0.0";
+	public static final String VERSION = "0.3.9";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
 	
@@ -113,12 +113,14 @@ public class JCdmBuilderMain {
 	private JTextField			targetResultsDatabaseField;
 	private JComboBox<String>	targetCdmVersion;
 	private JTextField			sourceDelimiterField;
+	private JTextField			sourceNullValueField;
 	private JTextField			sourceFolderField;
 	//private JTextField			sourceServerField;
 	//private JTextField			sourceUserField;
 	//private JTextField			sourcePasswordField;
 	//private JTextField			sourceDatabaseField;
 	private JTextField			sourceServerDelimiterField;
+	private JTextField			sourceServerNullValueField;
 	private JTextField			sourceServerFolderField;
 	private JTextField			sourceServerTempFolderField;
 	private JTextField			sourceServerTempLocalFolderField;
@@ -624,7 +626,12 @@ public class JCdmBuilderMain {
 		sourceDelimiterField = new JTextField(",");
 		sourceDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
 		sourceFolderPanel.add(sourceDelimiterField);
-		sourceFolderPanel.add(Box.createHorizontalGlue());
+		
+		sourceFolderPanel.add(new JLabel("Null value"));
+		sourceNullValueField = new JTextField("");
+		sourceNullValueField.setToolTipText("The value that represents the NULL value.");
+		sourceFolderPanel.add(sourceNullValueField);
+		
 		sourceFolderPanel.add(Box.createHorizontalGlue());
 		sourceFolderPanel.add(Box.createHorizontalGlue());
 		sourceFolderPanel.add(Box.createHorizontalGlue());
@@ -680,6 +687,11 @@ public class JCdmBuilderMain {
 		sourceServerDelimiterField = new JTextField(",");
 		sourceServerDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
 		sourceServerFolderPanel.add(sourceServerDelimiterField);
+		
+		sourceServerFolderPanel.add(new JLabel("Null value"));
+		sourceServerNullValueField = new JTextField("");
+		sourceServerNullValueField.setToolTipText("The value that represents the NULL value.");
+		sourceServerFolderPanel.add(sourceServerNullValueField);
 		
 		
 		sourceCards = new JPanel(new CardLayout());
@@ -1316,14 +1328,14 @@ public class JCdmBuilderMain {
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceFolderField.getText(), sourceDelimiterField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
+						etl.process(structure, sourceFolderField.getText(), sourceDelimiterField.getText(), sourceNullValueField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
 				if (etlType.getSelectedItem().equals("2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server")) {
 					CdmEtl etl = new CdmEtl();
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
+						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerNullValueField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
 				
 			} catch (Exception e) {

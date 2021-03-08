@@ -556,8 +556,8 @@ public class RichConnection {
 	 * @param create
 	 *            If true, the data format is determined based on the first batch of rows and used to create the table structure.
 	 */
-	public void readFromFile(String filename, String table, boolean create, boolean emptyStringToNull) {
-		insertIntoTable(new ReadCSVFileWithHeader(filename).iterator(), table, create, emptyStringToNull);
+	public void readFromFile(String filename, String table, boolean create, String nullValueString) {
+		insertIntoTable(new ReadCSVFileWithHeader(filename).iterator(), table, create, nullValueString);
 	}
 
 	/**
@@ -568,7 +568,7 @@ public class RichConnection {
 	 * @param create
 	 *            If true, the data format is determined based on the first batch of rows and used to create the table structure.
 	 */
-	public void insertIntoTable(Iterator<Row> iterator, String table, boolean create, boolean emptyStringToNull) {
+	public void insertIntoTable(Iterator<Row> iterator, String table, boolean create, String nullValueString) {
 		List<Row> batch = new ArrayList<Row>(INSERT_BATCH_SIZE);
 
 		boolean first = true;
@@ -577,7 +577,7 @@ public class RichConnection {
 			if (batch.size() == INSERT_BATCH_SIZE) {
 				if (first && create)
 					createTable(table, batch);
-				insert(table, batch, emptyStringToNull);
+				insert(table, batch, nullValueString);
 				batch.clear();
 				first = false;
 			}
@@ -587,11 +587,11 @@ public class RichConnection {
 		if (batch.size() != 0) {
 			if (first && create)
 				createTable(table, batch);
-			insert(table, batch, emptyStringToNull);
+			insert(table, batch, nullValueString);
 		}
 	}
 
-	private void insert(String tableName, List<Row> rows, boolean emptyStringToNull) {
+	private void insert(String tableName, List<Row> rows, String nullValueString) {
 		List<String> columns = null;
 		columns = rows.get(0).getFieldNames();
 		for (int i = 0; i < columns.size(); i++)
@@ -609,7 +609,7 @@ public class RichConnection {
 			for (Row row : rows) {
 				for (int i = 0; i < columns.size(); i++) {
 					String value = row.get(columns.get(i));
-					if (value != null && value.length() == 0 && emptyStringToNull)
+					if (value != null && (nullValueString != null) && value.equals(nullValueString))
 						value = null;
 					if (dbType == DbType.POSTGRESQL) {// PostgreSQL does not allow unspecified types
 						if (tableName.equals("note") && (value != null) && (value.contains("\\"))) {
@@ -770,7 +770,7 @@ public class RichConnection {
 		sql.append(");");
 		targetConnection.execute(sql.toString());
 		targetConnection.use(targetDatabase);
-		targetConnection.insertIntoTable(query("SELECT * FROM " + sourceDatabase + ".dbo." + sourceTable).iterator(), targetTable, false, false);
+		targetConnection.insertIntoTable(query("SELECT * FROM " + sourceDatabase + ".dbo." + sourceTable).iterator(), targetTable, false, null);
 	}
 
 	private class DBRowIterator implements Iterator<Row> {
