@@ -50,7 +50,7 @@ public class CdmEtl {
 						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
 						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath(), delimiter).iterator();
 						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
-						connection.insertIntoTable(filteredIterator, table, false, nullValueString);
+						connection.insertIntoTable(filteredIterator, (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table, false, nullValueString);
 					}
 				}
 			} catch (Exception e) {
