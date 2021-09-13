@@ -113,6 +113,7 @@ public class JCdmBuilderMain {
 	private JTextField			targetResultsDatabaseField;
 	private JComboBox<String>	targetCdmVersion;
 	private JTextField			sourceDelimiterField;
+	private JTextField			sourceQuoteField;
 	private JTextField			sourceNullValueField;
 	private JTextField			sourceFolderField;
 	//private JTextField			sourceServerField;
@@ -120,6 +121,7 @@ public class JCdmBuilderMain {
 	//private JTextField			sourcePasswordField;
 	//private JTextField			sourceDatabaseField;
 	private JTextField			sourceServerDelimiterField;
+	private JTextField			sourceServerQuoteField;
 	private JTextField			sourceServerNullValueField;
 	private JTextField			sourceServerFolderField;
 	private JTextField			sourceServerTempFolderField;
@@ -287,7 +289,7 @@ public class JCdmBuilderMain {
 		folderPanel.add(pickButton);
 		pickButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				pickFile();
+				pickFolder();
 			}
 		});
 		componentsToDisableWhenRunning.add(pickButton);
@@ -436,8 +438,10 @@ public class JCdmBuilderMain {
 		//sourceUserField.setText(propertiesManager.get("SourceUserName"));
 		//sourceDatabaseField.setText(propertiesManager.get("SourceDatabaseName"));
 		sourceDelimiterField.setText(propertiesManager.get("SourceDelimiter"));
+		sourceQuoteField.setText(propertiesManager.get("SourceQuote"));
 		sourceFolderField.setText(propertiesManager.get("SourceFolder"));
 		sourceServerDelimiterField.setText(propertiesManager.get("SourceServerDelimiter"));
+		sourceServerQuoteField.setText(propertiesManager.get("SourceServerQuote"));
 		sourceServerFolderField.setText(propertiesManager.get("SourceServerFolder"));
 		sourceServerTempFolderField.setText(propertiesManager.get("SourceServerTempFolder"));
 		sourceServerTempLocalFolderField.setText(propertiesManager.get("SourceServerTempLocalFolder"));
@@ -471,8 +475,10 @@ public class JCdmBuilderMain {
 		//propertiesManager.set("SourceUserName", sourceUserField.getText());
 		//propertiesManager.set("SourceDatabaseName", sourceDatabaseField.getText());
 		propertiesManager.set("SourceDelimiter", sourceDelimiterField.getText());
+		propertiesManager.set("SourceQuote", sourceQuoteField.getText());
 		propertiesManager.set("SourceFolder", sourceFolderField.getText());
 		propertiesManager.set("SourceServerDelimiter", sourceServerDelimiterField.getText());
+		propertiesManager.set("SourceServerQuote", sourceServerQuoteField.getText());
 		propertiesManager.set("SourceServerFolder", sourceServerFolderField.getText());
 		propertiesManager.set("SourceServerTempFolder", sourceServerTempFolderField.getText());
 		propertiesManager.set("SourceServerTempLocalFolder", sourceServerTempLocalFolderField.getText());
@@ -563,7 +569,7 @@ public class JCdmBuilderMain {
 		etlTypePanel.setLayout(new BoxLayout(etlTypePanel, BoxLayout.X_AXIS));
 		etlTypePanel.setBorder(BorderFactory.createTitledBorder("ETL type"));
 		etlType = new JComboBox<String>(
-				new String[] { "1. Load CSV files in CDM format to server", "2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server" });
+				new String[] { "1. Load CSV files in CDM format to server", "2. Bulk Load CSV files from server in CDM format to server" });
 		etlType.setToolTipText("Select the appropriate ETL process");
 		etlType.addItemListener(new ItemListener() {
 			
@@ -572,7 +578,7 @@ public class JCdmBuilderMain {
 				String selection = arg0.getItem().toString();
 				if (selection.equals("1. Load CSV files in CDM format to server"))
 					((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEFOLDER);
-				else if (selection.equals("2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server"))
+				else if (selection.equals("2. Bulk Load CSV files from server in CDM format to server"))
 						((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEVIASERVERFOLDER);
 				else
 					((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEDATABASE);
@@ -601,7 +607,7 @@ public class JCdmBuilderMain {
 		
 		// ETL-Type 1 and 2 Panel
 		JPanel sourceFolderPanel = new JPanel();
-		sourceFolderPanel.setLayout(new GridLayout(5, 2));
+		sourceFolderPanel.setLayout(new GridLayout(6, 2));
 		sourceFolderPanel.setBorder(BorderFactory.createTitledBorder("Source folder location"));
 		
 		sourceFolderPanel.add(new JLabel("Folder"));
@@ -627,6 +633,11 @@ public class JCdmBuilderMain {
 		sourceDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
 		sourceFolderPanel.add(sourceDelimiterField);
 		
+		sourceFolderPanel.add(new JLabel("Quote"));
+		sourceQuoteField = new JTextField("\"");
+		sourceQuoteField.setToolTipText("The field quote.");
+		sourceFolderPanel.add(sourceQuoteField);
+		
 		sourceFolderPanel.add(new JLabel("Null value"));
 		sourceNullValueField = new JTextField("");
 		sourceNullValueField.setToolTipText("The value that represents the NULL value.");
@@ -639,7 +650,7 @@ public class JCdmBuilderMain {
 
 		// ETL-Type 2 Panel
 		JPanel sourceServerFolderPanel = new JPanel();
-		sourceServerFolderPanel.setLayout(new GridLayout(5, 2));
+		sourceServerFolderPanel.setLayout(new GridLayout(6, 2));
 		sourceServerFolderPanel.setBorder(BorderFactory.createTitledBorder("Folder locations"));
 		sourceServerFolderPanel.add(new JLabel("Folder"));
 		
@@ -650,11 +661,11 @@ public class JCdmBuilderMain {
 		sourceServerFolderField.setToolTipText("Specify the name of the folder containing the CSV files here");
 		sourceViaServerFolderFieldPanel.add(sourceServerFolderField);
 		JButton pickFolderButton = new JButton("Pick folder");
-		pickFolderButton.setToolTipText("Select the folder containing the source CSV files");
+		pickFolderButton.setToolTipText("Select the name of the folder containing the source CSV files");
 		sourceViaServerFolderFieldPanel.add(pickFolderButton);
 		pickFolderButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				pickSourceFolder();
+				pickSourceServerFolder();
 			}
 		});
 		sourceServerFolderPanel.add(sourceViaServerFolderFieldPanel);
@@ -668,7 +679,7 @@ public class JCdmBuilderMain {
 		sourceServerTempFolderField.setToolTipText("Specify the path of the temporary folder on the server here");
 		sourceServerTempFolderFieldPanel.add(sourceServerTempFolderField);
 		JButton pickServerFolderButton = new JButton("Pick folder");
-		pickServerFolderButton.setToolTipText("Select the temporary folder on the server");
+		pickServerFolderButton.setToolTipText("Select the path of the temporary folder on the server");
 		sourceServerTempFolderFieldPanel.add(pickServerFolderButton);
 		pickServerFolderButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -687,6 +698,11 @@ public class JCdmBuilderMain {
 		sourceServerDelimiterField = new JTextField(",");
 		sourceServerDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
 		sourceServerFolderPanel.add(sourceServerDelimiterField);
+		
+		sourceServerFolderPanel.add(new JLabel("Quote"));
+		sourceServerQuoteField = new JTextField("\"");
+		sourceServerQuoteField.setToolTipText("The field quote.");
+		sourceServerFolderPanel.add(sourceServerQuoteField);
 		
 		sourceServerFolderPanel.add(new JLabel("Null value"));
 		sourceServerNullValueField = new JTextField("");
@@ -805,11 +821,12 @@ public class JCdmBuilderMain {
 							executeResultsIndicesWhenReady) {
 						if (
 								(!etlType.getSelectedItem().equals("2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server")) ||
-								(targetType.getSelectedItem().equals("PostgreSQL"))) {
+								(targetType.getSelectedItem().equals("PostgreSQL")) ||
+								(targetType.getSelectedItem().equals("SQL Server"))) {
 							runAll();
 						}
 						else {
-							JOptionPane.showMessageDialog(frame, "ETL-Type 2 is only available for PostgreSQL", "Incorrect settings", JOptionPane.ERROR_MESSAGE);
+							JOptionPane.showMessageDialog(frame, "ETL-Type 2 is only available for PostgreSQL and SQL Server", "Incorrect settings", JOptionPane.ERROR_MESSAGE);
 						}
 					}
 				}
@@ -1116,7 +1133,7 @@ public class JCdmBuilderMain {
 		}
 	}
 	
-	private void pickFile() {
+	private void pickFolder() {
 		JFileChooser fileChooser = new JFileChooser(new File(folderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select folder");
@@ -1153,7 +1170,7 @@ public class JCdmBuilderMain {
 	}
 	
 	private void pickVocabFile() {
-		JFileChooser fileChooser = new JFileChooser(new File(folderField.getText()));
+		JFileChooser fileChooser = new JFileChooser(new File(vocabFileField.getText().trim().equals("") ? folderField.getText() : vocabFileField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select vocabulary folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
@@ -1161,15 +1178,23 @@ public class JCdmBuilderMain {
 	}
 	
 	private void pickSourceFolder() {
-		JFileChooser fileChooser = new JFileChooser(new File(folderField.getText()));
+		JFileChooser fileChooser = new JFileChooser(new File(sourceFolderField.getText().trim().equals("") ? folderField.getText() : sourceFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select source folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			sourceFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
 	}
 	
+	private void pickSourceServerFolder() {
+		JFileChooser fileChooser = new JFileChooser(new File(sourceFolderField.getText().trim().equals("") ? folderField.getText() : sourceServerFolderField.getText()));
+		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		int returnVal = fileChooser.showDialog(frame, "Select source server folder");
+		if (returnVal == JFileChooser.APPROVE_OPTION)
+			sourceServerFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+	}
+	
 	private void pickTemporaryServerFolder() {
-		JFileChooser fileChooser = new JFileChooser(new File(sourceServerTempFolderField.getText()));
+		JFileChooser fileChooser = new JFileChooser(new File(sourceServerTempFolderField.getText().trim().equals("") ? folderField.getText() : sourceServerTempFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select temporary server folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
@@ -1328,14 +1353,14 @@ public class JCdmBuilderMain {
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceFolderField.getText(), sourceDelimiterField.getText(), sourceNullValueField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
+						etl.process(structure, sourceFolderField.getText(), sourceDelimiterField.getText(), sourceQuoteField.getText(), sourceNullValueField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
-				if (etlType.getSelectedItem().equals("2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server")) {
+				if (etlType.getSelectedItem().equals("2. Bulk Load CSV files from server in CDM format to server")) {
 					CdmEtl etl = new CdmEtl();
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerNullValueField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
+						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerQuoteField.getText(), sourceServerNullValueField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
 				
 			} catch (Exception e) {

@@ -48,16 +48,28 @@ import org.ohdsi.utilities.files.WriteTextFile;
  */
 public class CSVFileChecker {
 
-	private static char			delimiter				= ',';
 	private static int			bufferSize				= 10000;
 	private static int			sampleSize				= 1000;
 	private static double		minFractionDateCorrect	= 0.95;
+	private char				delimiter				= ',';
+	private char				quote					= '"';
 	private int					columnCount;
 	private String				filename;
 	private List<LineError>		errors;
 	private List<ColumnInfo>	columnInfos;
 	private JFrame				frame;
 	private List<String>		header;
+	
+	
+	public CSVFileChecker() {
+		// Accept defaults
+	}
+	
+	
+	public CSVFileChecker(char delimiter, char quote) {
+		this.delimiter = delimiter;
+		this.quote = quote;
+	}
 
 	public void checkFile(String filename) {
 		checkFile(filename, null);
@@ -71,7 +83,7 @@ public class CSVFileChecker {
 		List<List<String>> rowBuffer = new ArrayList<List<String>>();
 		for (String line : new ReadTextFile(filename)) {
 			lineNr++;
-			List<String> row = StringUtilities.safeSplit(line, delimiter);
+			List<String> row = StringUtilities.safeSplit(line, delimiter, quote);
 
 			if (lineNr == 1) { // header
 				columnCount = row.size();

@@ -32,10 +32,12 @@ public class ReadCSVFile implements Iterable<List<String>> {
 	protected BufferedReader	bufferedReader;
 	public boolean				EOF			= false;
 	private char				delimiter	= ',';
+	private char				quote		= '"';
 
-	public ReadCSVFile(String filename, char delimiter) {
+	public ReadCSVFile(String filename, char delimiter, char quote) {
 		this(filename);
 		this.delimiter = delimiter;
+		this.quote = quote;
 	}
 
 	public ReadCSVFile(String filename) {
@@ -49,9 +51,10 @@ public class ReadCSVFile implements Iterable<List<String>> {
 		}
 	}
 
-	public ReadCSVFile(InputStream inputstream, char delimiter) {
+	public ReadCSVFile(InputStream inputstream, char delimiter, char quote) {
 		this(inputstream);
 		this.delimiter = delimiter;
+		this.quote = quote;
 	}
 
 	public ReadCSVFile(InputStream inputstream) {
@@ -120,7 +123,7 @@ public class ReadCSVFile implements Iterable<List<String>> {
 			}
 			return columns;
 		} else {
-			List<String> columns = StringUtilities.safeSplit(line, delimiter);
+			List<String> columns = StringUtilities.safeSplit(line, delimiter, quote);
 			for (int i = 0; i < columns.size(); i++) {
 				String column = columns.get(i);
 				if (column.startsWith("\"") && column.endsWith("\"") && column.length() > 1)

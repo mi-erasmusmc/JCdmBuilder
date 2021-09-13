@@ -1,3 +1,0 @@
-ALTER TABLE mees_concept ADD CONSTRAINT xpk_concept PRIMARY KEY NONCLUSTERED (concept_id);
-
-ALTER TABLE mees_domain ADD CONSTRAINT xpk_domain PRIMARY KEY NONCLUSTERED (domain_id);

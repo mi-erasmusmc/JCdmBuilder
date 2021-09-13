@@ -12,6 +12,7 @@ import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 
 import org.apache.commons.io.FileUtils;
+import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
 import org.ohdsi.jCdmBuilder.ErrorReport;
@@ -23,11 +24,12 @@ import org.ohdsi.utilities.files.Row;
 
 public class CdmEtl {
 	
-	public void process(int currentStructure, String folder, String delimiterString, String nullValueString, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
+	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 		
 		char delimiter = delimiterString.trim().toLowerCase().equals("tab") ? '\t' : delimiterString.charAt(0);
+		char quote     = quoteString.charAt(0);
 		
 		Set<String> tables = new HashSet<String>();
 		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase))
@@ -48,7 +50,7 @@ public class CdmEtl {
 					if (tables.contains(table.toLowerCase())) {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
 						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
-						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath(), delimiter).iterator();
+						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath(), delimiter, quote).iterator();
 						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
 						connection.insertIntoTable(filteredIterator, (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table, false, nullValueString);
 					}
@@ -67,11 +69,12 @@ public class CdmEtl {
 		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 	
-	public void process(int currentStructure, String folder, String delimiterString, String nullValueString, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
+	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
 		
 		char delimiter = delimiterString.trim().toLowerCase().equals("tab") ? '\t' : delimiterString.charAt(0);
+		char quote     = quoteString.charAt(0);
 		
 		Set<String> tables = new HashSet<String>();
 		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase))
@@ -97,25 +100,41 @@ public class CdmEtl {
 						File temporarySourceFile = null;
 						if (!folder.equals(temporaryLocalServerFolder)) {
 							// Copy source file to temporary file on the server
-							
-							//PostgerSQL only
-							String databaseName = dbSettings.server.split("/")[1].trim();
-							
-							temporarySourceFileName = databaseName + "_" + file.getName();
-							StringUtilities.outputWithTime("Copy file " + file.getName() + " to " + temporarySourceFileName);
+
+							String databaseName = "";
+							// PostgreSQL
+							if (dbSettings.dbType == DbType.POSTGRESQL) {
+								databaseName = dbSettings.server.split("/")[1].trim();
+							}
+							// Microsoft SQL Server
+							else if (dbSettings.dbType == DbType.MSSQL) {
+								databaseName = dbSettings.server.substring(dbSettings.server.indexOf("database=") + 9).trim();
+								if (databaseName.contains(";")) {
+									databaseName = databaseName.substring(0, databaseName.indexOf(";")).trim();
+								}
+							}
+							temporarySourceFileName = databaseName + "_" + dbSettings.database + "_" + file.getName();
 							temporarySourceFileNamePath = temporaryServerFolder + "/" + temporarySourceFileName;
 							temporarySourceFile = new File(temporarySourceFileNamePath);
+							StringUtilities.outputWithTime("Copy file " + file.getName() + " to " + temporarySourceFile.getAbsolutePath());
 							FileUtils.copyFile(file, temporarySourceFile);
 						}
 						
 						// Copy data into table
-						
-						// Postgresql
-						StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + temporarySourceFileName + " into table " + table);
-						connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH DELIMITER '" + delimiter + "' NULL '" + (nullValueString == null ? "" : nullValueString) + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
-						
-						// SQL Server
-						//connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporarySourceFileName + "' WITH (FORMAT = 'CSV', FIELDTERMINATOR = '" + delimiter + "', FIELDQUOTE = '\"', ROWTERMINATOR = '\n');");
+
+						// PostgreSQL
+						if (dbSettings.dbType == DbType.POSTGRESQL) {
+							StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + temporarySourceFileName + " into table " + table);
+							connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH DELIMITER '" + delimiter + "' NULL '" + (nullValueString == null ? "" : nullValueString) + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
+						}
+						// Microsoft SQL Server
+						else if (dbSettings.dbType == DbType.MSSQL) {
+							connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH (FORMAT = 'CSV', FIRSTROW = 2, FIELDTERMINATOR = '" + delimiter + "', FIELDQUOTE = '" + quote + "', ROWTERMINATOR = '\n');");
+						}
+						// Oracle
+						else if (dbSettings.dbType == DbType.ORACLE) {
+							connection.execute("LOAD DATA INFILE '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' INTO TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FIELD TERMINATED BY '" + delimiter + "' OPTIONALLY ENCLOSED BY '" + quote + "' LINES TERMINATED BY '\n';");
+						}
 
 						if (temporarySourceFile != null) {
 							FileUtils.forceDelete(temporarySourceFile);
@@ -133,6 +152,7 @@ public class CdmEtl {
 				}
 			}
 		}
+		
 		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 	

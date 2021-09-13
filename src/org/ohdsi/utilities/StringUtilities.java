@@ -172,7 +172,7 @@ public class StringUtilities {
 	
 	// Safesplit works the same as default split, but takes escapes into account
 	// Author: Martijn
-	public static List<String> safeSplit(String string, char delimiter) {
+	public static List<String> safeSplit(String string, char delimiter, char quote) {
 		List<String> result = new ArrayList<String>();
 		if (string.length() == 0) {
 			result.add("");
@@ -185,7 +185,7 @@ public class StringUtilities {
 		char currentchar;
 		while (i < string.length()) {
 			currentchar = string.charAt(i);
-			if (currentchar == '"' && !escape) {
+			if (currentchar == quote && !escape) {
 				literal = !literal;
 			}
 			if (!literal && (currentchar == delimiter && !escape)) {

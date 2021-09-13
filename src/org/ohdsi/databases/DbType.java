@@ -26,9 +26,11 @@ public class DbType {
 	};
 
 	private Type	type;
+	private String	name;
 
 	public DbType(String type) {
 		this.type = Type.valueOf(type.toUpperCase());
+		this.name = type;
 	}
 
 	public boolean equals(Object other) {
@@ -36,5 +38,9 @@ public class DbType {
 			return true;
 		else
 			return false;
+	}
+	
+	public String toString() {
+		return name;
 	}
 }
