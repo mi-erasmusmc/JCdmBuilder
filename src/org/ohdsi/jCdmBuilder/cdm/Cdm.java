@@ -159,6 +159,7 @@ public class Cdm {
 		}
 
 		if (resourceName != null) {
+			/*
 			InputStream resourceStream = null;
 			if (sourceFolder != null) {
 				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
@@ -194,6 +195,7 @@ public class Cdm {
 					sqlLines.add(line);
 				}
 			}
+			*/
 
 			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 			connection.setContext(cdm.getClass());
@@ -309,13 +311,11 @@ public class Cdm {
 			List<String> sqlLines = new ArrayList<>();
 			for (String line : new ReadTextFile(resourceStream)) {
 				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-					if (dbSettings.dbType == DbType.MSSQL) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("CREATE TABLE ")) {
-							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
-						}
+					while (line.contains("  ")) {
+						line = line.replaceAll("  ", " ");
+					}
+					if (line.contains("CREATE TABLE ")) {
+						line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
 					}
 					sqlLines.add(line);
 				}
@@ -485,13 +485,14 @@ public class Cdm {
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						if (dbSettings.dbType == DbType.MSSQL) {
-							while (line.contains("  ")) {
-								line = line.replaceAll("  ", " ");
-							}
-							if (line.contains("CREATE TABLE ")) {
-								line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
-							}
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("DROP TABLE ")) {
+							line = line.replace("DROP TABLE ", "DROP TABLE " + schemaName + ".");
+						}
+						if (line.contains("CREATE TABLE ")) {
+							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
 						}
 						sqlLines.add(line);
 					}
@@ -571,16 +572,14 @@ public class Cdm {
 			List<String> sqlLines = new ArrayList<>();
 			for (String line : new ReadTextFile(resourceStream)) {
 				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-					if (dbSettings.dbType == DbType.MSSQL) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
-							line = line.replace(" ON ", " ON " + schemaName + ".");
-						}
+					while (line.contains("  ")) {
+						line = line.replaceAll("  ", " ");
+					}
+					if (line.contains("ALTER TABLE ")) {
+						line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+					}
+					if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
+						line = line.replace(" ON ", " ON " + schemaName + ".");
 					}
 					sqlLines.add(line);
 				}
@@ -646,16 +645,14 @@ public class Cdm {
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						if (dbSettings.dbType == DbType.MSSQL) {
-							while (line.contains("  ")) {
-								line = line.replaceAll("  ", " ");
-							}
-							if (line.contains("ALTER TABLE ")) {
-								line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-							}
-							if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
-								line = line.replace(" ON ", " ON " + schemaName + ".");
-							}
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("ALTER TABLE ")) {
+							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+						}
+						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
+							line = line.replace(" ON ", " ON " + schemaName + ".");
 						}
 						sqlLines.add(line);
 					}
@@ -724,16 +721,14 @@ public class Cdm {
 			List<String> sqlLines = new ArrayList<>();
 			for (String line : new ReadTextFile(resourceStream)) {
 				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-					if (dbSettings.dbType == DbType.MSSQL) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("REFERENCES ")) {
-							line = line.replace("REFERENCES ", "REFERENCES " + schemaName + ".");
-						}
+					while (line.contains("  ")) {
+						line = line.replaceAll("  ", " ");
+					}
+					if (line.contains("ALTER TABLE ")) {
+						line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+					}
+					if (line.contains("REFERENCES ")) {
+						line = line.replace("REFERENCES ", "REFERENCES " + schemaName + ".");
 					}
 					sqlLines.add(line);
 				}
@@ -747,54 +742,6 @@ public class Cdm {
 			
 			connection.close();
 			StringUtilities.outputWithTime("Done");
-/*			
-			boolean localDefinition = false;
-			if (sourceFolder != null) {
-				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
-				if (localFile.exists()) {
-					if (localFile.canRead()) {
-						StringUtilities.outputWithTime("Using local definition: " + resourceName);
-						resourceName = sourceFolder + "/Scripts/" + resourceName;
-						localDefinition = true;
-					}
-					else {
-						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
-					}
-				}
-			}
-			
-			RichConnection connection = null;
-			try {
-				connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-				connection.setContext(cdm.getClass());
-				
-				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " constraints");
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-				if (localDefinition) {
-					connection.executeLocalFile(resourceName);
-				}
-				else {
-					resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
-					URL resourceURL = cdm.getClass().getResource(resourceName);
-					if (resourceURL != null) {
-						connection.executeResource(resourceName);
-					}
-					else {
-						StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " indices defintion not found.");
-					}
-				}
-			} catch (Exception e) {
-				handleError(e, frame, errorFolder, "Creating Constraints", continueOnError);
-				if (!continueOnError && (JOptionPane.showConfirmDialog(frame, "Do you want to continue?","Continue?",JOptionPane.YES_NO_OPTION) != JOptionPane.YES_OPTION)) {
-					throw new Exception("NO ERROR");
-				}
-			} finally {
-				if (connection != null) {
-					connection.close();
-					StringUtilities.outputWithTime("Done");
-				}
-			}
-*/
 		}
 	}
 	

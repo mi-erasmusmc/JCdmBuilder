@@ -54,8 +54,10 @@ public class RichConnection {
 	private static DecimalFormat	decimalFormat		= new DecimalFormat("#.#");
 	private Map<String, String>		localVariables		= new HashMap<String, String>();
 	private DbType					dbType;
+	private String					password;
 
 	public RichConnection(String server, String domain, String user, String password, DbType dbType) {
+		this.password = password;
 		this.connection = DBConnector.connect(server, domain, user, password, dbType);
 		this.dbType = dbType;
 	}
@@ -148,6 +150,7 @@ public class RichConnection {
 			sql = handleSQLDefineStatements(sql);
 			if (sql.length() == 0)
 				return;
+			sql = stripComments(sql);
 			Statement statement = null;
 
 			statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
@@ -169,11 +172,15 @@ public class RichConnection {
 				outputQueryStats(statement, System.currentTimeMillis() - start);
 			statement.close();
 		} catch (SQLException e) {
-			String message = e.getMessage();
-			System.err.println(sql);
-			e.printStackTrace();
-			e = e.getNextException();
-			if (e != null) {
+			if (
+					(e != null) && 
+					(!e.getMessage().contains("ORA-01435")) && // Suppress Oracle user (schema) does not exist error
+					(!e.getMessage().contains("ORA-01918"))    // Suppress Oracle user (schema) does not exist error
+				) {
+				System.err.println(sql);
+				e.printStackTrace();
+				e = e.getNextException();
+				String message = e.getMessage();
 				message = message + "\n" + e.getMessage();
 				System.err.println("Error: " + e.getMessage());
 				e.printStackTrace();
@@ -234,6 +241,48 @@ public class RichConnection {
 			start = sql.toLowerCase().indexOf("sqldefine");
 		}
 		return sql;
+	}
+	
+	private String stripComments(String sql) {
+		String strippedSql = "";
+		boolean commentBlock = false;
+		boolean commentLine = false;
+		String endComment = "";
+		int index = 0;
+		if (sql.startsWith("--")) {
+			sql = "\n" + sql;
+		}
+		while (index < sql.length()) {
+			if (commentBlock || commentLine) {
+				if ((sql.length() > (index + endComment.length())) && (sql.substring(index, index + endComment.length()).equals(endComment))) {
+					if (commentBlock) {
+						index ++;
+					}
+					else {
+						index--;
+					}
+					commentBlock = false;
+					commentLine = false;
+				}
+			}
+			else {
+				if ((sql.length() > (index + 2)) && (sql.substring(index, index + 2).equals("/*"))) {
+					commentBlock = true;
+					endComment = "*/";
+					index++;
+				}
+				else if ((sql.length() > (index + 3)) && (sql.substring(index, index + 3).equals("\n--"))) {
+					commentLine = true;
+					endComment = "\n";
+					index += 2;
+				}
+				else {
+					strippedSql += sql.substring(index, index + 1);
+				}
+			}
+			index++;
+		}
+		return strippedSql;
 	}
 
 	private void outputQueryStats(Statement statement, long ms) throws SQLException {
@@ -304,7 +353,7 @@ public class RichConnection {
 		if (schema == null)
 			return;
 		if (dbType == DbType.ORACLE)
-			execute("ALTER SESSION SET current_schema = " + schema);
+			execute("ALTER SESSION SET current_schema = " + schema.toUpperCase());
 		else if (dbType == DbType.POSTGRESQL)
 			execute("SET search_path TO " + schema);
 		else if (dbType != DbType.MSSQL) // Not possible in MSSQL
@@ -398,25 +447,33 @@ public class RichConnection {
 	}
 
 	public void dropTableIfExists(String schema,String table) {
-		if (dbType == DbType.ORACLE || dbType == DbType.POSTGRESQL) {
+		if (dbType == DbType.ORACLE) {
 			try {
 				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 				if (verbose) {
-					System.out.println("Executing: TRUNCATE TABLE " + table + " CASCADE");
+					System.out.println("Executing: TRUNCATE TABLE " + schema.toUpperCase() + "." + table + " CASCADE");
 				}
-				statement.execute("TRUNCATE TABLE " + table + " CASCADE");
-				if (dbType == DbType.ORACLE) {
-					if (verbose) {
-						System.out.println("Executing: BEGIN EXECUTE IMMEDIATE 'DROP TABLE " + table + "'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
-					}
-					execute("BEGIN EXECUTE IMMEDIATE 'DROP TABLE " + table + "'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
+				statement.execute("BEGIN EXECUTE IMMEDIATE 'TRUNCATE TABLE " + schema.toUpperCase() + "." + table + " CASCADE'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
+				if (verbose) {
+					System.out.println("Executing: BEGIN EXECUTE IMMEDIATE 'DROP TABLE " + schema.toUpperCase() + "." + table + "'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
 				}
-				else { // dbType == DbType.POSTGRESQL
-					if (verbose) {
-						System.out.println("Executing: DROP TABLE IF EXISTS " + table + " CASCADE");
-					}
-					statement.execute("DROP TABLE IF EXISTS " + table + " CASCADE");
+				statement.execute("BEGIN EXECUTE IMMEDIATE 'DROP TABLE " + schema.toUpperCase() + "." + table + "'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
+				statement.close();
+			} catch (Exception e) {
+				if (verbose)
+					System.out.println(e.getMessage());
+			}
+		} else if (dbType == DbType.POSTGRESQL) {
+			try {
+				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+				if (verbose) {
+					System.out.println("Executing: TRUNCATE TABLE " + schema + "." + table + " CASCADE");
 				}
+				statement.execute("TRUNCATE TABLE " + schema + "." + table + " CASCADE");
+				if (verbose) {
+					System.out.println("Executing: DROP TABLE IF EXISTS " + schema + "." + table + " CASCADE");
+				}
+				statement.execute("DROP TABLE IF EXISTS " + schema + "." + table + " CASCADE");
 				statement.close();
 			} catch (Exception e) {
 				if (verbose)
@@ -431,13 +488,11 @@ public class RichConnection {
 
 	public void dropSchemaIfExists(String schema) {
 		String query = null;
-		if (dbType == DbType.ORACLE || dbType == DbType.POSTGRESQL) {
-			if (dbType == DbType.ORACLE) {
-				query = "DROP SCHEMA " + schema + ";";
-			}
-			else {
-				query = "DROP SCHEMA IF EXISTS " + schema + " CASCADE;";
-			}
+		if (dbType == DbType.ORACLE) {
+			query = "ALTER SESSION SET \"_ORACLE_SCRIPT\"=true; DROP USER " + schema.toUpperCase() + " CASCADE;";
+		}
+		else if (dbType == DbType.POSTGRESQL) {
+			query = "DROP SCHEMA IF EXISTS " + schema + " CASCADE;";
 		}
 		else if (dbType == DbType.MSSQL) { // CASCADE is not possible!!
 			query = "DROP SCHEMA IF EXISTS " + schema + ";";
@@ -451,7 +506,12 @@ public class RichConnection {
 	}
 
 	public void createSchema(String schema) {
-		execute("CREATE SCHEMA " + schema + ";");
+		if (dbType == DbType.ORACLE) {
+			execute("ALTER SESSION SET \"_ORACLE_SCRIPT\"=true; CREATE USER " + schema.toUpperCase() + " IDENTIFIED BY \"" + password + "\";");
+		}
+		else {
+			execute("CREATE SCHEMA " + schema + ";");
+		}
 	}
 
 	public void dropDatabaseIfExists(String database) {
