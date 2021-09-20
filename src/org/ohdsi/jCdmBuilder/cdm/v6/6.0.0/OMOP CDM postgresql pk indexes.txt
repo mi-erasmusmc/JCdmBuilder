@@ -2,7 +2,7 @@
 # Copyright 2014 Observational Health Data Sciences and Informatics
 #
 #
-# Licensed under the Apache License, Version 2.0 (the "License")
+# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -190,6 +190,7 @@ CREATE INDEX idx_concept_code ON concept (concept_code ASC);
 CREATE INDEX idx_concept_vocabluary_id ON concept (vocabulary_id ASC);
 CREATE INDEX idx_concept_domain_id ON concept (domain_id ASC);
 CREATE INDEX idx_concept_class_id ON concept (concept_class_id ASC);
+CREATE INDEX idx_concept_id_varchar ON concept (CAST(concept_id AS VARCHAR));
 
 CREATE UNIQUE INDEX idx_vocabulary_vocabulary_id  ON vocabulary  (vocabulary_id ASC);
 CLUSTER vocabulary  USING idx_vocabulary_vocabulary_id ;

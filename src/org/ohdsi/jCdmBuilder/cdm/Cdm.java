@@ -108,36 +108,38 @@ public class Cdm {
 					}
 				}
 				
-				List<String> sqlLines = new ArrayList<>();
-				for (String line : new ReadTextFile(resourceStream)) {
-					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						sqlLines.add(line);
+				if (resourceStream != null) {
+					List<String> sqlLines = new ArrayList<>();
+					for (String line : new ReadTextFile(resourceStream)) {
+						if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+							sqlLines.add(line);
+						}
 					}
-				}
 
-				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-				
-				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " constraints if they exist");
-				String currentConstraint = "";
-				for (String line : sqlLines) {
-					currentConstraint += line;
-					if (currentConstraint.contains("ALTER TABLE ") && currentConstraint.contains(" ADD CONSTRAINT ") && currentConstraint.contains(" FOREIGN KEY ")) {
-						String tableName = StringUtilities.findBetween(currentConstraint, "ALTER TABLE ", " ADD CONSTRAINT ").trim();
-						String constraintName = StringUtilities.findBetween(currentConstraint, " ADD CONSTRAINT ", " FOREIGN KEY ").trim();
-						if (tableName.length() != 0) {
-							connection.dropConstraintIfExists(dbSettings.database, tableName, constraintName);
+					RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+					connection.setContext(cdm.getClass());
+					connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+					
+					StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " constraints if they exist");
+					String currentConstraint = "";
+					for (String line : sqlLines) {
+						currentConstraint += line;
+						if (currentConstraint.contains("ALTER TABLE ") && currentConstraint.contains(" ADD CONSTRAINT ") && currentConstraint.contains(" FOREIGN KEY ")) {
+							String tableName = StringUtilities.findBetween(currentConstraint, "ALTER TABLE ", " ADD CONSTRAINT ").trim();
+							String constraintName = StringUtilities.findBetween(currentConstraint, " ADD CONSTRAINT ", " FOREIGN KEY ").trim();
+							if (tableName.length() != 0) {
+								connection.dropConstraintIfExists(dbSettings.database, tableName, constraintName);
+								currentConstraint = "";
+							}
+						}
+						else {
 							currentConstraint = "";
 						}
 					}
-					else {
-						currentConstraint = "";
-					}
+					
+					connection.close();
+					StringUtilities.outputWithTime("Done");
 				}
-				
-				connection.close();
-				StringUtilities.outputWithTime("Done");
 			}
 		}
 	}
@@ -303,60 +305,65 @@ public class Cdm {
 					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
 				}
 				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " data structure definition not found");
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " data structure definition not found");
 				}
 			}
 
-			String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
-			List<String> sqlLines = new ArrayList<>();
-			for (String line : new ReadTextFile(resourceStream)) {
-				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-					while (line.contains("  ")) {
-						line = line.replaceAll("  ", " ");
+			if (resourceStream != null) {
+				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				List<String> sqlLines = new ArrayList<>();
+				for (String line : new ReadTextFile(resourceStream)) {
+					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("CREATE TABLE ")) {
+							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
+						}
+						if (line.contains("INSERT INTO ")) {
+							line = line.replace("INSERT INTO ", "INSERT INTO " + schemaName + ".");
+						}
+						sqlLines.add(line);
 					}
-					if (line.contains("CREATE TABLE ")) {
-						line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
+				}
+				
+				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+							
+				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " data structure");
+				if (idsToBigInt) {
+					StringUtilities.outputWithTime("- Converting IDs to BIGINT");
+					Pattern pattern = Pattern.compile("[^t]_id\\s+integer");
+					for (int i = 0; i < sqlLines.size(); i++) {
+						String line = sqlLines.get(i);
+						Matcher matcher = pattern.matcher(line.toLowerCase());
+						if (matcher.find())
+							sqlLines.set(i, line.replace("INTEGER", "BIGINT"));
 					}
-					sqlLines.add(line);
 				}
-			}
-			
-			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-			connection.setContext(cdm.getClass());
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-						
-			StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results")+ " data structure");
-			if (idsToBigInt) {
-				StringUtilities.outputWithTime("- Converting IDs to BIGINT");
-				Pattern pattern = Pattern.compile("[^t]_id\\s+integer");
-				for (int i = 0; i < sqlLines.size(); i++) {
-					String line = sqlLines.get(i);
-					Matcher matcher = pattern.matcher(line.toLowerCase());
-					if (matcher.find())
-						sqlLines.set(i, line.replace("INTEGER", "BIGINT"));
-				}
-			}
-			
-			if (currentStructure == Cdm.RESULTS) {
-				StringUtilities.outputWithTime("- Adding CDM schema prefixes");
-				for (int i = 0; i < sqlLines.size(); i++) {
-					String line = sqlLines.get(i);
-					// Check for reference to other table in other schema.
-					if (line.contains(" REFERENCES ")) {
-						String tableName = StringUtilities.findBetween(line, " REFERENCES ", "(");
-						String searchTableName = tableName.trim().toLowerCase();
-						if (!connection.getTableNames(dbSettings.resultsDatabase).contains(searchTableName)) {
-							String schemaPrefix = dbSettings.database + ".";
-							sqlLines.set(i, line.replace(" REFERENCES " + tableName + "(", " REFERENCES " + schemaPrefix + tableName.trim() + " ("));
+				
+				if (currentStructure == Cdm.RESULTS) {
+					StringUtilities.outputWithTime("- Adding CDM schema prefixes");
+					for (int i = 0; i < sqlLines.size(); i++) {
+						String line = sqlLines.get(i);
+						// Check for reference to other table in other schema.
+						if (line.contains(" REFERENCES ")) {
+							String tableName = StringUtilities.findBetween(line, " REFERENCES ", "(");
+							String searchTableName = tableName.trim().toLowerCase();
+							if (!connection.getTableNames(dbSettings.resultsDatabase).contains(searchTableName)) {
+								String schemaPrefix = dbSettings.database + ".";
+								sqlLines.set(i, line.replace(" REFERENCES " + tableName + "(", " REFERENCES " + schemaPrefix + tableName.trim() + " ("));
+							}
 						}
 					}
 				}
+				
+				connection.execute(StringUtilities.join(sqlLines, "\n"));
+				
+				connection.close();
+				StringUtilities.outputWithTime("Done");
 			}
-			
-			connection.execute(StringUtilities.join(sqlLines, "\n"));
-			
-			connection.close();
-			StringUtilities.outputWithTime("Done");
 		}
 	}
 	
@@ -563,36 +570,38 @@ public class Cdm {
 					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
 				}
 				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " data structure definition not found");
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " indices definition not found");
 				}
 			}
 
-			StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " indices");
-			String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
-			List<String> sqlLines = new ArrayList<>();
-			for (String line : new ReadTextFile(resourceStream)) {
-				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-					while (line.contains("  ")) {
-						line = line.replaceAll("  ", " ");
+			if (resourceStream != null) {
+				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " indices");
+				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				List<String> sqlLines = new ArrayList<>();
+				for (String line : new ReadTextFile(resourceStream)) {
+					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("ALTER TABLE ")) {
+							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+						}
+						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
+							line = line.replace(" ON ", " ON " + schemaName + ".");
+						}
+						sqlLines.add(line);
 					}
-					if (line.contains("ALTER TABLE ")) {
-						line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-					}
-					if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
-						line = line.replace(" ON ", " ON " + schemaName + ".");
-					}
-					sqlLines.add(line);
 				}
+				
+				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				
+				connection.execute(StringUtilities.join(sqlLines, "\n"));
+				
+				connection.close();
+				StringUtilities.outputWithTime("Done");
 			}
-			
-			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-			connection.setContext(cdm.getClass());
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-			
-			connection.execute(StringUtilities.join(sqlLines, "\n"));
-			
-			connection.close();
-			StringUtilities.outputWithTime("Done");
 		}
 	}
 	
@@ -712,36 +721,38 @@ public class Cdm {
 					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
 				}
 				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " data structure definition not found");
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " constraints definition not found");
 				}
 			}
 
-			StringUtilities.outputWithTime("Creating constraints");
-			String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
-			List<String> sqlLines = new ArrayList<>();
-			for (String line : new ReadTextFile(resourceStream)) {
-				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-					while (line.contains("  ")) {
-						line = line.replaceAll("  ", " ");
+			if (resourceStream != null) {
+				StringUtilities.outputWithTime("Creating constraints");
+				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				List<String> sqlLines = new ArrayList<>();
+				for (String line : new ReadTextFile(resourceStream)) {
+					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("ALTER TABLE ")) {
+							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+						}
+						if (line.contains("REFERENCES ")) {
+							line = line.replace("REFERENCES ", "REFERENCES " + schemaName + ".");
+						}
+						sqlLines.add(line);
 					}
-					if (line.contains("ALTER TABLE ")) {
-						line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-					}
-					if (line.contains("REFERENCES ")) {
-						line = line.replace("REFERENCES ", "REFERENCES " + schemaName + ".");
-					}
-					sqlLines.add(line);
 				}
+				
+				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				
+				connection.execute(StringUtilities.join(sqlLines, "\n"));
+				
+				connection.close();
+				StringUtilities.outputWithTime("Done");
 			}
-			
-			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-			connection.setContext(cdm.getClass());
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-			
-			connection.execute(StringUtilities.join(sqlLines, "\n"));
-			
-			connection.close();
-			StringUtilities.outputWithTime("Done");
 		}
 	}
 	

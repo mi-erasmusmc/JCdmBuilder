@@ -18,7 +18,7 @@
 /***********************
 Unofficial version table
 ***********************/
-CREATE TABLE _version (
+CREATE TABLE version (
 	version_id INT,
 	version_date DATE
 ) WITH(DATA_COMPRESSION = PAGE);

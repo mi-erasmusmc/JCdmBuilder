@@ -37,7 +37,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import org.ohdsi.utilities.SimpleCounter;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadCSVFileWithHeader;
@@ -151,18 +150,22 @@ public class RichConnection {
 			if (sql.length() == 0)
 				return;
 			sql = stripComments(sql);
+			
 			Statement statement = null;
 
 			statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-			for (String subQuery : sql.split(";")) {
-				if (verbose) {
-					String abbrSQL = subQuery.replace('\n', ' ').replace('\t', ' ').trim();
-					if (abbrSQL.length() > 100)
-						abbrSQL = abbrSQL.substring(0, 100).trim() + "...";
-					System.out.println("Adding query to batch: " + abbrSQL);
-				}
 
-				statement.addBatch(subQuery);
+			for (String subQuery : sql.split(";")) {
+				subQuery = subQuery.trim();
+				if (!subQuery.equals("")) {
+					if (verbose) {
+						String abbrSQL = subQuery.replace('\n', ' ').replace('\t', ' ').trim();
+						//if (abbrSQL.length() > 100)
+						//	abbrSQL = abbrSQL.substring(0, 100).trim() + "...";
+						System.out.println("Adding query to batch: " + abbrSQL);
+					}
+					statement.addBatch(subQuery);
+				}
 			}
 			long start = System.currentTimeMillis();
 			if (verbose)
@@ -249,9 +252,6 @@ public class RichConnection {
 		boolean commentLine = false;
 		String endComment = "";
 		int index = 0;
-		if (sql.startsWith("--")) {
-			sql = "\n" + sql;
-		}
 		while (index < sql.length()) {
 			if (commentBlock || commentLine) {
 				if ((sql.length() > (index + endComment.length())) && (sql.substring(index, index + endComment.length()).equals(endComment))) {
@@ -271,16 +271,19 @@ public class RichConnection {
 					endComment = "*/";
 					index++;
 				}
-				else if ((sql.length() > (index + 3)) && (sql.substring(index, index + 3).equals("\n--"))) {
+				else if ((sql.length() > (index + 2)) && (sql.substring(index, index + 2).equals("--"))) {
 					commentLine = true;
 					endComment = "\n";
-					index += 2;
+					index++;
 				}
 				else {
 					strippedSql += sql.substring(index, index + 1);
 				}
 			}
 			index++;
+		}
+		while (strippedSql.startsWith("\n")) {
+			strippedSql = strippedSql.substring(1);
 		}
 		return strippedSql;
 	}
@@ -411,14 +414,25 @@ public class RichConnection {
 		if (dbType == DbType.MSSQL) {
 			for (Row row : query("SELECT name FROM syscolumns WHERE id=OBJECT_ID('" + schema + "." + table + "')"))
 				names.add(row.get("name"));
-		} else if (dbType == DbType.MYSQL)
-			for (Row row : query("SHOW COLUMNS FROM " + table))
+		}
+		else if (dbType == DbType.MYSQL) {
+			for (Row row : query("SHOW COLUMNS FROM " + table)) {
 				names.add(row.get("COLUMN_NAME"));
-		else if (dbType == DbType.POSTGRESQL)
-			for (Row row : query("SELECT column_name FROM information_schema.columns WHERE table_name='" + table.toLowerCase() + "'"))
+			}
+		}
+		else if (dbType == DbType.POSTGRESQL) {
+			for (Row row : query("SELECT column_name FROM information_schema.columns WHERE table_name='" + table.toLowerCase() + "'")) {
 				names.add(row.get("column_name"));
-		else
+			}
+		}
+		else if (dbType == DbType.ORACLE) {
+			for (Row row : query("SELECT COLUMN_NAME FROM ALL_TAB_COLS WHERE TABLE_NAME = '" + table.toUpperCase() + "' AND owner = '" + schema.toUpperCase() + "' AND NOT REGEXP_LIKE(COLUMN_NAME, '^SYS_')")) {
+				names.add(row.get("COLUMN_NAME"));
+			}
+		}
+		else {
 			throw new RuntimeException("DB type not supported");
+		}
 
 		return names;
 	}
@@ -508,6 +522,7 @@ public class RichConnection {
 	public void createSchema(String schema) {
 		if (dbType == DbType.ORACLE) {
 			execute("ALTER SESSION SET \"_ORACLE_SCRIPT\"=true; CREATE USER " + schema.toUpperCase() + " IDENTIFIED BY \"" + password + "\";");
+			execute("ALTER USER " + schema.toUpperCase() + " QUOTA UNLIMITED ON USERS");
 		}
 		else {
 			execute("CREATE SCHEMA " + schema + ";");

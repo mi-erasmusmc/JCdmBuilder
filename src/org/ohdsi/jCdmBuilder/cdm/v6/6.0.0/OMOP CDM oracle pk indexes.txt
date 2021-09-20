@@ -2,7 +2,7 @@
 # Copyright 2014 Observational Health Data Sciences and Informatics
 #
 #
-# Licensed under the Apache License, Version 2.0 (the "License")
+# Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
@@ -101,6 +101,9 @@ ALTER TABLE observation_period ADD CONSTRAINT xpk_observation_period PRIMARY KEY
 
 ALTER TABLE specimen ADD CONSTRAINT xpk_specimen PRIMARY KEY ( specimen_id ) ;
 
+-- Table death does not exist in ddl
+-- ALTER TABLE death ADD CONSTRAINT xpk_death PRIMARY KEY ( person_id ) ;
+
 ALTER TABLE visit_occurrence ADD CONSTRAINT xpk_visit_occurrence PRIMARY KEY ( visit_occurrence_id ) ;
 
 ALTER TABLE visit_detail ADD CONSTRAINT xpk_visit_detail PRIMARY KEY ( visit_detail_id ) ;
@@ -184,58 +187,64 @@ Standardized vocabulary
 
 ************************/
 
-BEGIN
-  EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_concept_concept_id  ON concept  (concept_id ASC)';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE != -1408 THEN
-      RAISE;
-    END IF;
-END;
+-- Is already a primary key index
+-- BEGIN
+--   EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_concept_concept_id  ON concept  (concept_id ASC)';
+-- EXCEPTION
+--   WHEN OTHERS THEN
+--     IF SQLCODE != -1408 THEN
+--       RAISE;
+--     END IF;
+-- END;
 CREATE INDEX idx_concept_code ON concept (concept_code ASC);
 CREATE INDEX idx_concept_vocabluary_id ON concept (vocabulary_id ASC);
 CREATE INDEX idx_concept_domain_id ON concept (domain_id ASC);
 CREATE INDEX idx_concept_class_id ON concept (concept_class_id ASC);
+CREATE INDEX idx_concept_id_varchar ON concept (TO_CHAR(concept_id ));
 
-BEGIN
-  EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_vocabulary_vocabulary_id  ON vocabulary  (vocabulary_id ASC)';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE != -1408 THEN
-      RAISE;
-    END IF;
-END;
+-- Is already a primary key index
+-- BEGIN
+--   EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_vocabulary_vocabulary_id  ON vocabulary  (vocabulary_id ASC)';
+-- EXCEPTION
+--   WHEN OTHERS THEN
+--     IF SQLCODE != -1408 THEN
+--       RAISE;
+--     END IF;
+-- END;
 
-BEGIN
-  EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_domain_domain_id  ON domain  (domain_id ASC)';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE != -1408 THEN
-      RAISE;
-    END IF;
-END;
+-- Is already a primary key index
+-- BEGIN
+--   EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_domain_domain_id  ON domain  (domain_id ASC)';
+-- EXCEPTION
+--   WHEN OTHERS THEN
+--     IF SQLCODE != -1408 THEN
+--       RAISE;
+--     END IF;
+-- END;
 
-BEGIN
-  EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_concept_class_class_id  ON concept_class  (concept_class_id ASC)';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE != -1408 THEN
-      RAISE;
-    END IF;
-END;
+-- Is already a primary key index
+-- BEGIN
+--   EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_concept_class_class_id  ON concept_class  (concept_class_id ASC)';
+-- EXCEPTION
+--   WHEN OTHERS THEN
+--     IF SQLCODE != -1408 THEN
+--       RAISE;
+--     END IF;
+-- END;
 
 CREATE INDEX idx_concept_relationship_id_1 ON concept_relationship (concept_id_1 ASC);
 CREATE INDEX idx_concept_relationship_id_2 ON concept_relationship (concept_id_2 ASC);
 CREATE INDEX idx_concept_relationship_id_3 ON concept_relationship (relationship_id ASC);
 
-BEGIN
-  EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_relationship_rel_id  ON relationship  (relationship_id ASC)';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE != -1408 THEN
-      RAISE;
-    END IF;
-END;
+-- Is already a primary key index
+-- BEGIN
+--   EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_relationship_rel_id  ON relationship  (relationship_id ASC)';
+-- EXCEPTION
+--   WHEN OTHERS THEN
+--     IF SQLCODE != -1408 THEN
+--       RAISE;
+--     END IF;
+-- END;
 
 CREATE INDEX idx_concept_synonym_id ON concept_synonym (concept_id ASC);
 
@@ -267,19 +276,23 @@ Standardized clinical data
 
 ************************/
 
-BEGIN
-  EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_person_id  ON person  (person_id ASC)';
-EXCEPTION
-  WHEN OTHERS THEN
-    IF SQLCODE != -1408 THEN
-      RAISE;
-    END IF;
-END;
+-- Is already a primary key index
+-- BEGIN
+--   EXECUTE IMMEDIATE 'CREATE UNIQUE INDEX idx_person_id  ON person  (person_id ASC)';
+-- EXCEPTION
+--   WHEN OTHERS THEN
+--     IF SQLCODE != -1408 THEN
+--       RAISE;
+--     END IF;
+-- END;
 
 CREATE INDEX idx_observation_period_id ON observation_period (person_id ASC);
 
 CREATE INDEX idx_specimen_person_id ON specimen (person_id ASC);
 CREATE INDEX idx_specimen_concept_id ON specimen (specimen_concept_id ASC);
+
+-- Table death does not exist in ddl
+-- CREATE INDEX idx_death_person_id ON death (person_id ASC);
 
 CREATE INDEX idx_visit_person_id ON visit_occurrence (person_id ASC);
 CREATE INDEX idx_visit_concept_id ON visit_occurrence (visit_concept_id ASC);
@@ -318,7 +331,8 @@ CREATE INDEX idx_observation_person_id ON observation (person_id ASC);
 CREATE INDEX idx_observation_concept_id ON observation (observation_concept_id ASC);
 CREATE INDEX idx_observation_visit_id ON observation (visit_occurrence_id ASC);
 
-CREATE INDEX idx_survey_person_id ON survey (person_id ASC);
+-- Modified survey to survey_conduct. Table survey does not exist in ddl.
+CREATE INDEX idx_survey_person_id ON survey_conduct (person_id ASC);
 
 CREATE INDEX idx_fact_relationship_id_1 ON fact_relationship (domain_concept_id_1 ASC);
 CREATE INDEX idx_fact_relationship_id_2 ON fact_relationship (domain_concept_id_2 ASC);

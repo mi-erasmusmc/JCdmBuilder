@@ -21,17 +21,17 @@ public class CdmV6 implements CdmVx {
 
 	@Override
 	public String constraintsMSSQL() {
-		return null;
+		return "OMOP CDM sql server constraints.txt";
 	}
 
 	@Override
 	public String constraintsPostgreSQL() {
-		return null;
+		return "OMOP CDM postgresql constraints.txt";
 	}
 
 	@Override
 	public String constraintsOracle() {
-		return null;
+		return "OMOP CDM oracle constraints.txt";
 	}
 
 	@Override
