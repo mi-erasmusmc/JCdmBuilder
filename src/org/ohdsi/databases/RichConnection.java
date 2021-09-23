@@ -21,6 +21,7 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.sql.BatchUpdateException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
@@ -412,7 +413,7 @@ public class RichConnection {
 	public List<String> getFieldNames(String schema, String table) {
 		List<String> names = new ArrayList<String>();
 		if (dbType == DbType.MSSQL) {
-			for (Row row : query("SELECT name FROM syscolumns WHERE id=OBJECT_ID('" + schema + "." + table + "')"))
+			for (Row row : query("SELECT name FROM sys.syscolumns WHERE id=OBJECT_ID('" + schema + "." + table + "')"))
 				names.add(row.get("name"));
 		}
 		else if (dbType == DbType.MYSQL) {
@@ -435,6 +436,43 @@ public class RichConnection {
 		}
 
 		return names;
+	}
+
+	public Map<String, String> getFieldTypes(String schema, String table) {
+		Map<String, String> types = new HashMap<String, String>();
+		if (dbType == DbType.MSSQL) {
+			for (Row row : query("SELECT c.name as column_name, t.name as data_type FROM sys.syscolumns c LEFT OUTER JOIN sys.types t ON t.system_type_id = c.xtype WHERE id=OBJECT_ID('" + schema + "." + table + "')")) {
+				String columnName = row.get("column_name").toUpperCase();
+				String columnType = row.get("data_type").toUpperCase();
+				types.put(columnName, columnType);
+			}
+		}
+		//else if (dbType == DbType.MYSQL) {
+		//	for (Row row : query("SHOW COLUMNS FROM " + table)) {
+		//		String columnName = row.get("COLUMN_NAME");
+		//		String columnType = row.get("data_type").toUpperCase();
+		//		types.put(columnName, columnType);
+		//	}
+		//}
+		else if (dbType == DbType.POSTGRESQL) {
+			for (Row row : query("SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = '" + schema.toLowerCase() + "' AND table_name='" + table.toLowerCase() + "'")) {
+				String columnName = row.get("column_name").toUpperCase();
+				String columnType = row.get("data_type").toUpperCase();
+				types.put(columnName, columnType);
+			}
+		}
+		else if (dbType == DbType.ORACLE) {
+			for (Row row : query("SELECT COLUMN_NAME, DATA_TYPE FROM ALL_TAB_COLS WHERE TABLE_NAME = '" + table.toUpperCase() + "' AND owner = '" + schema.toUpperCase() + "' AND NOT REGEXP_LIKE(COLUMN_NAME, '^SYS_')")) {
+				String columnName = row.get("COLUMN_NAME").toUpperCase();
+				String columnType = row.get("DATA_TYPE").toUpperCase();
+				types.put(columnName, columnType);
+			}
+		}
+		else {
+			throw new RuntimeException("DB type not supported");
+		}
+
+		return types;
 	}
 	
 	public void dropConstraintIfExists(String schema, String table, String constraint) {
@@ -464,10 +502,10 @@ public class RichConnection {
 		if (dbType == DbType.ORACLE) {
 			try {
 				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-				if (verbose) {
-					System.out.println("Executing: TRUNCATE TABLE " + schema.toUpperCase() + "." + table + " CASCADE");
-				}
-				statement.execute("BEGIN EXECUTE IMMEDIATE 'TRUNCATE TABLE " + schema.toUpperCase() + "." + table + " CASCADE'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
+				//if (verbose) {
+				//	System.out.println("Executing: TRUNCATE TABLE " + schema.toUpperCase() + "." + table + " CASCADE");
+				//}
+				//statement.execute("BEGIN EXECUTE IMMEDIATE 'TRUNCATE TABLE " + schema.toUpperCase() + "." + table + " CASCADE'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
 				if (verbose) {
 					System.out.println("Executing: BEGIN EXECUTE IMMEDIATE 'DROP TABLE " + schema.toUpperCase() + "." + table + "'; EXCEPTION WHEN OTHERS THEN IF SQLCODE != -942 THEN RAISE; END IF; END;");
 				}
@@ -480,10 +518,10 @@ public class RichConnection {
 		} else if (dbType == DbType.POSTGRESQL) {
 			try {
 				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
-				if (verbose) {
-					System.out.println("Executing: TRUNCATE TABLE " + schema + "." + table + " CASCADE");
-				}
-				statement.execute("TRUNCATE TABLE " + schema + "." + table + " CASCADE");
+				//if (verbose) {
+				//	System.out.println("Executing: TRUNCATE TABLE " + schema + "." + table + " CASCADE");
+				//}
+				//statement.execute("TRUNCATE TABLE " + schema + "." + table + " CASCADE");
 				if (verbose) {
 					System.out.println("Executing: DROP TABLE IF EXISTS " + schema + "." + table + " CASCADE");
 				}
@@ -631,8 +669,8 @@ public class RichConnection {
 	 * @param create
 	 *            If true, the data format is determined based on the first batch of rows and used to create the table structure.
 	 */
-	public void readFromFile(String filename, String table, boolean create, String nullValueString) {
-		insertIntoTable(new ReadCSVFileWithHeader(filename).iterator(), table, create, nullValueString);
+	public void readFromFile(String filename, String table, Map<String, String> columnTypes, boolean create, String nullValueString) {
+		insertIntoTable(new ReadCSVFileWithHeader(filename).iterator(), table, columnTypes, create, nullValueString);
 	}
 
 	/**
@@ -643,7 +681,7 @@ public class RichConnection {
 	 * @param create
 	 *            If true, the data format is determined based on the first batch of rows and used to create the table structure.
 	 */
-	public void insertIntoTable(Iterator<Row> iterator, String table, boolean create, String nullValueString) {
+	public void insertIntoTable(Iterator<Row> iterator, String table, Map<String, String> columnTypes, boolean create, String nullValueString) {
 		List<Row> batch = new ArrayList<Row>(INSERT_BATCH_SIZE);
 
 		boolean first = true;
@@ -652,7 +690,7 @@ public class RichConnection {
 			if (batch.size() == INSERT_BATCH_SIZE) {
 				if (first && create)
 					createTable(table, batch);
-				insert(table, batch, nullValueString);
+				insert(table, columnTypes, batch, nullValueString);
 				batch.clear();
 				first = false;
 			}
@@ -662,11 +700,11 @@ public class RichConnection {
 		if (batch.size() != 0) {
 			if (first && create)
 				createTable(table, batch);
-			insert(table, batch, nullValueString);
+			insert(table, columnTypes, batch, nullValueString);
 		}
 	}
 
-	private void insert(String tableName, List<Row> rows, String nullValueString) {
+	private void insert(String tableName, Map<String, String> columnTypes, List<Row> rows, String nullValueString) {
 		List<String> columns = null;
 		columns = rows.get(0).getFieldNames();
 		for (int i = 0; i < columns.size(); i++)
@@ -690,15 +728,34 @@ public class RichConnection {
 						if (tableName.equals("note") && (value != null) && (value.contains("\\"))) {
 							value = value.replace("\\\\", SUBSTITUTE).replace("\\n", "\n").replace("\\t", "\t").replace(SUBSTITUTE, "\\");
 						}
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATE")))
+							statement.setDate(i + 1, getSQLDate(value));
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("TIMESTAMP")))
+							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
+						else
 						statement.setObject(i + 1, value, Types.OTHER);
 					}
 					else if (dbType == DbType.ORACLE) {
-						if (isDate(value)) {
-							statement.setDate(i + 1, java.sql.Date.valueOf(value));
-
-						} else
+						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATE")))
+							statement.setDate(i + 1, getSQLDate(value));
+						else
 							statement.setString(i + 1, value);
-					} else
+					}
+					else if (dbType == DbType.MSSQL) {
+						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATE")))
+							statement.setDate(i + 1, getSQLDate(value));
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATETIME")))
+							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATETIME2")))
+							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATETIMEOFFSET")))
+							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("SMALLDATETIME")))
+							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
+						else
+							statement.setString(i + 1, value);
+					}
+					else
 						statement.setString(i + 1, value);
 				}
 				statement.addBatch();
@@ -716,7 +773,170 @@ public class RichConnection {
 			throw new RuntimeException(e);
 		}
 	}
+	
+	private java.sql.Timestamp getSQLTimeStamp(String timeStampValue) {
+		String[] timeStampValueSplit = timeStampValue.split(" ");
+		String dateString = "";
+		String timeString = "";
+		
+		if (timeStampValueSplit.length > 0) {
+			dateString = getSQLDateString(timeStampValueSplit[0].trim());
+		}
+		
+		if (timeStampValueSplit.length > 1) {
+			timeString = getSQLTimeString(timeStampValueSplit[1].trim());
+		}
+		
+		if (dateString == null) {
+			return null;
+		}
+		else if (timeString == null) {
+			timeString = "00:00:00";
+		}
+		return java.sql.Timestamp.valueOf(dateString + " " + timeString);
+	}
+	
+	private java.sql.Date getSQLDate(String dateValue) {
+		// Return an SQL date or null
+		String dateString = getSQLDateString(dateValue);
+		java.sql.Date date = dateString == null ? null : java.sql.Date.valueOf(dateString);
+		return date;
+	}
+	
+	private String getSQLDateString(String dateValue) {
+		String dateString = null;
+		if (dateValue != null) {
+			dateString = "";
+			String dateSeparator = null;
+			if (dateValue.contains("-") && (dateValue.length() == 10)) { // dd-mm-yyyy or yyyy-mm-dd
+				dateSeparator = "-";
+			}
+			else if (dateValue.contains("/") && (dateValue.length() == 10)) { // dd/mm/yyyy or yyyy/mm/dd
+				dateSeparator = "/";
+			}
+			if (dateSeparator != null) {
+				String[] dateValueSplit = dateValue.split(dateSeparator);
+				if (dateValueSplit.length >= 3) {
+					try {
+						int datePart0 = Integer.parseInt(dateValueSplit[0]);
+						int datePart1 = Integer.parseInt(dateValueSplit[1]);
+						int datePart2 = Integer.parseInt(dateValueSplit[2]);
+						
+						if ((datePart0 > 31) && (datePart1 > 0) && (datePart1 < 13) && (datePart2 > 0) && (datePart2 < 31)) {
+							dateString = dateValueSplit[0] + "-" + dateValueSplit[1] + "-" + dateValueSplit[2];
+						}
+						else if ((datePart2 > 31) && (datePart1 > 0) && (datePart1 < 13) && (datePart0 > 0) && (datePart0 < 31)) {
+							dateString = dateValueSplit[2] + "-" + dateValueSplit[1] + "-" + dateValueSplit[0];
+						}
+						else {
+							dateString = null;
+						}
+					} catch (NumberFormatException e) {
+						dateString = null;
+					}
+				}
+			}
+			else if (dateValue.length() == 8) {
+				try {
+					String year  = dateValue.substring(0, 4);
+					String month = dateValue.substring(4, 6);
+					String day   = dateValue.substring(6, 8);
+					
+					int yearPart  = Integer.parseInt(year);
+					int monthPart = Integer.parseInt(month);
+					int dayPart   = Integer.parseInt(day);
+					
+					if ((yearPart  > 31) && (monthPart > 0) && (monthPart < 13) && (dayPart > 0) && (dayPart < 33)) {
+						dateString = year + "-" + month + "-" + day;
+					}
+					else {
+						year  = dateValue.substring(4, 8);
+						month = dateValue.substring(2, 4);
+						day   = dateValue.substring(0, 2);
+						
+						yearPart  = Integer.parseInt(year);
+						monthPart = Integer.parseInt(month);
+						dayPart   = Integer.parseInt(day);
 
+						if ((yearPart  > 31) && (monthPart > 0) && (monthPart < 13) && (dayPart > 0) && (dayPart < 31)) {
+							dateString = year + "-" + month + "-" + day;
+						}
+						else {
+							dateString = null;
+						}
+					}
+				} catch (NumberFormatException e) {
+					dateString = null;
+				} catch (IndexOutOfBoundsException e) {
+					dateString = null;
+				}
+			}
+		}
+		else {
+			dateString = null;
+		}
+		return dateString;
+	}
+	
+	private java.sql.Time getSQLTime(String timeValue) {
+		// Return an SQL date or null
+		String timeString = getSQLTimeString(timeValue);
+		java.sql.Time time = timeString == null ? null : java.sql.Time.valueOf(timeString);
+		return time;
+	}
+	
+	private String getSQLTimeString(String timeValue) {
+		// Return an SQL date or null
+		String timeString = null;
+		if (timeValue != null) {
+			if (timeValue.contains(":")) {
+				String[] timeValueSplit = timeValue.split(":");
+				String hourString    = "00";
+				String minutesString = "00";
+				String secondsString = "00";
+				
+				if (timeValueSplit.length > 0) {
+					hourString = timeValueSplit[0].trim();
+					if (hourString.equals("")) {
+						hourString = "00";
+					}
+				}
+				if (timeValueSplit.length > 1) {
+					minutesString = timeValueSplit[1].trim();
+					if (minutesString.equals("")) {
+						minutesString = "00";
+					}
+				}
+				if (timeValueSplit.length > 2) {
+					secondsString = timeValueSplit[2].trim();
+					if (secondsString.equals("")) {
+						secondsString = "00";
+					}
+				}
+				
+				try {
+					int hour    = Integer.parseInt(hourString);
+					int minutes = Integer.parseInt(minutesString);
+					int seconds = Integer.parseInt(secondsString);
+					
+					if ((hour >= 0) && (hour <= 24) && (minutes >= 0) && (minutes <= 59) && (seconds >= 0) && (seconds <= 59)) {
+						timeString = hourString + ":" + minutesString + ":" + secondsString;
+					}
+					else {
+						timeString = null;
+					}
+				} catch (NumberFormatException e) {
+					timeString = null;
+				}
+			}
+		}
+		else {
+			timeString = null;
+		}
+		return timeString;
+	}
+	
+/*
 	private static boolean isDate(String string) {
 		if (string != null && string.length() == 10 && string.charAt(4) == '-' && string.charAt(7) == '-')
 			try {
@@ -735,7 +955,8 @@ public class RichConnection {
 			}
 		return false;
 	}
-
+*/
+	
 	private Set<String> createTable(String tableName, List<Row> rows) {
 		Set<String> numericFields = new HashSet<String>();
 		Row firstRow = rows.get(0);
@@ -845,7 +1066,8 @@ public class RichConnection {
 		sql.append(");");
 		targetConnection.execute(sql.toString());
 		targetConnection.use(targetDatabase);
-		targetConnection.insertIntoTable(query("SELECT * FROM " + sourceDatabase + ".dbo." + sourceTable).iterator(), targetTable, false, null);
+		//TODO column types
+		targetConnection.insertIntoTable(query("SELECT * FROM " + sourceDatabase + ".dbo." + sourceTable).iterator(), targetTable, null, false, null);
 	}
 
 	private class DBRowIterator implements Iterator<Row> {

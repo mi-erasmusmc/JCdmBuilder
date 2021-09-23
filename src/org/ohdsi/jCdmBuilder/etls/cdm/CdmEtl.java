@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JFrame;
@@ -52,7 +53,8 @@ public class CdmEtl {
 						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
 						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath(), delimiter, quote).iterator();
 						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
-						connection.insertIntoTable(filteredIterator, (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table, false, nullValueString);
+						Map<String, String> columnTypes = connection.getFieldTypes(dbSettings.database, table);
+						connection.insertIntoTable(filteredIterator, (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table, columnTypes, false, nullValueString);
 					}
 				}
 			} catch (Exception e) {

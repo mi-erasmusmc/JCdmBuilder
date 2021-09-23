@@ -19,6 +19,7 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.ohdsi.databases.RichConnection;
@@ -48,7 +49,8 @@ public class InsertVocabularyInServer {
 					connection.execute("TRUNCATE TABLE " + dbSettings.database + "." + table);
 					Iterator<Row> iterator = new ReadAthenaFile(file.getAbsolutePath()).iterator();
 					Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
-					connection.insertIntoTable(filteredIterator, dbSettings.database + "." + table, false, "");
+					Map<String, String> columnTypes = connection.getFieldTypes(dbSettings.database, table);
+					connection.insertIntoTable(filteredIterator, dbSettings.database + "." + table, columnTypes, false, "");
 				}
 			}
 		}
