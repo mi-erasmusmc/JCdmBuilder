@@ -34,12 +34,13 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -73,76 +74,93 @@ import org.ohdsi.utilities.StringUtilities;
 public class JCdmBuilderMain {
 	public static final String VERSION = "0.3.9";
 	
-	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif"; 
+	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 	
-	private static String		SOURCEFOLDER					        = "source folder";
-	private static String		SOURCEVIASERVERFOLDER			        = "source via server folder";
-	private static String		SOURCEDATABASE					        = "source database";
-	private static String		VOCABFOLDER						        = "vocab folder";
-	private static String		VOCABSCHEMA						        = "vocab schema";
+	private static String					DATABASE_TYPE_POSTGRESQL				= "PostgreSQL";
+	private static String					DATABASE_TYPE_ORACLE					= "Oracle";
+	private static String					DATABASE_TYPE_SQLSERVER					= "SQL Server";
+	private static String					DATABASE_TYPE_MYSQL						= "MySQL";
 	
-	public static List<String> errors = null;
+	private static String[]					DATABASE_TYPES							= new String[] { DATABASE_TYPE_POSTGRESQL, DATABASE_TYPE_ORACLE, DATABASE_TYPE_SQLSERVER };
+	private static HashSet<String>			BULK_LOAD_DATABASE_TYPES				= new HashSet<String>() {
+																						private static final long serialVersionUID = 946936162824903605L;
+																						{
+																							add(DATABASE_TYPE_POSTGRESQL);
+																							add(DATABASE_TYPE_SQLSERVER);
+																						}};
 	
-	private JFrame				frame;
-	private JTabbedPane			tabbedPane;
-	private JTextField			folderField;
-	private JTextField			vocabFileField;
-	private JTextField			vocabSchemaField;
-	private JRadioButton		vocabFileTypeButton;
-	private JRadioButton		vocabSchemaTypeButton;
-	private JPanel				vocabCards;
-	private JCheckBox			executeStructureCheckBox;
-	private JCheckBox			executeVocabCheckBox;
-	private JCheckBox			executeETLCheckBox;
-	private JCheckBox           continueOnErrorCheckBox;
-	private JCheckBox			executeIndicesCheckBox;
-	private JCheckBox			executeConstraintsCheckBox;
-	private JCheckBox			executeConditionErasCheckBox;
-	private JCheckBox			executeDrugErasCheckBox;
-	private JCheckBox			executeResultsStructureCheckBox;
-	private JCheckBox			executeResultsDataCheckBox;
-	private JCheckBox			executeResultsIndicesCheckBox;
-	private JComboBox<String>	etlType;
-	//private JComboBox<String>	sourceType;
-	private JComboBox<String>	targetType;
-	private JTextField			versionIdField;
-	private JTextField			targetUserField;
-	private JTextField			targetPasswordField;
-	private JTextField			targetServerField;
-	private JTextField			targetDatabaseField;
-	private JTextField			targetResultsDatabaseField;
-	private JComboBox<String>	targetCdmVersion;
-	private JTextField			sourceDelimiterField;
-	private JTextField			sourceQuoteField;
-	private JTextField			sourceNullValueField;
-	private JTextField			sourceFolderField;
-	//private JTextField			sourceServerField;
-	//private JTextField			sourceUserField;
-	//private JTextField			sourcePasswordField;
-	//private JTextField			sourceDatabaseField;
-	private JTextField			sourceServerDelimiterField;
-	private JTextField			sourceServerQuoteField;
-	private JTextField			sourceServerNullValueField;
-	private JTextField			sourceServerFolderField;
-	private JTextField			sourceServerTempFolderField;
-	private JTextField			sourceServerTempLocalFolderField;
-	private JPanel				sourceCards;
-	private boolean				executeCdmStructureWhenReady		    = false;
-	private boolean				executeVocabWhenReady				    = false;
-	private boolean				executeEtlWhenReady					    = false;
-	private boolean				executeIndicesWhenReady				    = false;
-	private boolean				executeConstraintsWhenReady			    = false;
-	private boolean				executeConditionErasWhenReady		    = false;
-	private boolean				executeDrugErasWhenReady			    = false;
-	private boolean				executeResultsStructureWhenReady	    = false;
-	private boolean				executeResultsDataWhenReady		        = false;
-	private boolean				executeResultsIndicesWhenReady		    = false;
-	private boolean				idsToBigInt							    = false;
-	private boolean             continueOnError                         = false;
-	private PropertiesManager	propertiesManager					    = new PropertiesManager();
+	private static String					SOURCEFOLDER					        = "source folder";
+	private static String					SOURCEVIASERVERFOLDER			        = "source via server folder";
+	private static String					SOURCEDATABASE					        = "source database";
+	private static String					VOCABFOLDER						        = "vocab folder";
+	private static String					VOCABSCHEMA						        = "vocab schema";
 	
-	private List<JComponent>	componentsToDisableWhenRunning	        = new ArrayList<JComponent>();
-	private boolean             autoStart                               = false;
+	private static String					ETLTYPE_LOAD							= "1. Load CSV files in CDM format to server";
+	private static String					ETLTYPE_BULK_LOAD						= "2. Bulk Load CSV files from server in CDM format to server";
+	
+	public static List<String> 				errors = null;
+	
+	private JFrame							frame;
+	private JTabbedPane						tabbedPane;
+	private JTextField						folderField;
+	private JTextField						vocabFileField;
+	private JTextField						vocabSchemaField;
+	private JRadioButton					vocabFileTypeButton;
+	private JRadioButton					vocabSchemaTypeButton;
+	private JPanel							vocabCards;
+	private JCheckBox						executeStructureCheckBox;
+	private JCheckBox						executeVocabCheckBox;
+	private JCheckBox						executeETLCheckBox;
+	private JCheckBox           			continueOnErrorCheckBox;
+	private JCheckBox						executeIndicesCheckBox;
+	private JCheckBox						executeConstraintsCheckBox;
+	private JCheckBox						executeConditionErasCheckBox;
+	private JCheckBox						executeDrugErasCheckBox;
+	private JCheckBox						executeResultsStructureCheckBox;
+	private JCheckBox						executeResultsDataCheckBox;
+	private JCheckBox						executeResultsIndicesCheckBox;
+	private JComboBox<String>				etlType;
+	private DefaultComboBoxModel<String>	etlTypeModel;
+	//private JComboBox<String>				sourceType;
+	private JComboBox<String>				targetType;
+	private JTextField						versionIdField;
+	private JTextField						targetUserField;
+	private JTextField						targetPasswordField;
+	private JTextField						targetServerField;
+	private JTextField						targetDatabaseField;
+	private JTextField						targetResultsDatabaseField;
+	private JComboBox<String>				targetCdmVersion;
+	private JTextField						sourceDelimiterField;
+	private JTextField						sourceQuoteField;
+	private JTextField						sourceNullValueField;
+	private JTextField						sourceFolderField;
+	//private JTextField					sourceServerField;
+	//private JTextField					sourceUserField;
+	//private JTextField					sourcePasswordField;
+	//private JTextField					sourceDatabaseField;
+	private JTextField						sourceServerDelimiterField;
+	private JTextField						sourceServerQuoteField;
+	private JTextField						sourceServerNullValueField;
+	private JTextField						sourceServerFolderField;
+	private JTextField						sourceServerTempFolderField;
+	private JTextField						sourceServerTempLocalFolderField;
+	private JPanel							sourceCards;
+	private boolean							executeCdmStructureWhenReady		    = false;
+	private boolean							executeVocabWhenReady				    = false;
+	private boolean							executeEtlWhenReady					    = false;
+	private boolean							executeIndicesWhenReady				    = false;
+	private boolean							executeConstraintsWhenReady			    = false;
+	private boolean							executeConditionErasWhenReady		    = false;
+	private boolean							executeDrugErasWhenReady			    = false;
+	private boolean							executeResultsStructureWhenReady	    = false;
+	private boolean							executeResultsDataWhenReady		        = false;
+	private boolean							executeResultsIndicesWhenReady		    = false;
+	private boolean							idsToBigInt							    = false;
+	private boolean             			continueOnError                         = false;
+	private PropertiesManager				propertiesManager					    = new PropertiesManager();
+	
+	private List<JComponent>				componentsToDisableWhenRunning	        = new ArrayList<JComponent>();
+	private boolean             			autoStart                               = false;
 	
 	
 	public static void main(String[] args) {
@@ -302,7 +320,7 @@ public class JCdmBuilderMain {
 		targetPanel.setLayout(new GridLayout(0, 2));
 		targetPanel.setBorder(BorderFactory.createTitledBorder("Target CDM location"));
 		targetPanel.add(new JLabel("Data type"));
-		targetType = new JComboBox<String>(new String[] { "PostgreSQL", "Oracle", "SQL Server" });
+		targetType = new JComboBox<String>(DATABASE_TYPES);
 		targetType.setToolTipText("Select the type of server where the CDM and vocabulary will be stored");
 		targetPanel.add(targetType);
 		targetPanel.add(new JLabel("Server location"));
@@ -423,11 +441,19 @@ public class JCdmBuilderMain {
 		// locations
 		folderField.setText(propertiesManager.get("WorkspaceFolder"));
 		targetType.setSelectedItem(propertiesManager.get("TargetDataType"));
+		targetType.addItemListener(new ItemListener() {
+			
+			@Override
+			public void itemStateChanged(ItemEvent arg0) {
+				updateETLType();
+			}
+		});
 		targetServerField.setText(propertiesManager.get("TargetServerLocation"));
 		targetUserField.setText(propertiesManager.get("TargetUserName"));
 		targetDatabaseField.setText(propertiesManager.get("TargetDatabaseName"));
 		targetResultsDatabaseField.setText(propertiesManager.get("TargetResultsDatabaseName"));
 		targetCdmVersion.setSelectedItem(propertiesManager.get("TargetCdmVersion"));
+		updateETLType();
 		
 		// ETL
 		versionIdField.setText(propertiesManager.get("VersionIdField"));
@@ -568,17 +594,18 @@ public class JCdmBuilderMain {
 		JPanel etlTypePanel = new JPanel();
 		etlTypePanel.setLayout(new BoxLayout(etlTypePanel, BoxLayout.X_AXIS));
 		etlTypePanel.setBorder(BorderFactory.createTitledBorder("ETL type"));
-		etlType = new JComboBox<String>(
-				new String[] { "1. Load CSV files in CDM format to server", "2. Bulk Load CSV files from server in CDM format to server" });
+		etlTypeModel = new DefaultComboBoxModel<String>(new String[] {});
+		etlType = new JComboBox<String>(etlTypeModel);
+		updateETLType();
 		etlType.setToolTipText("Select the appropriate ETL process");
 		etlType.addItemListener(new ItemListener() {
 			
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
 				String selection = arg0.getItem().toString();
-				if (selection.equals("1. Load CSV files in CDM format to server"))
+				if (selection.equals(ETLTYPE_LOAD))
 					((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEFOLDER);
-				else if (selection.equals("2. Bulk Load CSV files from server in CDM format to server"))
+				else if (selection.equals(ETLTYPE_BULK_LOAD))
 						((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEVIASERVERFOLDER);
 				else
 					((CardLayout) sourceCards.getLayout()).show(sourceCards, SOURCEDATABASE);
@@ -738,6 +765,26 @@ public class JCdmBuilderMain {
 		panel.add(mainPanel, BorderLayout.NORTH);
 		
 		return panel;
+	}
+	
+	
+	private void updateETLType() {
+		String currentETLType = (String) etlType.getSelectedItem();
+		etlTypeModel.removeAllElements();
+		etlTypeModel.addElement(ETLTYPE_LOAD);
+		boolean bulkLoadPossible = false;
+		if (BULK_LOAD_DATABASE_TYPES.contains((String) targetType.getSelectedItem())) {
+			etlTypeModel.addElement(ETLTYPE_BULK_LOAD);
+			bulkLoadPossible = true;
+		}
+		if (currentETLType != null) {
+			if ((!bulkLoadPossible) && (currentETLType.equals(ETLTYPE_BULK_LOAD))) {
+				etlType.setSelectedItem(ETLTYPE_LOAD);
+			}
+			else {
+				etlType.setSelectedItem(currentETLType);
+			}
+		}
 	}
 	
 	private JPanel createExecutePanel() {

@@ -738,6 +738,8 @@ public class RichConnection {
 					else if (dbType == DbType.ORACLE) {
 						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATE")))
 							statement.setDate(i + 1, getSQLDate(value));
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).startsWith("TIMESTAMP(")))
+							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
 						else
 							statement.setString(i + 1, value);
 					}
@@ -775,25 +777,30 @@ public class RichConnection {
 	}
 	
 	private java.sql.Timestamp getSQLTimeStamp(String timeStampValue) {
-		String[] timeStampValueSplit = timeStampValue.split(" ");
-		String dateString = "";
-		String timeString = "";
-		
-		if (timeStampValueSplit.length > 0) {
-			dateString = getSQLDateString(timeStampValueSplit[0].trim());
+		if (timeStampValue != null) {
+			String[] timeStampValueSplit = timeStampValue.split(" ");
+			String dateString = "";
+			String timeString = "";
+			
+			if (timeStampValueSplit.length > 0) {
+				dateString = getSQLDateString(timeStampValueSplit[0].trim());
+			}
+			
+			if (timeStampValueSplit.length > 1) {
+				timeString = getSQLTimeString(timeStampValueSplit[1].trim());
+			}
+			
+			if (dateString == null) {
+				return null;
+			}
+			else if ((timeString == null) || (timeString.equals(""))) {
+				timeString = "00:00:00";
+			}
+			return java.sql.Timestamp.valueOf(dateString + " " + timeString);
 		}
-		
-		if (timeStampValueSplit.length > 1) {
-			timeString = getSQLTimeString(timeStampValueSplit[1].trim());
-		}
-		
-		if (dateString == null) {
+		else {
 			return null;
 		}
-		else if (timeString == null) {
-			timeString = "00:00:00";
-		}
-		return java.sql.Timestamp.valueOf(dateString + " " + timeString);
 	}
 	
 	private java.sql.Date getSQLDate(String dateValue) {
@@ -822,10 +829,10 @@ public class RichConnection {
 						int datePart1 = Integer.parseInt(dateValueSplit[1]);
 						int datePart2 = Integer.parseInt(dateValueSplit[2]);
 						
-						if ((datePart0 > 31) && (datePart1 > 0) && (datePart1 < 13) && (datePart2 > 0) && (datePart2 < 31)) {
+						if ((datePart0 > 31) && (datePart1 > 0) && (datePart1 < 13) && (datePart2 > 0) && (datePart2 <= 31)) {
 							dateString = dateValueSplit[0] + "-" + dateValueSplit[1] + "-" + dateValueSplit[2];
 						}
-						else if ((datePart2 > 31) && (datePart1 > 0) && (datePart1 < 13) && (datePart0 > 0) && (datePart0 < 31)) {
+						else if ((datePart2 > 31) && (datePart1 > 0) && (datePart1 < 13) && (datePart0 > 0) && (datePart0 <= 31)) {
 							dateString = dateValueSplit[2] + "-" + dateValueSplit[1] + "-" + dateValueSplit[0];
 						}
 						else {
