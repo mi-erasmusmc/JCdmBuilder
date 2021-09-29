@@ -46,28 +46,42 @@ import org.ohdsi.utilities.files.ReadTextFile;
  */
 public class Cdm {
 	
-	public static final int	VERSION_501	= 501;
-	public static final int	VERSION_530	= 530;
-	public static final int	VERSION_531	= 531;
-	public static final int	VERSION_600	= 600;
-	
 	public static final int CDM     = 0;
 	public static final int RESULTS = 1;
 	
+	public static final String[] availableVersions = new String[] {
+			"5.0.1",
+			"5.3.0",
+			"5.3.1",
+			"5.4.0",
+			"6.0.0"
+	};
 	
-	public static void dropStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
+	
+	public static CdmVx getCDM(String version) {
+		CdmVx cdm = null;
+		if (version.startsWith("5.")) {
+			cdm = new CdmV5();
+		}
+		else if (version.startsWith("6.")) {
+			cdm = new CdmV6();
+		}
+		return cdm;
+	}
+	
+	
+	public static void dropStructure(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
 		dropConstraints(currentStructure, dbSettings, version, sourceFolder);
+		dropIndices(currentStructure, dbSettings, version, sourceFolder);
 		dropTables(currentStructure, dbSettings, version, sourceFolder);
 		dropSchema(currentStructure, dbSettings, version);
 	}
 	
-	public static void dropConstraints(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
+	
+	private static void dropConstraints(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
+		//TODO: get constraints from database
 		if (currentStructure == CDM) {
-			CdmVx cdm;
-			if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-				cdm = new CdmV5();
-			else
-				cdm = new CdmV6();
+			CdmVx cdm = getCDM(version);
 			
 			String resourceName = null;
 			if (dbSettings.dbType == DbType.ORACLE) {
@@ -98,7 +112,7 @@ public class Cdm {
 				}
 				
 				if (resourceStream == null) {
-					resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
+					resourceName = version + "/" + resourceName;
 					URL resourceURL = cdm.getClass().getResource(resourceName);
 					if (resourceURL != null) {
 						resourceStream = cdm.getClass().getResourceAsStream(resourceName);
@@ -144,12 +158,14 @@ public class Cdm {
 		}
 	}
 	
-	public static void dropTables(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
-		CdmVx cdm;
-		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-			cdm = new CdmV5();
-		else
-			cdm = new CdmV6();
+	
+	private static void dropIndices(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
+		//TODO: Get indices from the database
+	}
+	
+	
+	private static void dropTables(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
+		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
@@ -161,46 +177,9 @@ public class Cdm {
 		}
 
 		if (resourceName != null) {
-			/*
-			InputStream resourceStream = null;
-			if (sourceFolder != null) {
-				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
-				if (localFile.exists()) {
-					if (localFile.canRead()) {
-						try {
-							resourceStream = new FileInputStream(localFile);
-							StringUtilities.outputWithTime("Using local definition: " + resourceName);
-						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
-						}
-					}
-					else {
-						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
-					}
-				}
-			}
-			
-			if (resourceStream == null) {
-				resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
-				URL resourceURL = cdm.getClass().getResource(resourceName);
-				if (resourceURL != null) {
-					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
-				}
-				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " data structure definition not found");
-				}
-			}
-			
-			List<String> sqlLines = new ArrayList<>();
-			for (String line : new ReadTextFile(resourceStream)) {
-				if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-					sqlLines.add(line);
-				}
-			}
-			*/
-
 			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 			connection.setContext(cdm.getClass());
+			
 			try {
 				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
 				
@@ -215,17 +194,14 @@ public class Cdm {
 					throw e;
 				}
 			}
-
+			
 			connection.close();
 		}
 	}
 	
-	public static void dropSchema(int currentStructure, DbSettings dbSettings, int version) {
-		CdmVx cdm;
-		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-			cdm = new CdmV5();
-		else
-			cdm = new CdmV6();
+	
+	private static void dropSchema(int currentStructure, DbSettings dbSettings, String version) {
+		CdmVx cdm = getCDM(version);
 
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.setContext(cdm.getClass());
@@ -245,12 +221,9 @@ public class Cdm {
 		connection.close();
 	}
 	
-	public static void createSchema(int currentStructure, DbSettings dbSettings, int version) {
-		CdmVx cdm;
-		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-			cdm = new CdmV5();
-		else
-			cdm = new CdmV6();
+	
+	public static void createSchema(int currentStructure, DbSettings dbSettings, String version) {
+		CdmVx cdm = getCDM(version);
 
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.setContext(cdm.getClass());
@@ -263,12 +236,9 @@ public class Cdm {
 		StringUtilities.outputWithTime("Done");
 	}
 	
-	public static void createStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, boolean idsToBigInt) {
-		CdmVx cdm;
-		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-			cdm = new CdmV5();
-		else
-			cdm = new CdmV6();
+	
+	public static void createTables(int currentStructure, DbSettings dbSettings, String version, String sourceFolder, boolean idsToBigInt) {
+		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
@@ -299,7 +269,7 @@ public class Cdm {
 			}
 			
 			if (resourceStream == null) {
-				resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
+				resourceName = version + "/" + resourceName;
 				URL resourceURL = cdm.getClass().getResource(resourceName);
 				if (resourceURL != null) {
 					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
@@ -367,31 +337,19 @@ public class Cdm {
 		}
 	}
 	
-	public static void dropPatchStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder) {
-		CdmVx cdm;
-		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-			cdm = new CdmV5();
-		else
-			cdm = new CdmV6();
+	public static void createIndices(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
+		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsStructureOracle();
+			resourceName = currentStructure == CDM ? cdm.indicesOracle() : cdm.resultsIndicesOracle();
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsStructureMSSQL();
+			resourceName = currentStructure == CDM ? cdm.indicesMSSQL() : cdm.resultsIndicesMSSQL();
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsStructurePostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.indicesPostgreSQL() : cdm.resultsIndicesPostgreSQL();
 		}
-
+		
 		if (resourceName != null) {
-			int lastDotPosition = resourceName.lastIndexOf(".", resourceName.length());
-			if (lastDotPosition == -1) {
-				resourceName = resourceName + " - Patch";
-			}
-			else {
-				resourceName = resourceName.substring(0, lastDotPosition) + " - Patch" + resourceName.substring(lastDotPosition);
-			}
-
 			InputStream resourceStream = null;
 			if (sourceFolder != null) {
 				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
@@ -410,33 +368,41 @@ public class Cdm {
 				}
 			}
 			
+			if (resourceStream == null) {
+				resourceName = version + "/" + resourceName;
+				URL resourceURL = cdm.getClass().getResource(resourceName);
+				if (resourceURL != null) {
+					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
+				}
+				else {
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " indices definition not found");
+				}
+			}
+
 			if (resourceStream != null) {
+				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " indices");
+				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("ALTER TABLE ")) {
+							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+						}
+						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
+							line = line.replace(" ON ", " ON " + schemaName + ".");
+						}
 						sqlLines.add(line);
 					}
 				}
-
+				
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
 				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
 				
-				StringUtilities.outputWithTime("Deleting old Patch tables if they exist");
-				String currentCreate = "";
-				for (String line : sqlLines) {
-					currentCreate += line;
-					if (currentCreate.contains("CREATE TABLE ")) {
-						String tableName = StringUtilities.findBetween(currentCreate, "CREATE TABLE", "(").trim();
-						if (tableName.length() != 0) {
-							connection.dropTableIfExists(dbSettings.database, tableName);
-							currentCreate = "";
-						}
-					}
-					else {
-						currentCreate = "";
-					}
-				}
+				connection.execute(StringUtilities.join(sqlLines, "\n"));
 				
 				connection.close();
 				StringUtilities.outputWithTime("Done");
@@ -444,12 +410,83 @@ public class Cdm {
 		}
 	}
 	
-	public static void patchStructure(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, boolean idsToBigInt) {
-		CdmVx cdm;
-		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-			cdm = new CdmV5();
-		else
-			cdm = new CdmV6();
+	
+	public static void createConstraints(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
+		CdmVx cdm = getCDM(version);
+		
+		String resourceName = null;
+		if (dbSettings.dbType == DbType.ORACLE) {
+			resourceName = currentStructure == CDM ? cdm.constraintsOracle() : cdm.resultsConstraintsOracle();
+		} else if (dbSettings.dbType == DbType.MSSQL) {
+			resourceName = currentStructure == CDM ? cdm.constraintsMSSQL() : cdm.resultsConstraintsMSSQL();
+		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
+			resourceName = currentStructure == CDM ? cdm.constraintsPostgreSQL() : cdm.resultsConstraintsPostgreSQL();
+		}
+		
+		if (resourceName != null) {
+			InputStream resourceStream = null;
+			if (sourceFolder != null) {
+				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+				if (localFile.exists()) {
+					if (localFile.canRead()) {
+						try {
+							resourceStream = new FileInputStream(localFile);
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
+						} catch (FileNotFoundException e) {
+							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
+						}
+					}
+					else {
+						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+					}
+				}
+			}
+			
+			if (resourceStream == null) {
+				resourceName = version + "/" + resourceName;
+				URL resourceURL = cdm.getClass().getResource(resourceName);
+				if (resourceURL != null) {
+					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
+				}
+				else {
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " constraints definition not found");
+				}
+			}
+
+			if (resourceStream != null) {
+				StringUtilities.outputWithTime("Creating constraints");
+				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				List<String> sqlLines = new ArrayList<>();
+				for (String line : new ReadTextFile(resourceStream)) {
+					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("ALTER TABLE ")) {
+							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+						}
+						if (line.contains("REFERENCES ")) {
+							line = line.replace("REFERENCES ", "REFERENCES " + schemaName + ".");
+						}
+						sqlLines.add(line);
+					}
+				}
+				
+				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				
+				connection.execute(StringUtilities.join(sqlLines, "\n"));
+				
+				connection.close();
+				StringUtilities.outputWithTime("Done");
+			}
+		}
+	}
+	
+	
+	public static void createPatchTables(int currentStructure, DbSettings dbSettings, String version, String sourceFolder, boolean idsToBigInt) {
+		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
@@ -528,97 +565,17 @@ public class Cdm {
 		}
 	}
 	
-	public static void createIndices(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
-		CdmVx cdm;
-		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-			cdm = new CdmV5();
-		else
-			cdm = new CdmV6();
-		
-		String resourceName = null;
-		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.indexesOracle() : cdm.resultsIndexesOracle();
-		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.indexesMSSQL() : cdm.resultsIndexesMSSQL();
-		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.indexesPostgreSQL() : cdm.resultsIndexesPostgreSQL();
-		}
-		
-		if (resourceName != null) {
-			InputStream resourceStream = null;
-			if (sourceFolder != null) {
-				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
-				if (localFile.exists()) {
-					if (localFile.canRead()) {
-						try {
-							resourceStream = new FileInputStream(localFile);
-							StringUtilities.outputWithTime("Using local definition: " + resourceName);
-						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
-						}
-					}
-					else {
-						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
-					}
-				}
-			}
-			
-			if (resourceStream == null) {
-				resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
-				URL resourceURL = cdm.getClass().getResource(resourceName);
-				if (resourceURL != null) {
-					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
-				}
-				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " indices definition not found");
-				}
-			}
-
-			if (resourceStream != null) {
-				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " indices");
-				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
-				List<String> sqlLines = new ArrayList<>();
-				for (String line : new ReadTextFile(resourceStream)) {
-					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
-							line = line.replace(" ON ", " ON " + schemaName + ".");
-						}
-						sqlLines.add(line);
-					}
-				}
-				
-				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-				
-				connection.execute(StringUtilities.join(sqlLines, "\n"));
-				
-				connection.close();
-				StringUtilities.outputWithTime("Done");
-			}
-		}
-	}
 	
-	public static void patchIndices(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
-		CdmVx cdm;
-		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-			cdm = new CdmV5();
-		else
-			cdm = new CdmV6();
+	public static void createPatchIndices(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
+		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.indexesOracle() : cdm.resultsIndexesOracle();
+			resourceName = currentStructure == CDM ? cdm.indicesOracle() : cdm.resultsIndicesOracle();
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.indexesMSSQL() : cdm.resultsIndexesMSSQL();
+			resourceName = currentStructure == CDM ? cdm.indicesMSSQL() : cdm.resultsIndicesMSSQL();
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.indexesPostgreSQL() : cdm.resultsIndexesPostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.indicesPostgreSQL() : cdm.resultsIndicesPostgreSQL();
 		}
 		
 		if (resourceName != null) {
@@ -679,82 +636,11 @@ public class Cdm {
 		}
 	}
 	
-	public static void createConstraints(int currentStructure, DbSettings dbSettings, int version, String sourceFolder, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
-		CdmVx cdm;
-		if ((version == VERSION_501) || (version == VERSION_530) || (version == VERSION_531))
-			cdm = new CdmV5();
-		else
-			cdm = new CdmV6();
-		
-		String resourceName = null;
-		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.constraintsOracle() : cdm.resultsConstraintsOracle();
-		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.constraintsMSSQL() : cdm.resultsConstraintsMSSQL();
-		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.constraintsPostgreSQL() : cdm.resultsConstraintsPostgreSQL();
-		}
-		
-		if (resourceName != null) {
-			InputStream resourceStream = null;
-			if (sourceFolder != null) {
-				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
-				if (localFile.exists()) {
-					if (localFile.canRead()) {
-						try {
-							resourceStream = new FileInputStream(localFile);
-							StringUtilities.outputWithTime("Using local definition: " + resourceName);
-						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
-						}
-					}
-					else {
-						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
-					}
-				}
-			}
-			
-			if (resourceStream == null) {
-				resourceName = (version == VERSION_501 ? "5.0.1/" : (version == VERSION_530 ? "5.3.0/" : (version == VERSION_531 ? "5.3.1/" : "6.0.0/"))) + resourceName;
-				URL resourceURL = cdm.getClass().getResource(resourceName);
-				if (resourceURL != null) {
-					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
-				}
-				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results")+ " constraints definition not found");
-				}
-			}
-
-			if (resourceStream != null) {
-				StringUtilities.outputWithTime("Creating constraints");
-				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
-				List<String> sqlLines = new ArrayList<>();
-				for (String line : new ReadTextFile(resourceStream)) {
-					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("REFERENCES ")) {
-							line = line.replace("REFERENCES ", "REFERENCES " + schemaName + ".");
-						}
-						sqlLines.add(line);
-					}
-				}
-				
-				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
-				
-				connection.execute(StringUtilities.join(sqlLines, "\n"));
-				
-				connection.close();
-				StringUtilities.outputWithTime("Done");
-			}
-		}
+	
+	public static void createPatchConstraints(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
+		//TODO
 	}
+	
 	
 	private static void handleError(Exception e, JFrame frame, String errorFolder, String item, boolean continueOnError) {
 		JCdmBuilderMain.errors.add(item);

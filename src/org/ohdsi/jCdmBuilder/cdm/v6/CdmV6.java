@@ -35,18 +35,18 @@ public class CdmV6 implements CdmVx {
 	}
 
 	@Override
-	public String indexesMSSQL() {
-		return "OMOP CDM sql server pk indexes.txt";
+	public String indicesMSSQL() {
+		return "OMOP CDM sql server pk indices.txt";
 	}
 
 	@Override
-	public String indexesPostgreSQL() {
-		return "OMOP CDM postgresql pk indexes.txt";
+	public String indicesPostgreSQL() {
+		return "OMOP CDM postgresql pk indices.txt";
 	}
 
 	@Override
-	public String indexesOracle() {
-		return "OMOP CDM oracle pk indexes.txt";
+	public String indicesOracle() {
+		return "OMOP CDM oracle pk indices.txt";
 	}
 
 	@Override
@@ -80,17 +80,17 @@ public class CdmV6 implements CdmVx {
 	}
 
 	@Override
-	public String resultsIndexesMSSQL() {
+	public String resultsIndicesMSSQL() {
 		return "OMOP CDM Results sql server pk indexes.txt";
 	}
 
 	@Override
-	public String resultsIndexesPostgreSQL() {
+	public String resultsIndicesPostgreSQL() {
 		return "OMOP CDM Results postgresql pk indexes.txt";
 	}
 
 	@Override
-	public String resultsIndexesOracle() {
+	public String resultsIndicesOracle() {
 		return "OMOP CDM Results oracle pk indexes.txt";
 	}
 

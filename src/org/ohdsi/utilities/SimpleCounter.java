@@ -46,7 +46,7 @@ public class SimpleCounter {
 		if (reportRate){
 			long interval = System.currentTimeMillis() - lastTime;
 			long processed = count - lastCount;
-			System.out.println(count + " (time per unit = " + interval/(double)processed + "ms)");
+			StringUtilities.outputWithTime("\t" + Long.toString(count) + " (time per unit = " + Double.toString(interval/(double)processed) + "ms)");
 			lastTime = System.currentTimeMillis();
 			lastCount = count;
 		} else
