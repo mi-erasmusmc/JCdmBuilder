@@ -474,6 +474,129 @@ public class RichConnection {
 		return types;
 	}
 	
+	public Map<String, List<String>> getForeignKeyConstraints(String schema) {
+		return getForeignKeyConstraints(schema, null);
+	}
+	
+	public Map<String, List<String>> getForeignKeyConstraints(String schema, String table) {
+		Map<String, List<String>> foreignKeyConstraints = new HashMap<String, List<String>>();
+		if (dbType == DbType.MSSQL) {
+			for (Row row : query("SELECT fk_tab.name as fk_table_name, fk.name as fk_constraint_name FROM sys.foreign_keys fk INNER JOIN sys.tables fk_tab ON fk_tab.object_id = fk.parent_object_id WHERE schema_name(fk_tab.schema_id) = '" + schema.toUpperCase() + "'" + (table == null ? "" : " AND fk_tab.name = '" + table.toUpperCase() + "'") + ";")) {
+				String tableName = row.get("fk_table_name");
+				String constraintName = row.get("fk_constraint_name");
+				List<String> tableConstraints = foreignKeyConstraints.get(tableName);
+				if ( tableConstraints == null) {
+					tableConstraints = new ArrayList<String>();
+					foreignKeyConstraints.put(tableName, tableConstraints);
+				}
+				tableConstraints.add(constraintName);
+			}
+		}
+		else if (dbType == DbType.POSTGRESQL) {
+			for (Row row : query("SELECT rel.relname, con.conname FROM pg_catalog.pg_constraint con INNER JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid INNER JOIN pg_catalog.pg_namespace nsp ON nsp.oid = connamespace WHERE nsp.nspname = '" + schema.toLowerCase() + "' AND con.contype = 'f'" + (table == null ? "" : " AND rel.relname = '" + table.toLowerCase() + "'") + ";")) {
+				String tableName = row.get("relname");
+				String constraintName = row.get("conname");
+				List<String> tableConstraints = foreignKeyConstraints.get(tableName);
+				if ( tableConstraints == null) {
+					tableConstraints = new ArrayList<String>();
+					foreignKeyConstraints.put(tableName, tableConstraints);
+				}
+				tableConstraints.add(constraintName);
+			}
+		}
+		else if (dbType == DbType.ORACLE) {
+			//TODO
+		}
+		//else if (dbType == DbType.MYSQL) {
+		//}
+		else {
+			throw new RuntimeException("DB type not supported");
+		}
+		return foreignKeyConstraints;
+	}
+	
+	public Map<String, List<String>> getIndices(String schema) {
+		return getIndices(schema, null);
+	}
+	
+	public Map<String, List<String>> getIndices(String schema, String table) {
+		Map<String, List<String>> indices = new HashMap<String, List<String>>();
+		if (dbType == DbType.MSSQL) {
+			for (Row row : query("SELECT object_name(i.object_id) As tablename, i.name AS indexname FROM sys.indexes i LEFT OUTER JOIN sys.objects o ON i.object_id = o.object_id WHERE i.is_hypothetical = 0 AND i.index_id != 0 AND i.is_primary_key = 'false' AND schema_name(o.schema_id) = '" + schema.toLowerCase() + "'" + (table == null ? "" : " AND object_name(i.object_id) = '" + table.toUpperCase() + "'") + ";")) {
+				String tableName = row.get("table_name");
+				String indexName = row.get("constraint_name");
+				List<String> tableIndices = indices.get(tableName);
+				if ( tableIndices == null) {
+					tableIndices = new ArrayList<String>();
+					indices.put(tableName, tableIndices);
+				}
+				tableIndices.add(indexName);
+			}
+		}
+		else if (dbType == DbType.POSTGRESQL) {
+			for (Row row : query("SELECT tablename, indexname FROM pg_indexes WHERE indexdef NOT LIKE '% UNIQUE %' AND schemaname = '" + schema.toLowerCase() + "'" + (table == null ? "" : " AND tablename = '" + table.toLowerCase() + "'") + ";")) {
+				String tableName = row.get("tablename");
+				String indexName = row.get("indexname");
+				List<String> tableIndices = indices.get(tableName);
+				if ( tableIndices == null) {
+					tableIndices = new ArrayList<String>();
+					indices.put(tableName, tableIndices);
+				}
+				tableIndices.add(indexName);
+			}
+		}
+		else if (dbType == DbType.ORACLE) {
+			//TODO
+		}
+		//else if (dbType == DbType.MYSQL) {
+		//}
+		else {
+			throw new RuntimeException("DB type not supported");
+		}
+		return indices;
+	}
+	
+	public Map<String, List<String>> getPrimaryKeyConstraints(String schema) {
+		return getPrimaryKeyConstraints(schema, null);
+	}
+	
+	public Map<String, List<String>> getPrimaryKeyConstraints(String schema, String table) {
+		Map<String, List<String>> primaryKeyConstraints = new HashMap<String, List<String>>();
+		if (dbType == DbType.MSSQL) {
+			for (Row row : query("SELECT t.[name] AS table_name, isnull(c.[name], i.[name]) AS constraint_name FROM sys.objects t LEFT OUTER JOIN sys.indexes i ON t.object_id = i.object_id LEFT OUTER JOIN sys.key_constraints c ON i.object_id = c.parent_object_id AND i.index_id = c.unique_index_id WHERE is_unique = 1 AND t.[type] = 'U' AND c.[type] = 'PK' AND t.is_ms_shipped <> 1 AND schema_name(t.schema_id) = '" + schema.toLowerCase() + "'" + (table == null ? "" : " AND t.[name] = '" + table.toUpperCase() + "'") + ";")) {
+				String tableName = row.get("table_name");
+				String constraintName = row.get("constraint_name");
+				List<String> tableConstraints = primaryKeyConstraints.get(tableName);
+				if ( tableConstraints == null) {
+					tableConstraints = new ArrayList<String>();
+					primaryKeyConstraints.put(tableName, tableConstraints);
+				}
+				tableConstraints.add(constraintName);
+			}
+		}
+		else if (dbType == DbType.POSTGRESQL) {
+			for (Row row : query("SELECT rel.relname, con.conname FROM pg_catalog.pg_constraint con INNER JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid INNER JOIN pg_catalog.pg_namespace nsp ON nsp.oid = connamespace WHERE nsp.nspname = '" + schema.toLowerCase() + "' AND con.contype = 'p'" + (table == null ? "" : " AND rel.relname = '" + table.toLowerCase() + "'") + ";")) {
+				String tableName = row.get("relname");
+				String constraintName = row.get("conname");
+				List<String> tableConstraints = primaryKeyConstraints.get(tableName);
+				if ( tableConstraints == null) {
+					tableConstraints = new ArrayList<String>();
+					primaryKeyConstraints.put(tableName, tableConstraints);
+				}
+				tableConstraints.add(constraintName);
+			}
+		}
+		else if (dbType == DbType.ORACLE) {
+			//TODO
+		}
+		//else if (dbType == DbType.MYSQL) {
+		//}
+		else {
+			throw new RuntimeException("DB type not supported");
+		}
+		return primaryKeyConstraints;
+	}
+	
 	public void dropConstraintIfExists(String schema, String table, String constraint) {
 		if (dbType == DbType.ORACLE) {
 			try {
@@ -488,12 +611,37 @@ public class RichConnection {
 					System.out.println(e.getMessage());
 			}
 		} else if (dbType == DbType.MSSQL) {
-			execute("IF OBJECT_ID('" + schema + "." + table + "') IS NOT NULL ALTER TABLE " + schema + "." + table + " DROP CONSTRAINT IF EXISTS " + constraint + ";");
+			execute("IF OBJECT_ID('" + schema + "." + table + "') IS NOT NULL ALTER TABLE " + schema + "." + table + " DROP CONSTRAINT " + constraint + ";");
 		} else if (dbType == DbType.POSTGRESQL) {
-			// Do nothing. The DROP CASCADE of the tables will take care of that.
+			// DO Nothing execute("ALTER TABLE " + schema + "." + table + " DROP CONSTRAINT IF EXISTS " + constraint + ";");
 		}
 		else {
 			execute("ALTER TABLE " + table + "DROP CONSTRAINT " + constraint);
+		}
+	}
+	
+	public void dropIndexIfExists(String schema, String table, String index) {
+		if (dbType == DbType.ORACLE) {
+			/* TODO
+			try {
+				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
+				if (verbose) {
+					System.out.println("Executing: ALTER TABLE " + table + "DROP CONSTRAINT " + constraint);
+				}
+				statement.execute("ALTER TABLE " + table + "DROP CONSTRAINT " + constraint);
+				statement.close();
+			} catch (Exception e) {
+				if (verbose)
+					System.out.println(e.getMessage());
+			}
+			*/
+		} else if (dbType == DbType.MSSQL) {
+			execute("DROP INDEX IF EXISTS index ON " + schema + "." + table + ";");
+		} else if (dbType == DbType.POSTGRESQL) {
+			//Do Nothing execute("DROP INDEX IF EXISTS " + schema + "." + index + " CASCADE;");
+		}
+		else {
+			execute("ALTER TABLE " + table + "DROP INDEX IF EXISTS " + index);
 		}
 	}
 
