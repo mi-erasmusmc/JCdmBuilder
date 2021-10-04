@@ -505,10 +505,13 @@ public class Cdm {
 						while (line.contains("  ")) {
 							line = line.replaceAll("  ", " ");
 						}
-						if (line.contains("DROP TABLE ")) {
+						if (line.contains("DROP TABLE IF EXISTS ")) {
+							line = line.replace("DROP TABLE IF EXISTS ", "DROP TABLE IF EXISTS " + schemaName + ".");
+						}
+						else if (line.contains("DROP TABLE ")) {
 							line = line.replace("DROP TABLE ", "DROP TABLE " + schemaName + ".");
 						}
-						if (line.contains("CREATE TABLE ")) {
+						else if (line.contains("CREATE TABLE ")) {
 							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
 						}
 						sqlLines.add(line);

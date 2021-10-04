@@ -505,7 +505,16 @@ public class RichConnection {
 			}
 		}
 		else if (dbType == DbType.ORACLE) {
-			//TODO
+			for (Row row : query("SELECT TABLE_NAME, CONSTRAINT_NAME FROM ALL_CONSTRAINTS WHERE OWNER = '" + schema.toUpperCase() + "' AND CONSTRAINT_TYPE = 'R'" + (table == null ? "" : " AND TABLE_NAME = '" + table.toUpperCase() + "'") + ";")) {
+				String tableName = row.get("TABLE_NAME");
+				String constraintName = row.get("CONSTRAINT_NAME");
+				List<String> tableConstraints = foreignKeyConstraints.get(tableName);
+				if ( tableConstraints == null) {
+					tableConstraints = new ArrayList<String>();
+					foreignKeyConstraints.put(tableName, tableConstraints);
+				}
+				tableConstraints.add(constraintName);
+			}
 		}
 		//else if (dbType == DbType.MYSQL) {
 		//}
@@ -546,7 +555,16 @@ public class RichConnection {
 			}
 		}
 		else if (dbType == DbType.ORACLE) {
-			//TODO
+			for (Row row : query("SELECT TABLE_NAME, INDEX_NAME FROM ALL_INDEXES WHERE UNIQUENESS = 'NONUNIQUE' AND OWNER = '" + schema.toUpperCase() + "'" + (table == null ? "" : " AND TABLE_NAME = '" + table.toUpperCase() + "'") + ";")) {
+				String tableName = row.get("TABLE_NAME");
+				String indexName = row.get("INDEX_NAME");
+				List<String> tableIndices = indices.get(tableName);
+				if ( tableIndices == null) {
+					tableIndices = new ArrayList<String>();
+					indices.put(tableName, tableIndices);
+				}
+				tableIndices.add(indexName);
+			}
 		}
 		//else if (dbType == DbType.MYSQL) {
 		//}
@@ -587,7 +605,16 @@ public class RichConnection {
 			}
 		}
 		else if (dbType == DbType.ORACLE) {
-			//TODO
+			for (Row row : query("SELECT TABLE_NAME, CONSTRAINT_NAME FROM ALL_CONSTRAINTS WHERE OWNER = '" + schema.toUpperCase() + "' AND CONSTRAINT_TYPE = 'P'" + (table == null ? "" : " AND TABLE_NAME = '" + table.toUpperCase() + "'") + ";")) {
+				String tableName = row.get("TABLE_NAME");
+				String constraintName = row.get("CONSTRAINT_NAME");
+				List<String> tableConstraints = primaryKeyConstraints.get(tableName);
+				if ( tableConstraints == null) {
+					tableConstraints = new ArrayList<String>();
+					primaryKeyConstraints.put(tableName, tableConstraints);
+				}
+				tableConstraints.add(constraintName);
+			}
 		}
 		//else if (dbType == DbType.MYSQL) {
 		//}
@@ -622,7 +649,7 @@ public class RichConnection {
 	
 	public void dropIndexIfExists(String schema, String table, String index) {
 		if (dbType == DbType.ORACLE) {
-			/* TODO
+			/* Done with dropping tables
 			try {
 				Statement statement = connection.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
 				if (verbose) {
@@ -638,7 +665,8 @@ public class RichConnection {
 		} else if (dbType == DbType.MSSQL) {
 			execute("DROP INDEX IF EXISTS index ON " + schema + "." + table + ";");
 		} else if (dbType == DbType.POSTGRESQL) {
-			//Do Nothing execute("DROP INDEX IF EXISTS " + schema + "." + index + " CASCADE;");
+			// Do Nothing execute("DROP INDEX IF EXISTS " + schema + "." + index + " CASCADE;");
+			// Done with dropping tables
 		}
 		else {
 			execute("ALTER TABLE " + table + "DROP INDEX IF EXISTS " + index);
