@@ -90,6 +90,7 @@ public class CdmEtl {
 
 		for (File file : new File(folder).listFiles()) {
 			String table = "";
+			File temporarySourceFile = null;
 			try {
 				if (file.getName().toLowerCase().endsWith(".csv")) {
 					table = file.getName().substring(0, file.getName().length() - 4);
@@ -99,7 +100,6 @@ public class CdmEtl {
 
 						String temporarySourceFileName = file.getName();
 						String temporarySourceFileNamePath = file.getAbsolutePath();
-						File temporarySourceFile = null;
 						if (!folder.equals(temporaryLocalServerFolder)) {
 							// Copy source file to temporary file on the server
 
@@ -144,6 +144,10 @@ public class CdmEtl {
 					}
 				}
 			} catch (Exception e) {
+				if (temporarySourceFile != null) {
+					FileUtils.forceDelete(temporarySourceFile);
+				}
+				
 				handleError(e, frame, errorFolder, "Table " + table, continueOnError);
 				if (continueOnError || JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);

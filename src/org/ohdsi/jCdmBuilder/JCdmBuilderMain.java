@@ -72,7 +72,7 @@ import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "0.3.9";
+	public static final String VERSION = "0.4.0";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 	
@@ -103,7 +103,7 @@ public class JCdmBuilderMain {
 	private JFrame							frame;
 	private JTabbedPane						tabbedPane;
 	private JTextField						folderField;
-	private JTextField						vocabFileField;
+	private JTextField						vocabFolderField;
 	private JTextField						vocabSchemaField;
 	private JRadioButton					vocabFileTypeButton;
 	private JRadioButton					vocabSchemaTypeButton;
@@ -322,7 +322,7 @@ public class JCdmBuilderMain {
 		JPanel targetPanel = new JPanel();
 		targetPanel.setLayout(new GridLayout(0, 2));
 		targetPanel.setBorder(BorderFactory.createTitledBorder("Target CDM location"));
-		targetPanel.add(new JLabel("Data type"));
+		targetPanel.add(new JLabel("Database type"));
 		targetType = new JComboBox<String>(DATABASE_TYPES);
 		targetType.setToolTipText("Select the type of server where the CDM and vocabulary will be stored");
 		targetPanel.add(targetType);
@@ -335,10 +335,10 @@ public class JCdmBuilderMain {
 		targetPanel.add(new JLabel("Password"));
 		targetPasswordField = new JPasswordField("");
 		targetPanel.add(targetPasswordField);
-		targetPanel.add(new JLabel("CDM Database name"));
+		targetPanel.add(new JLabel("CDM Schema name"));
 		targetDatabaseField = new JTextField("");
 		targetPanel.add(targetDatabaseField);
-		targetPanel.add(new JLabel("Results Database name"));
+		targetPanel.add(new JLabel("Results Schema name"));
 		targetResultsDatabaseField = new JTextField("");
 		targetPanel.add(targetResultsDatabaseField);
 		targetPanel.add(new JLabel("CDM version"));
@@ -471,7 +471,7 @@ public class JCdmBuilderMain {
 		sourceServerTempLocalFolderField.setText(propertiesManager.get("SourceServerTempLocalFolder"));
 		
 		// vocabulary
-		vocabFileField.setText(propertiesManager.get("VocabFileField"));
+		vocabFolderField.setText(propertiesManager.get("VocabFileField"));
 		vocabSchemaField.setText(propertiesManager.get("VocabSchemaField"));
 		if (propertiesManager.get("VocabType").equals("ATHENA CSV files in folder"))
 			vocabFileTypeButton.doClick();
@@ -509,7 +509,7 @@ public class JCdmBuilderMain {
 		propertiesManager.set("SourceServerTempLocalFolder", sourceServerTempLocalFolderField.getText());
 		
 		// vocabulary
-		propertiesManager.set("VocabFileField", vocabFileField.getText());
+		propertiesManager.set("VocabFileField", vocabFolderField.getText());
 		propertiesManager.set("VocabSchemaField", vocabSchemaField.getText());
 		if (vocabFileTypeButton.isSelected())
 			propertiesManager.set("VocabType", "ATHENA CSV files in folder");
@@ -553,10 +553,10 @@ public class JCdmBuilderMain {
 		JPanel vocabFilePanel = new JPanel();
 		vocabFilePanel.setLayout(new BoxLayout(vocabFilePanel, BoxLayout.X_AXIS));
 		vocabFilePanel.setBorder(BorderFactory.createTitledBorder("Vocabulary data folder"));
-		vocabFileField = new JTextField();
-		vocabFileField.setText("");
-		vocabFileField.setToolTipText("Specify the name of the folder containing the vocabulary CSV files here");
-		vocabFilePanel.add(vocabFileField);
+		vocabFolderField = new JTextField();
+		vocabFolderField.setText("");
+		vocabFolderField.setToolTipText("Specify the name of the folder containing the vocabulary CSV files here");
+		vocabFilePanel.add(vocabFolderField);
 		JButton pickButton = new JButton("Pick folder");
 		pickButton.setToolTipText("Select the folder containing the vocabulary CSV files");
 		vocabFilePanel.add(pickButton);
@@ -679,9 +679,9 @@ public class JCdmBuilderMain {
 		// ETL-Type 2 Panel
 		JPanel sourceServerFolderPanel = new JPanel();
 		sourceServerFolderPanel.setLayout(new GridLayout(6, 2));
-		sourceServerFolderPanel.setBorder(BorderFactory.createTitledBorder("Folder locations"));
-		sourceServerFolderPanel.add(new JLabel("Folder"));
+		sourceServerFolderPanel.setBorder(BorderFactory.createTitledBorder("Source Folder locations"));
 		
+		sourceServerFolderPanel.add(new JLabel("Folder"));
 		JPanel sourceViaServerFolderFieldPanel = new JPanel();
 		sourceViaServerFolderFieldPanel.setLayout(new BoxLayout(sourceViaServerFolderFieldPanel, BoxLayout.X_AXIS));
 		sourceServerFolderField = new JTextField();
@@ -698,8 +698,22 @@ public class JCdmBuilderMain {
 		});
 		sourceServerFolderPanel.add(sourceViaServerFolderFieldPanel);
 		
-		sourceServerFolderPanel.add(new JLabel("Server folder"));
+		sourceServerFolderPanel.add(new JLabel("Delimiter"));
+		sourceServerDelimiterField = new JTextField(",");
+		sourceServerDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
+		sourceServerFolderPanel.add(sourceServerDelimiterField);
 		
+		sourceServerFolderPanel.add(new JLabel("Quote"));
+		sourceServerQuoteField = new JTextField("\"");
+		sourceServerQuoteField.setToolTipText("The field quote.");
+		sourceServerFolderPanel.add(sourceServerQuoteField);
+		
+		sourceServerFolderPanel.add(new JLabel("Null value"));
+		sourceServerNullValueField = new JTextField("");
+		sourceServerNullValueField.setToolTipText("The value that represents the NULL value.");
+		sourceServerFolderPanel.add(sourceServerNullValueField);
+		
+		sourceServerFolderPanel.add(new JLabel("Server folder"));
 		JPanel sourceServerTempFolderFieldPanel = new JPanel();
 		sourceServerTempFolderFieldPanel.setLayout(new BoxLayout(sourceServerTempFolderFieldPanel, BoxLayout.X_AXIS));
 		sourceServerTempFolderField = new JTextField();
@@ -721,21 +735,6 @@ public class JCdmBuilderMain {
 		sourceServerTempLocalFolderField.setToolTipText("Specify the local path on the server of the temporary folder on the server here");
 		sourceServerFolderPanel.add(new JLabel("Local path server folder"));
 		sourceServerFolderPanel.add(sourceServerTempLocalFolderField);
-		
-		sourceServerFolderPanel.add(new JLabel("Delimiter"));
-		sourceServerDelimiterField = new JTextField(",");
-		sourceServerDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
-		sourceServerFolderPanel.add(sourceServerDelimiterField);
-		
-		sourceServerFolderPanel.add(new JLabel("Quote"));
-		sourceServerQuoteField = new JTextField("\"");
-		sourceServerQuoteField.setToolTipText("The field quote.");
-		sourceServerFolderPanel.add(sourceServerQuoteField);
-		
-		sourceServerFolderPanel.add(new JLabel("Null value"));
-		sourceServerNullValueField = new JTextField("");
-		sourceServerNullValueField.setToolTipText("The value that represents the NULL value.");
-		sourceServerFolderPanel.add(sourceServerNullValueField);
 		
 		
 		sourceCards = new JPanel(new CardLayout());
@@ -906,7 +905,7 @@ public class JCdmBuilderMain {
 			result = false;
 		}
 		if (executeVocabCheckBox.isSelected()) {
-			result = folderExists(vocabFileField.getText(), false, "Vocabulary data folder", errors);
+			result = folderExists(vocabFolderField.getText(), false, "Vocabulary data folder", errors);
 		}
 		if (executeETLCheckBox.isSelected()) {
 			result = folderExists(sourceFolderField.getText(), false, "Source folder", errors);
@@ -1133,7 +1132,7 @@ public class JCdmBuilderMain {
 				if (parameter.equals("-vocabfolder")) {
 					argNr++;
 					parameterValue = args[argNr];
-					vocabFileField.setText(parameterValue);
+					vocabFolderField.setText(parameterValue);
 				}
 				if (parameter.equals("-vocabschema")) {
 					argNr++;
@@ -1230,11 +1229,11 @@ public class JCdmBuilderMain {
 	
 	
 	private void pickVocabFile() {
-		JFileChooser fileChooser = new JFileChooser(new File(vocabFileField.getText().trim().equals("") ? folderField.getText() : vocabFileField.getText()));
+		JFileChooser fileChooser = new JFileChooser(new File(vocabFolderField.getText().trim().equals("") ? folderField.getText() : vocabFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select vocabulary folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
-			vocabFileField.setText(fileChooser.getSelectedFile().getAbsolutePath());
+			vocabFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
 	}
 	
 	
@@ -1453,7 +1452,7 @@ public class JCdmBuilderMain {
 					InsertVocabularyInServer process = new InsertVocabularyInServer();
 					DbSettings dbSettings = getTargetDbSettings();
 					if (dbSettings != null)
-						process.process(vocabFileField.getText(), dbSettings);
+						process.process(vocabFolderField.getText(), dbSettings);
 				} else {
 					CopyVocabularyFromSchema process = new CopyVocabularyFromSchema();
 					DbSettings dbSettings = getTargetDbSettings();
