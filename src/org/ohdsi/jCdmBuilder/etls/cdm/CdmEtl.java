@@ -1,11 +1,18 @@
 package org.ohdsi.jCdmBuilder.etls.cdm;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -24,6 +31,8 @@ import org.ohdsi.utilities.files.ReadCSVFileWithHeader;
 import org.ohdsi.utilities.files.Row;
 
 public class CdmEtl {
+	static int CR = 13;
+	static int LF = 10;
 	
 	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
@@ -90,7 +99,7 @@ public class CdmEtl {
 
 		for (File file : new File(folder).listFiles()) {
 			String table = "";
-			File temporarySourceFile = null;
+			List<String> fileParts = new ArrayList<String>();
 			try {
 				if (file.getName().toLowerCase().endsWith(".csv")) {
 					table = file.getName().substring(0, file.getName().length() - 4);
@@ -115,37 +124,50 @@ public class CdmEtl {
 									databaseName = databaseName.substring(0, databaseName.indexOf(";")).trim();
 								}
 							}
-							temporarySourceFileName = databaseName + "_" + dbSettings.database + "_" + file.getName();
-							temporarySourceFileNamePath = temporaryServerFolder + "/" + temporarySourceFileName;
-							temporarySourceFile = new File(temporarySourceFileNamePath);
-							StringUtilities.outputWithTime("Copy file " + file.getName() + " to " + temporarySourceFile.getAbsolutePath());
-							FileUtils.copyFile(file, temporarySourceFile);
+							if (FileUtils.sizeOf(file) < 2000000000L) {
+								temporarySourceFileName = databaseName + "_" + dbSettings.database + "_" + file.getName();
+								temporarySourceFileNamePath = temporaryServerFolder + File.separator + temporarySourceFileName;
+								File temporarySourceFile = new File(temporarySourceFileNamePath);
+								StringUtilities.outputWithTime("Copy file " + file.getName() + " to " + temporarySourceFile.getAbsolutePath());
+								fileParts.add(temporarySourceFileName);
+								FileUtils.copyFile(file, temporarySourceFile);
+							}
+							else { // Split file in parts of less than 2 GB.
+								fileParts = splitFile(file, temporaryServerFolder, databaseName + "_" + dbSettings.database, quote, 2000000000);
+							}
 						}
 						
 						// Copy data into table
+						for (String fileName : fileParts) {
+							// PostgreSQL
+							if (dbSettings.dbType == DbType.POSTGRESQL) {
+								StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + fileName + " into table " + table);
+								connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH DELIMITER '" + delimiter + "' NULL '" + (nullValueString == null ? "" : nullValueString) + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
+							}
+							// Microsoft SQL Server
+							else if (dbSettings.dbType == DbType.MSSQL) {
+								connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH (FORMAT = 'CSV', FIRSTROW = 2, FIELDTERMINATOR = '" + delimiter + "', FIELDQUOTE = '" + quote + "', ROWTERMINATOR = '\n');");
+							}
+							// Oracle
+							else if (dbSettings.dbType == DbType.ORACLE) {
+								connection.execute("LOAD DATA INFILE '" + temporaryLocalServerFolder + "/" + fileName + "' INTO TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FIELD TERMINATED BY '" + delimiter + "' OPTIONALLY ENCLOSED BY '" + quote + "' LINES TERMINATED BY '\n';");
+							}
 
-						// PostgreSQL
-						if (dbSettings.dbType == DbType.POSTGRESQL) {
-							StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + temporarySourceFileName + " into table " + table);
-							connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH DELIMITER '" + delimiter + "' NULL '" + (nullValueString == null ? "" : nullValueString) + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
-						}
-						// Microsoft SQL Server
-						else if (dbSettings.dbType == DbType.MSSQL) {
-							connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' WITH (FORMAT = 'CSV', FIRSTROW = 2, FIELDTERMINATOR = '" + delimiter + "', FIELDQUOTE = '" + quote + "', ROWTERMINATOR = '\n');");
-						}
-						// Oracle
-						else if (dbSettings.dbType == DbType.ORACLE) {
-							connection.execute("LOAD DATA INFILE '" + temporaryLocalServerFolder + "/" + temporarySourceFileName + "' INTO TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FIELD TERMINATED BY '" + delimiter + "' OPTIONALLY ENCLOSED BY '" + quote + "' LINES TERMINATED BY '\n';");
-						}
-
-						if (temporarySourceFile != null) {
-							FileUtils.forceDelete(temporarySourceFile);
+							temporarySourceFileNamePath = temporaryServerFolder + File.separator + fileName;
+							File temporarySourceFile = new File(temporarySourceFileNamePath);
+							if (temporarySourceFile != null) {
+								FileUtils.forceDelete(temporarySourceFile);
+							}
 						}
 					}
 				}
 			} catch (Exception e) {
-				if (temporarySourceFile != null) {
-					FileUtils.forceDelete(temporarySourceFile);
+				// Delete files from the server
+				for (String fileName : fileParts) {
+					File temporarySourceFile = new File(temporaryServerFolder + File.separator + fileName);
+					if (temporarySourceFile != null) {
+						FileUtils.forceDelete(temporarySourceFile);
+					}
 				}
 				
 				handleError(e, frame, errorFolder, "Table " + table, continueOnError);
@@ -160,6 +182,94 @@ public class CdmEtl {
 		}
 		
 		StringUtilities.outputWithTime("Finished inserting tables");
+	}
+	
+	private List<String> splitFile(File file, String destinationFolder, String fileNamePrefix, char quote, int maxSize) throws IOException {
+		StringUtilities.outputWithTime("Split file " + file.getName() + " into:");
+		List<String> fileParts = new ArrayList<String>();
+		int fileNr = 0;
+		int fileSize = 0;
+		BufferedReader fileReader = new BufferedReader(new FileReader(file));
+		BufferedWriter fileWriter = null;
+		String record = getNextCSVRecord(fileReader, (int) quote);
+		String header = null;
+		while (record != null) {
+			if (fileWriter == null) {
+				fileNr++;
+				String partFileName = fileNamePrefix + "_" + Integer.toString(fileNr) + "_" + file.getName();
+				String partFileNamePath = destinationFolder + File.separator + partFileName;
+				fileParts.add(partFileName);
+				StringUtilities.outputWithTime("    " + partFileNamePath);
+				fileWriter = new BufferedWriter(new FileWriter(new File(partFileNamePath)));
+				if (header == null) {
+					header = record;
+				}
+				else {
+					fileWriter.append(header);
+					fileSize += header.length();
+				}
+			}
+			fileWriter.append(record);
+			fileSize += record.length();
+			if (fileSize > maxSize) {
+				fileWriter.close();
+				fileWriter = null;
+				fileSize = 0;
+			}
+			record = getNextCSVRecord(fileReader, (int) quote);
+		}
+		if (fileWriter != null) {
+			fileWriter.close();
+		}
+		return fileParts;
+	}
+	
+	private String getNextCSVRecord(BufferedReader csvFileReader, int quote) throws IOException {
+		String record = null;
+		boolean eol = false;
+		boolean quoted = false;
+		int lastCharNum = -2;
+		while (!eol) {
+			int charNum = lastCharNum == -2 ? csvFileReader.read() : lastCharNum;
+			lastCharNum = -2;
+			if (charNum != -1) {
+				if (!quoted) {
+					if (charNum == LF) {
+						record = (record == null ? "" : record) + ((char)charNum);
+						eol = true;
+						break;
+					}
+					else if (charNum == quote) {
+						quoted = true;
+						record = (record == null ? "" : record) + ((char)charNum);
+					}
+					else {
+						record = (record == null ? "" : record) + ((char)charNum);
+					}
+				}
+				else {
+					if (charNum == quote) {
+						record = (record == null ? "" : record) + ((char)charNum);
+						charNum = csvFileReader.read();
+						if (charNum != quote) {
+							quoted = false;
+							lastCharNum = charNum;
+						}
+						else {
+							record = (record == null ? "" : record) + ((char)charNum);
+						}
+					}
+					else {
+						record = (record == null ? "" : record) + ((char)charNum);
+					}
+				}
+			}
+			else {
+				// EOF
+				break;
+			}
+		}
+		return record;
 	}
 	
 	private void handleError(Exception e, JFrame frame, String errorFolder, String item, boolean continueOnError) {

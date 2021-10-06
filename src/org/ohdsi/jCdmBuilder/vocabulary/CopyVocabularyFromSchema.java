@@ -8,14 +8,13 @@ import org.ohdsi.utilities.StringUtilities;
 public class CopyVocabularyFromSchema {
 	public void process(String schema, DbSettings dbSettings) {
 		String resourceName = null;
-		if (dbSettings.dbType == DbType.ORACLE) {
-			throw new RuntimeException("Copying vocabulary not implemented for Oracle. Contact JCDMBuilder maintainer if needed.");
-		} else if (dbSettings.dbType == DbType.MSSQL) {
+		if (dbSettings.dbType == DbType.MSSQL) {
 			resourceName = "CopyVocabFromSchema - SQL Server.sql";
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
 			resourceName = "CopyVocabFromSchema - PostgreSQL.sql";
 		} else if (dbSettings.dbType == DbType.ORACLE) {
 			resourceName = "CopyVocabFromSchema - Oracle.sql";
+			throw new RuntimeException("Copying vocabulary not implemented for Oracle. Contact JCDMBuilder maintainer if needed.");
 		}
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(dbSettings.database);

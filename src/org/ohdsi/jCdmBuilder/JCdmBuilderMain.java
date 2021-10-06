@@ -60,6 +60,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
@@ -68,11 +70,11 @@ import org.ohdsi.jCdmBuilder.cdm.EraBuilder;
 import org.ohdsi.jCdmBuilder.etls.cdm.CdmEtl;
 import org.ohdsi.jCdmBuilder.vocabulary.CopyVocabularyFromSchema;
 import org.ohdsi.jCdmBuilder.vocabulary.InsertVocabularyInServer;
-import org.ohdsi.utilities.PropertiesManager;
 import org.ohdsi.utilities.StringUtilities;
+import org.ohdsi.utilities.files.IniFile;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "0.4.0";
+	public static final String VERSION = "0.4.1";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 	
@@ -121,15 +123,15 @@ public class JCdmBuilderMain {
 	private JCheckBox						executeResultsIndicesCheckBox;
 	private JComboBox<String>				etlType;
 	private DefaultComboBoxModel<String>	etlTypeModel;
-	//private JComboBox<String>				sourceType;
 	private JComboBox<String>				targetType;
 	private JTextField						versionIdField;
 	private JTextField						targetUserField;
 	private JTextField						targetPasswordField;
 	private JTextField						targetServerField;
-	private JTextField						targetDatabaseField;
-	private JTextField						targetResultsDatabaseField;
+	private JTextField						targetSchemaField;
+	private JTextField						targetResultsSchemaField;
 	private JComboBox<String>				targetCdmVersion;
+	//private JComboBox<String>				sourceType;
 	private JTextField						sourceDelimiterField;
 	private JTextField						sourceQuoteField;
 	private JTextField						sourceNullValueField;
@@ -157,8 +159,9 @@ public class JCdmBuilderMain {
 	private boolean							executeResultsIndicesWhenReady		    = false;
 	private boolean							idsToBigInt							    = false;
 	private boolean             			continueOnError                         = false;
-	private PropertiesManager				propertiesManager					    = new PropertiesManager();
+	private IniFile							settingsFile							= null;
 	
+	private boolean							fieldLinkActive							= false;
 	private List<JComponent>				componentsToDisableWhenRunning	        = new ArrayList<JComponent>();
 	private boolean             			autoStart                               = false;
 	
@@ -336,11 +339,11 @@ public class JCdmBuilderMain {
 		targetPasswordField = new JPasswordField("");
 		targetPanel.add(targetPasswordField);
 		targetPanel.add(new JLabel("CDM Schema name"));
-		targetDatabaseField = new JTextField("");
-		targetPanel.add(targetDatabaseField);
+		targetSchemaField = new JTextField("");
+		targetPanel.add(targetSchemaField);
 		targetPanel.add(new JLabel("Results Schema name"));
-		targetResultsDatabaseField = new JTextField("");
-		targetPanel.add(targetResultsDatabaseField);
+		targetResultsSchemaField = new JTextField("");
+		targetPanel.add(targetResultsSchemaField);
 		targetPanel.add(new JLabel("CDM version"));
 		targetCdmVersion = new JComboBox<String>(Cdm.availableVersions);
 		targetCdmVersion.setToolTipText("Select the CMD version");
@@ -356,22 +359,22 @@ public class JCdmBuilderMain {
 					targetServerField.setToolTipText("For Oracle servers this field contains the SID, servicename, and optionally the port: '<host>/<sid>', '<host>:<port>/<sid>', '<host>/<service name>', or '<host>:<port>/<service name>'.");
 					targetUserField.setToolTipText("For Oracle servers this field contains the name of the user used to log in.");
 					targetPasswordField.setToolTipText("For Oracle servers this field contains the password corresponding to the user.");
-					targetDatabaseField.setToolTipText("For Oracle servers this field contains the schema (i.e. 'user' in Oracle terms) containing the target tables. The user will be created with the same password.");
+					targetSchemaField.setToolTipText("For Oracle servers this field contains the schema (i.e. 'user' in Oracle terms) containing the target tables. The user will be created with the same password.");
 				} else if (arg0.getItem().toString().equals("PostgreSQL")) {
 					targetServerField.setToolTipText("For PostgreSQL servers this field contains the host name and database name (<host>/<database>).");
 					targetUserField.setToolTipText("The user used to log in to the server.");
 					targetPasswordField.setToolTipText("The password used to log in to the server.");
-					targetDatabaseField.setToolTipText("For PostgreSQL servers this field contains the schema containing the target tables.");
+					targetSchemaField.setToolTipText("For PostgreSQL servers this field contains the schema containing the target tables.");
 				} else if (arg0.getItem().toString().equals("SQL Server")) {
 					targetServerField.setToolTipText("For Microsoft SQL Server this field contains the server address, the database and optionally the port: '<host>:<port>;database=<database>;', or  '<host>;database=<database>;'");
 					targetUserField.setToolTipText("The user used to log in to the server. Optionally, the domain can be specified as <domain>/<user> (e.g. 'MyDomain/Joe').");
 					targetPasswordField.setToolTipText("The password used to log in to the server.");
-					targetDatabaseField.setToolTipText("The name of the schema containing the target tables.");
+					targetSchemaField.setToolTipText("The name of the schema containing the target tables.");
 				} else {
 					targetServerField.setToolTipText("This field contains the name or IP-address or name of the database server.");
 					targetUserField.setToolTipText("The user used to log in to the server.");
 					targetPasswordField.setToolTipText("The password used to log in to the server.");
-					targetDatabaseField.setToolTipText("The name of the database containing the target tables.");
+					targetSchemaField.setToolTipText("The name of the database containing the target tables.");
 				}
 			}
 		});
@@ -443,80 +446,75 @@ public class JCdmBuilderMain {
 	}
 	
 	
-	private void loadSettings() {
-		// locations
-		folderField.setText(propertiesManager.get("WorkspaceFolder"));
-		targetType.setSelectedItem(propertiesManager.get("TargetDataType"));
-		targetServerField.setText(propertiesManager.get("TargetServerLocation"));
-		targetUserField.setText(propertiesManager.get("TargetUserName"));
-		targetDatabaseField.setText(propertiesManager.get("TargetDatabaseName"));
-		targetResultsDatabaseField.setText(propertiesManager.get("TargetResultsDatabaseName"));
-		targetCdmVersion.setSelectedItem(propertiesManager.get("TargetCdmVersion"));
+	private void loadSettings(String fileName) {
+		settingsFile = new IniFile(fileName);
+		settingsFile.readFile();
+		
+		// Locations
+		if (settingsFile.getValue("Locations", "Workspace Folder")           != null) folderField.setText(settingsFile.getValue("Locations", "Workspace Folder"));
+		if (settingsFile.getValue("Locations", "Target Database Type")       != null) targetType.setSelectedItem(settingsFile.getValue("Locations", "Target Database Type"));
+		if (settingsFile.getValue("Locations", "Target Server Location")     != null) targetServerField.setText(settingsFile.getValue("Locations", "Target Server Location"));
+		if (settingsFile.getValue("Locations", "Target User Name")           != null) targetUserField.setText(settingsFile.getValue("Locations", "Target User Name"));
+		if (settingsFile.getValue("Locations", "Target CDM Schema Name")     != null) targetSchemaField.setText(settingsFile.getValue("Locations", "Target CDM Schema Name"));
+		if (settingsFile.getValue("Locations", "Target Results Schema Name") != null) targetResultsSchemaField.setText(settingsFile.getValue("Locations", "Target Results Schema Name"));
+		if (settingsFile.getValue("Locations", "Target CDM Version")         != null) targetCdmVersion.setSelectedItem(settingsFile.getValue("Locations", "Target CDM Version"));
+		
+		// Vocabulary
+		if (settingsFile.getValue("Vocabulary", "Vocabulary Source Type")    != null) {
+			if (settingsFile.getValue("Vocabulary", "Vocabulary Source Type").equals("ATHENA CSV files in folder"))
+				vocabFileTypeButton.doClick();
+			else
+				vocabSchemaTypeButton.doClick();
+		}
+		if (settingsFile.getValue("Vocabulary", "Vocabulary Data Folder")    != null) vocabFolderField.setText(settingsFile.getValue("Vocabulary", "Vocabulary Data Folder"));
+		if (settingsFile.getValue("Vocabulary", "Vocabulary Schema")         != null) vocabSchemaField.setText(settingsFile.getValue("Vocabulary", "Vocabulary Schema"));
 		
 		// ETL
-		versionIdField.setText(propertiesManager.get("VersionIdField"));
-		etlType.setSelectedItem(propertiesManager.get("EtlType"));
-		//TODO
-		//sourceType.setSelectedItem(propertiesManager.get("SourceDataType"));
-		//sourceServerField.setText(propertiesManager.get("SourceServerLocation"));
-		//sourceUserField.setText(propertiesManager.get("SourceUserName"));
-		//sourceDatabaseField.setText(propertiesManager.get("SourceDatabaseName"));
-		sourceDelimiterField.setText(propertiesManager.get("SourceDelimiter"));
-		sourceQuoteField.setText(propertiesManager.get("SourceQuote"));
-		sourceFolderField.setText(propertiesManager.get("SourceFolder"));
-		sourceServerDelimiterField.setText(propertiesManager.get("SourceServerDelimiter"));
-		sourceServerQuoteField.setText(propertiesManager.get("SourceServerQuote"));
-		sourceServerFolderField.setText(propertiesManager.get("SourceServerFolder"));
-		sourceServerTempFolderField.setText(propertiesManager.get("SourceServerTempFolder"));
-		sourceServerTempLocalFolderField.setText(propertiesManager.get("SourceServerTempLocalFolder"));
-		
-		// vocabulary
-		vocabFolderField.setText(propertiesManager.get("VocabFileField"));
-		vocabSchemaField.setText(propertiesManager.get("VocabSchemaField"));
-		if (propertiesManager.get("VocabType").equals("ATHENA CSV files in folder"))
-			vocabFileTypeButton.doClick();
-		else
-			vocabSchemaTypeButton.doClick();
-		
+		if (settingsFile.getValue("ETL", "ETL Type")                         != null) etlType.setSelectedItem(settingsFile.getValue("ETL", "ETL Type"));
+		if (settingsFile.getValue("ETL", "Version ID")                       != null) versionIdField.setText(settingsFile.getValue("ETL", "Version ID"));
+		if (settingsFile.getValue("ETL", "Source Folder")                    != null) sourceFolderField.setText(settingsFile.getValue("ETL", "Source Folder"));
+		if (settingsFile.getValue("ETL", "Source Delimiter")                 != null) sourceDelimiterField.setText(settingsFile.getValue("ETL", "Source Delimiter"));
+		if (settingsFile.getValue("ETL", "Source Quote")                     != null) sourceQuoteField.setText(settingsFile.getValue("ETL", "Source Quote"));
+		if (settingsFile.getValue("ETL", "Source Null Value")                != null) sourceNullValueField.setText(settingsFile.getValue("ETL", "Source Null Value"));
+		if (settingsFile.getValue("ETL", "Server Temp Folder")               != null) sourceServerTempFolderField.setText(settingsFile.getValue("ETL", "Server Temp Folder"));
+		if (settingsFile.getValue("ETL", "Local Path Server Temp Folder")    != null) sourceServerTempLocalFolderField.setText(settingsFile.getValue("ETL", "Local Path Server Temp Folder"));
 	}
 	
 	
 	private void saveSettings(String fileName) {
+		settingsFile = new IniFile(fileName);
+		
 		// locations
-		propertiesManager.set("WorkspaceFolder", folderField.getText());
-		propertiesManager.set("TargetDataType", targetType.getSelectedItem().toString());
-		propertiesManager.set("TargetServerLocation", targetServerField.getText());
-		propertiesManager.set("TargetUserName", targetUserField.getText());
-		propertiesManager.set("TargetDatabaseName", targetDatabaseField.getText());
-		propertiesManager.set("TargetResultsDatabaseName", targetResultsDatabaseField.getText());
-		propertiesManager.set("TargetCdmVersion", targetCdmVersion.getSelectedItem().toString());
+		settingsFile.addGroup("Locations", null);
+		settingsFile.setValue("Locations", "Workspace Folder", folderField.getText(), null);
+		settingsFile.setValue("Locations", "Target Database Type", targetType.getSelectedItem().toString(), null);
+		settingsFile.setValue("Locations", "Target Server Location", targetServerField.getText(), null);
+		settingsFile.setValue("Locations", "Target User Name", targetUserField.getText(), null);
+		settingsFile.setValue("Locations", "Target CDM Schema Name", targetSchemaField.getText(), null);
+		settingsFile.setValue("Locations", "Target Results Schema Name", targetResultsSchemaField.getText(), null);
+		settingsFile.setValue("Locations", "Target CDM Version", targetCdmVersion.getSelectedItem().toString(), null);
+		
+		// Vocabulary
+		settingsFile.addGroup("Vocabulary", null);
+		if (vocabFileTypeButton.isSelected())
+			settingsFile.setValue("Vocabulary", "Vocabulary Source Type", "ATHENA CSV files in folder", null);
+		else
+			settingsFile.setValue("Vocabulary", "Vocabulary Source Type", "Database schema", null);
+		settingsFile.setValue("Vocabulary", "Vocabulary Data Folder", vocabFolderField.getText(), null);
+		settingsFile.setValue("Vocabulary", "Vocabulary Schema", vocabSchemaField.getText(), null);
 		
 		// ETL
-		propertiesManager.set("VersionIdField", versionIdField.getText());
-		propertiesManager.set("EtlType", etlType.getSelectedItem().toString());
-		//TODO
-		//propertiesManager.set("SourceDataType", sourceType.getSelectedItem().toString());
-		//propertiesManager.set("SourceServerLocation", sourceServerField.getText());
-		//propertiesManager.set("SourceUserName", sourceUserField.getText());
-		//propertiesManager.set("SourceDatabaseName", sourceDatabaseField.getText());
-		propertiesManager.set("SourceDelimiter", sourceDelimiterField.getText());
-		propertiesManager.set("SourceQuote", sourceQuoteField.getText());
-		propertiesManager.set("SourceFolder", sourceFolderField.getText());
-		propertiesManager.set("SourceServerDelimiter", sourceServerDelimiterField.getText());
-		propertiesManager.set("SourceServerQuote", sourceServerQuoteField.getText());
-		propertiesManager.set("SourceServerFolder", sourceServerFolderField.getText());
-		propertiesManager.set("SourceServerTempFolder", sourceServerTempFolderField.getText());
-		propertiesManager.set("SourceServerTempLocalFolder", sourceServerTempLocalFolderField.getText());
+		settingsFile.addGroup("ETL", null);
+		settingsFile.setValue("ETL", "ETL Type", etlType.getSelectedItem().toString(), null);
+		settingsFile.setValue("ETL", "Version ID", versionIdField.getText(), null);
+		settingsFile.setValue("ETL", "Source Folder", sourceFolderField.getText(), null);
+		settingsFile.setValue("ETL", "Source Delimiter", sourceDelimiterField.getText(), null);
+		settingsFile.setValue("ETL", "Source Quote", sourceQuoteField.getText(), null);
+		settingsFile.setValue("ETL", "Source Null Value", sourceNullValueField.getText(), null);
+		settingsFile.setValue("ETL", "Server Temp Folder", sourceServerTempFolderField.getText(), null);
+		settingsFile.setValue("ETL", "Local Path Server Temp Folder", sourceServerTempLocalFolderField.getText(), null);
 		
-		// vocabulary
-		propertiesManager.set("VocabFileField", vocabFolderField.getText());
-		propertiesManager.set("VocabSchemaField", vocabSchemaField.getText());
-		if (vocabFileTypeButton.isSelected())
-			propertiesManager.set("VocabType", "ATHENA CSV files in folder");
-		else
-			propertiesManager.set("VocabType", "Database schema");
-		
-		propertiesManager.save(fileName);
+		settingsFile.writeFile();
 	}
 	
 	
@@ -735,6 +733,12 @@ public class JCdmBuilderMain {
 		sourceServerTempLocalFolderField.setToolTipText("Specify the local path on the server of the temporary folder on the server here");
 		sourceServerFolderPanel.add(new JLabel("Local path server folder"));
 		sourceServerFolderPanel.add(sourceServerTempLocalFolderField);
+		
+		// Link fields
+		sourceFolderField.getDocument().addDocumentListener(new TextFieldLink(sourceFolderField, sourceServerFolderField));
+		sourceDelimiterField.getDocument().addDocumentListener(new TextFieldLink(sourceDelimiterField, sourceServerDelimiterField));
+		sourceQuoteField.getDocument().addDocumentListener(new TextFieldLink(sourceQuoteField, sourceServerQuoteField));
+		sourceNullValueField.getDocument().addDocumentListener(new TextFieldLink(sourceNullValueField, sourceServerNullValueField));
 		
 		
 		sourceCards = new JPanel(new CardLayout());
@@ -1036,8 +1040,7 @@ public class JCdmBuilderMain {
 				if (parameter.equals("-settingsfile")) {
 					argNr++;
 					parameterValue = args[argNr];
-					propertiesManager.load(parameterValue);
-					loadSettings();
+					loadSettings(parameterValue);
 					break;
 				}
 			}
@@ -1070,7 +1073,7 @@ public class JCdmBuilderMain {
 				if (parameter.equals("-targetdatabase")) {
 					argNr++;
 					parameterValue = args[argNr];
-					targetDatabaseField.setText(parameterValue);
+					targetSchemaField.setText(parameterValue);
 				}
 				if (parameter.equals("-targetuser")) {
 					argNr++;
@@ -1200,30 +1203,28 @@ public class JCdmBuilderMain {
 	
 	private void loadSettingsFile() {
 		JFileChooser fileChooser = new JFileChooser();
-		if (propertiesManager.getSettingFileName() == null)
+		if (settingsFile == null)
 			fileChooser.setSelectedFile(new File(System.getProperty("user.dir")));
 		else
-			fileChooser.setSelectedFile(new File(propertiesManager.getSettingFileName()));
+			fileChooser.setSelectedFile(new File(settingsFile.getFileName()));
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Load");
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
-			propertiesManager.load(fileChooser.getSelectedFile().getAbsolutePath());
-			loadSettings();
+			loadSettings(fileChooser.getSelectedFile().getAbsolutePath());
 		}
 	}
 	
 	
 	private void saveSettingsFile() {
 		JFileChooser fileChooser = new JFileChooser();
-		if (propertiesManager.getSettingFileName() == null)
+		if (settingsFile == null)
 			fileChooser.setSelectedFile(new File(System.getProperty("user.dir")));
 		else
-			fileChooser.setSelectedFile(new File(propertiesManager.getSettingFileName()));
+			fileChooser.setSelectedFile(new File(settingsFile.getFileName()));
 		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Save");
 		if (returnVal == JFileChooser.APPROVE_OPTION) {
 			saveSettings(fileChooser.getSelectedFile().getAbsolutePath());
-			propertiesManager.load(fileChooser.getSelectedFile().getAbsolutePath());
 		}
 	}
 	
@@ -1293,8 +1294,8 @@ public class JCdmBuilderMain {
 		dbSettings.user = targetUserField.getText();
 		dbSettings.password = targetPasswordField.getText();
 		dbSettings.server = targetServerField.getText();
-		dbSettings.database = targetDatabaseField.getText();
-		dbSettings.resultsDatabase = targetResultsDatabaseField.getText();
+		dbSettings.database = targetSchemaField.getText();
+		dbSettings.resultsDatabase = targetResultsSchemaField.getText();
 		if (targetType.getSelectedItem().toString().equals("MySQL"))
 			dbSettings.dbType = DbType.MYSQL;
 		else if (targetType.getSelectedItem().toString().equals("Oracle"))
@@ -1606,6 +1607,40 @@ public class JCdmBuilderMain {
 			} finally {
 				for (JComponent component : componentsToDisableWhenRunning)
 					component.setEnabled(true);
+			}
+		}
+	}
+	
+	
+	private class TextFieldLink implements DocumentListener {
+		private JTextField sourceField;
+		private JTextField linkedField;
+		
+		public TextFieldLink(JTextField sourceField, JTextField linkedField) {
+			this.sourceField = sourceField;
+			this.linkedField = linkedField;
+		}
+
+		@Override
+		public void insertUpdate(DocumentEvent e) {
+			copyValueToLinkedField();
+		}
+
+		@Override
+		public void removeUpdate(DocumentEvent e) {
+			copyValueToLinkedField();
+		}
+
+		@Override
+		public void changedUpdate(DocumentEvent e) {
+			copyValueToLinkedField();
+		} 
+		
+		private void copyValueToLinkedField() {
+			if (!fieldLinkActive) {
+				fieldLinkActive = true;
+				linkedField.setText(sourceField.getText());
+				fieldLinkActive = false;
 			}
 		}
 	}
