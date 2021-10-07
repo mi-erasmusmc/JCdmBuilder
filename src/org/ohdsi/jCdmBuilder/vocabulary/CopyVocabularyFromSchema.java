@@ -20,9 +20,8 @@ public class CopyVocabularyFromSchema {
 		connection.use(dbSettings.cdmSchema);
 		connection.setContext(CopyVocabularyFromSchema.class);
 		connection.setVerbose(true);
-		StringUtilities.outputWithTime("Copying vocabulary tables");
-		connection.executeResource(resourceName, "@target_schema", dbSettings.cdmSchema);
-		connection.executeResource(resourceName, "@vocab_schema", vocabSchema);
+		StringUtilities.outputWithTime("Copying vocabulary tables from schema " + vocabSchema);
+		connection.executeResource(resourceName, "@target_schema", dbSettings.cdmSchema, "@vocab_schema", vocabSchema);
 		connection.close();
 		StringUtilities.outputWithTime("Done");
 	}
