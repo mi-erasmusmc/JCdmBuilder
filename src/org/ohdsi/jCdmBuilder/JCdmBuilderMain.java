@@ -95,7 +95,12 @@ public class JCdmBuilderMain {
 	private static String					SOURCEVIASERVERFOLDER			        = "source via server folder";
 	private static String					SOURCEDATABASE					        = "source database";
 	private static String					VOCABFOLDER						        = "vocab folder";
+	private static String					VOCABVIASERVERFOLDER                    = "vocab via server folder";
 	private static String					VOCABSCHEMA						        = "vocab schema";
+	
+	private static String					VOCABTYPE_LOAD							= "1. Load ATHENA CSV files to server";
+	private static String					VOCABTYPE_BULK_LOAD						= "2. Bulk Load ATHENA CSV files from server to server";
+	private static String					VOCABTYPE_SCHEMA_LOAD					= "3. Load vocabulary from schema";
 	
 	private static String					ETLTYPE_LOAD							= "1. Load CSV files in CDM format to server";
 	private static String					ETLTYPE_BULK_LOAD						= "2. Bulk Load CSV files from server in CDM format to server";
@@ -105,10 +110,13 @@ public class JCdmBuilderMain {
 	private JFrame							frame;
 	private JTabbedPane						tabbedPane;
 	private JTextField						folderField;
+	private JComboBox<String>				vocabSourceType;
+	private DefaultComboBoxModel<String>	vocabSourceTypeModel;
 	private JTextField						vocabFolderField;
+	private JTextField						vocabServerFolderField;
+	private JTextField						vocabServerTempFolderField;
+	private JTextField						vocabServerTempLocalFolderField;
 	private JTextField						vocabSchemaField;
-	private JRadioButton					vocabFileTypeButton;
-	private JRadioButton					vocabSchemaTypeButton;
 	private JPanel							vocabCards;
 	private JCheckBox						executeStructureCheckBox;
 	private JCheckBox						executeVocabCheckBox;
@@ -289,6 +297,22 @@ public class JCdmBuilderMain {
 		JPanel executePanel = createExecutePanel();
 		tabbedPane.addTab("Execute", null, executePanel, "Run multiple steps automatically");
 		
+		// Link fields
+		vocabFolderField.getDocument().addDocumentListener(new TextFieldLink(vocabFolderField, vocabServerFolderField));
+		vocabServerFolderField.getDocument().addDocumentListener(new TextFieldLink(vocabServerFolderField, vocabFolderField));
+		vocabServerTempFolderField.getDocument().addDocumentListener(new TextFieldLink(vocabServerTempFolderField, sourceServerTempFolderField));
+		sourceServerTempFolderField.getDocument().addDocumentListener(new TextFieldLink(sourceServerTempFolderField, vocabServerTempFolderField));
+		vocabServerTempLocalFolderField.getDocument().addDocumentListener(new TextFieldLink(vocabServerTempLocalFolderField, sourceServerTempLocalFolderField));
+		sourceServerTempLocalFolderField.getDocument().addDocumentListener(new TextFieldLink(sourceServerTempLocalFolderField, vocabServerTempLocalFolderField));
+		sourceFolderField.getDocument().addDocumentListener(new TextFieldLink(sourceFolderField, sourceServerFolderField));
+		sourceServerFolderField.getDocument().addDocumentListener(new TextFieldLink(sourceServerFolderField, sourceFolderField));
+		sourceDelimiterField.getDocument().addDocumentListener(new TextFieldLink(sourceDelimiterField, sourceServerDelimiterField));
+		sourceServerDelimiterField.getDocument().addDocumentListener(new TextFieldLink(sourceServerDelimiterField, sourceDelimiterField));
+		sourceQuoteField.getDocument().addDocumentListener(new TextFieldLink(sourceQuoteField, sourceServerQuoteField));
+		sourceServerQuoteField.getDocument().addDocumentListener(new TextFieldLink(sourceServerQuoteField, sourceQuoteField));
+		sourceNullValueField.getDocument().addDocumentListener(new TextFieldLink(sourceNullValueField, sourceServerNullValueField));
+		sourceServerNullValueField.getDocument().addDocumentListener(new TextFieldLink(sourceServerNullValueField, sourceNullValueField));
+		
 		return tabbedPane;
 	}
 	
@@ -354,6 +378,7 @@ public class JCdmBuilderMain {
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
 				updateETLType();
+				updateVocabSourceType();
 				
 				if (arg0.getItem().toString().equals("Oracle")) {
 					targetServerField.setToolTipText("For Oracle servers this field contains the SID, servicename, and optionally the port: '<host>/<sid>', '<host>:<port>/<sid>', '<host>/<service name>', or '<host>:<port>/<service name>'.");
@@ -460,12 +485,7 @@ public class JCdmBuilderMain {
 		if (settingsFile.getValue("Locations", "Target CDM Version")         != null) targetCdmVersion.setSelectedItem(settingsFile.getValue("Locations", "Target CDM Version"));
 		
 		// Vocabulary
-		if (settingsFile.getValue("Vocabulary", "Vocabulary Source Type")    != null) {
-			if (settingsFile.getValue("Vocabulary", "Vocabulary Source Type").equals("ATHENA CSV files in folder"))
-				vocabFileTypeButton.doClick();
-			else
-				vocabSchemaTypeButton.doClick();
-		}
+		if (settingsFile.getValue("Vocabulary", "Vocabulary Source Type")    != null) vocabSourceType.setSelectedItem(settingsFile.getValue("Vocabulary", "Vocabulary Source Type"));
 		if (settingsFile.getValue("Vocabulary", "Vocabulary Data Folder")    != null) vocabFolderField.setText(settingsFile.getValue("Vocabulary", "Vocabulary Data Folder"));
 		if (settingsFile.getValue("Vocabulary", "Vocabulary Schema")         != null) vocabSchemaField.setText(settingsFile.getValue("Vocabulary", "Vocabulary Schema"));
 		
@@ -484,7 +504,7 @@ public class JCdmBuilderMain {
 	private void saveSettings(String fileName) {
 		settingsFile = new IniFile(fileName);
 		
-		// locations
+		// Locations
 		settingsFile.addGroup("Locations", null);
 		settingsFile.setValue("Locations", "Workspace Folder", folderField.getText(), null);
 		settingsFile.setValue("Locations", "Target Database Type", targetType.getSelectedItem().toString(), null);
@@ -496,10 +516,7 @@ public class JCdmBuilderMain {
 		
 		// Vocabulary
 		settingsFile.addGroup("Vocabulary", null);
-		if (vocabFileTypeButton.isSelected())
-			settingsFile.setValue("Vocabulary", "Vocabulary Source Type", "ATHENA CSV files in folder", null);
-		else
-			settingsFile.setValue("Vocabulary", "Vocabulary Source Type", "Database schema", null);
+		settingsFile.setValue("Vocabulary", "Vocabulary Source Type", vocabSourceType.getSelectedItem().toString(), null);
 		settingsFile.setValue("Vocabulary", "Vocabulary Data Folder", vocabFolderField.getText(), null);
 		settingsFile.setValue("Vocabulary", "Vocabulary Schema", vocabSchemaField.getText(), null);
 		
@@ -519,65 +536,180 @@ public class JCdmBuilderMain {
 	
 	
 	private JPanel createVocabPanel() {
-		JPanel panel = new JPanel();
-		panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+		JPanel panel = new JPanel(new BorderLayout());
+		
+		JPanel mainPanel = new JPanel();
+		mainPanel.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.weightx = 0.5;
 		
 		JPanel vocabSourceTypePanel = new JPanel();
 		vocabSourceTypePanel.setLayout(new BoxLayout(vocabSourceTypePanel, BoxLayout.X_AXIS));
-		vocabSourceTypePanel.setBorder(BorderFactory.createTitledBorder("Vocabulary source type"));
-		ButtonGroup buttonGroup = new ButtonGroup();
-		vocabFileTypeButton = new JRadioButton("ATHENA CSV files in folder");
-		vocabSourceTypePanel.add(vocabFileTypeButton);
-		buttonGroup.add(vocabFileTypeButton);
-		vocabFileTypeButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				((CardLayout) vocabCards.getLayout()).show(vocabCards, VOCABFOLDER);
+		vocabSourceTypePanel.setBorder(BorderFactory.createTitledBorder("Vocabulary Source type"));
+		vocabSourceTypeModel = new DefaultComboBoxModel<String>(new String[] {});
+		vocabSourceType = new JComboBox<String>(vocabSourceTypeModel);
+		updateVocabSourceType();
+		vocabSourceType.setToolTipText("Select the appropriate vocabulary load process");
+		vocabSourceType.addItemListener(new ItemListener() {
+			
+			@Override
+			public void itemStateChanged(ItemEvent arg0) {
+				String selection = arg0.getItem().toString();
+				if (selection.equals(VOCABTYPE_LOAD))
+					((CardLayout) vocabCards.getLayout()).show(vocabCards, VOCABFOLDER);
+				else if (selection.equals(VOCABTYPE_BULK_LOAD))
+						((CardLayout) vocabCards.getLayout()).show(vocabCards, VOCABVIASERVERFOLDER);
+				else
+					((CardLayout) vocabCards.getLayout()).show(vocabCards, VOCABSCHEMA);
 			}
 		});
-		vocabSourceTypePanel.add(Box.createHorizontalGlue());
-		vocabSchemaTypeButton = new JRadioButton("Database schema");
-		vocabSourceTypePanel.add(vocabSchemaTypeButton);
-		buttonGroup.add(vocabSchemaTypeButton);
-		vocabFileTypeButton.setSelected(true);
-		vocabSchemaTypeButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				((CardLayout) vocabCards.getLayout()).show(vocabCards, VOCABSCHEMA);
-			}
-		});
-		panel.add(vocabSourceTypePanel);
+		vocabSourceTypePanel.add(vocabSourceType);
+		vocabSourceTypePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, vocabSourceTypePanel.getPreferredSize().height));
+		c.gridx = 0;
+		c.gridy = 0;
+		c.gridwidth = 1;
+		mainPanel.add(vocabSourceTypePanel, c);
 		
-		vocabCards = new JPanel(new CardLayout());
 		
-		JPanel vocabFilePanel = new JPanel();
-		vocabFilePanel.setLayout(new BoxLayout(vocabFilePanel, BoxLayout.X_AXIS));
-		vocabFilePanel.setBorder(BorderFactory.createTitledBorder("Vocabulary data folder"));
+		// Vocabulary Source Type 1 Panel
+		JPanel vocabFolderPanel = new JPanel();
+		vocabFolderPanel.setLayout(new GridLayout(6, 2));
+		vocabFolderPanel.setBorder(BorderFactory.createTitledBorder("Vocabulary source folder location"));
+		
+		vocabFolderPanel.add(new JLabel("Folder"));
+		
+		JPanel vocabFolderFieldPanel = new JPanel();
+		vocabFolderFieldPanel.setLayout(new BoxLayout(vocabFolderFieldPanel, BoxLayout.X_AXIS));
 		vocabFolderField = new JTextField();
 		vocabFolderField.setText("");
 		vocabFolderField.setToolTipText("Specify the name of the folder containing the vocabulary CSV files here");
-		vocabFilePanel.add(vocabFolderField);
-		JButton pickButton = new JButton("Pick folder");
-		pickButton.setToolTipText("Select the folder containing the vocabulary CSV files");
-		vocabFilePanel.add(pickButton);
-		pickButton.addActionListener(new ActionListener() {
+		vocabFolderFieldPanel.add(vocabFolderField);
+		JButton pickVocabFolderButton = new JButton("Pick folder");
+		pickVocabFolderButton.setToolTipText("Select the folder containing the vocabulary CSV files");
+		vocabFolderFieldPanel.add(pickVocabFolderButton);
+		pickVocabFolderButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				pickVocabFile();
+				pickVocabFolder();
 			}
 		});
-		vocabCards.add(vocabFilePanel, VOCABFOLDER);
+		vocabFolderPanel.add(vocabFolderFieldPanel);
 		
+		vocabFolderPanel.add(Box.createHorizontalGlue());
+		vocabFolderPanel.add(Box.createHorizontalGlue());
+		vocabFolderPanel.add(Box.createHorizontalGlue());
+		vocabFolderPanel.add(Box.createHorizontalGlue());
+		vocabFolderPanel.add(Box.createHorizontalGlue());
+		vocabFolderPanel.add(Box.createHorizontalGlue());
+		
+		
+		// Vocabulary Source Type 2 Panel
+		JPanel vocabServerFolderPanel = new JPanel();
+		vocabServerFolderPanel.setLayout(new GridLayout(6, 2));
+		vocabServerFolderPanel.setBorder(BorderFactory.createTitledBorder("Vocabulary source folder locations"));
+		
+		vocabServerFolderPanel.add(new JLabel("Folder"));
+		JPanel vocabViaServerFolderFieldPanel = new JPanel();
+		vocabViaServerFolderFieldPanel.setLayout(new BoxLayout(vocabViaServerFolderFieldPanel, BoxLayout.X_AXIS));
+		vocabServerFolderField = new JTextField();
+		vocabServerFolderField.setText("");
+		vocabServerFolderField.setToolTipText("Specify the name of the folder containing the CSV files here");
+		vocabViaServerFolderFieldPanel.add(vocabServerFolderField);
+		JButton pickvocabViaServerFolderButton = new JButton("Pick folder");
+		pickvocabViaServerFolderButton.setToolTipText("Select the folder containing the vocab CSV files");
+		vocabViaServerFolderFieldPanel.add(pickvocabViaServerFolderButton);
+		pickvocabViaServerFolderButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pickVocabFolder();
+			}
+		});
+		vocabServerFolderPanel.add(vocabViaServerFolderFieldPanel);
+		
+		vocabServerFolderPanel.add(new JLabel("Server folder"));
+		JPanel vocabServerTempFolderFieldPanel = new JPanel();
+		vocabServerTempFolderFieldPanel.setLayout(new BoxLayout(vocabServerTempFolderFieldPanel, BoxLayout.X_AXIS));
+		vocabServerTempFolderField = new JTextField();
+		vocabServerTempFolderField.setText("");
+		vocabServerTempFolderField.setToolTipText("Specify the path of the temporary folder on the server here");
+		vocabServerTempFolderFieldPanel.add(vocabServerTempFolderField);
+		JButton pickServerFolderButton = new JButton("Pick folder");
+		pickServerFolderButton.setToolTipText("Select the path of the temporary folder on the server");
+		vocabServerTempFolderFieldPanel.add(pickServerFolderButton);
+		pickServerFolderButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pickTemporaryServerFolder();
+			}
+		});
+		vocabServerFolderPanel.add(vocabServerTempFolderFieldPanel);
+
+		vocabServerTempLocalFolderField = new JTextField();
+		vocabServerTempLocalFolderField.setText("");
+		vocabServerTempLocalFolderField.setToolTipText("Specify the local path on the server of the temporary folder on the server here");
+		vocabServerFolderPanel.add(new JLabel("Local path server folder"));
+		vocabServerFolderPanel.add(vocabServerTempLocalFolderField);
+		
+		vocabServerFolderPanel.add(Box.createHorizontalGlue());
+		vocabServerFolderPanel.add(Box.createHorizontalGlue());
+		vocabServerFolderPanel.add(Box.createHorizontalGlue());
+		vocabServerFolderPanel.add(Box.createHorizontalGlue());
+		
+		
+		// Vocabulary Source Type 3 Panel
 		JPanel vocabSchemaPanel = new JPanel();
-		vocabSchemaPanel.setLayout(new BoxLayout(vocabSchemaPanel, BoxLayout.Y_AXIS));
-		vocabSchemaPanel.setBorder(BorderFactory.createTitledBorder("Vocabulary schema"));
+		vocabSchemaPanel.setLayout(new GridLayout(6, 2));
+		vocabSchemaPanel.setBorder(BorderFactory.createTitledBorder("Vocabulary source schema"));
+
+		vocabSchemaPanel.add(new JLabel("Schema"));
 		vocabSchemaField = new JTextField();
 		vocabSchemaField.setText("");
 		vocabSchemaField.setToolTipText("Specify the name of the schema containing the vocabulary tables here");
 		vocabSchemaPanel.add(vocabSchemaField);
+		
+		vocabSchemaPanel.add(Box.createHorizontalGlue());
+		vocabSchemaPanel.add(Box.createHorizontalGlue());
+		vocabSchemaPanel.add(Box.createHorizontalGlue());
+		vocabSchemaPanel.add(Box.createHorizontalGlue());
+		vocabSchemaPanel.add(Box.createHorizontalGlue());
+		vocabSchemaPanel.add(Box.createHorizontalGlue());
+		
+		vocabCards = new JPanel(new CardLayout());
+		vocabCards.add(vocabFolderPanel, VOCABFOLDER);
+		vocabCards.add(vocabServerFolderPanel, VOCABVIASERVERFOLDER);
 		vocabCards.add(vocabSchemaPanel, VOCABSCHEMA);
 		
-		panel.add(vocabCards);
+		c.gridx = 0;
+		c.gridy = 1;
+		c.gridwidth = 2;
+		mainPanel.add(vocabCards, c);
 		vocabCards.setMaximumSize(new Dimension(Integer.MAX_VALUE, vocabCards.getPreferredSize().height));
-		panel.add(Box.createVerticalGlue());
+		
+		panel.add(mainPanel, BorderLayout.NORTH);
+		
 		return panel;
+	}
+	
+	
+	private void updateVocabSourceType() {
+		if ((targetType != null) && (vocabSourceType != null)) {
+			String currentETLType = (String) vocabSourceType.getSelectedItem();
+			vocabSourceTypeModel.removeAllElements();
+			vocabSourceTypeModel.addElement(VOCABTYPE_LOAD);
+			boolean bulkLoadPossible = false;
+			if (BULK_LOAD_DATABASE_TYPES.contains((String) targetType.getSelectedItem())) {
+				vocabSourceTypeModel.addElement(VOCABTYPE_BULK_LOAD);
+				bulkLoadPossible = true;
+			}
+			vocabSourceTypeModel.addElement(VOCABTYPE_SCHEMA_LOAD);
+			
+			if (currentETLType != null) {
+				if ((!bulkLoadPossible) && (currentETLType.equals(VOCABTYPE_BULK_LOAD))) {
+					vocabSourceType.setSelectedItem(VOCABTYPE_LOAD);
+				}
+				else {
+					vocabSourceType.setSelectedItem(currentETLType);
+				}
+			}
+		}
 	}
 	
 	
@@ -631,7 +763,7 @@ public class JCdmBuilderMain {
 		mainPanel.add(versionIdPanel, c);
 		
 		
-		// ETL-Type 1 and 2 Panel
+		// ETL-Type 1 Panel
 		JPanel sourceFolderPanel = new JPanel();
 		sourceFolderPanel.setLayout(new GridLayout(6, 2));
 		sourceFolderPanel.setBorder(BorderFactory.createTitledBorder("Source folder location"));
@@ -644,10 +776,10 @@ public class JCdmBuilderMain {
 		sourceFolderField.setText("");
 		sourceFolderField.setToolTipText("Specify the name of the folder containing the CSV files here");
 		sourceFolderFieldPanel.add(sourceFolderField);
-		JButton pickButton = new JButton("Pick folder");
-		pickButton.setToolTipText("Select the folder containing the source CSV files");
-		sourceFolderFieldPanel.add(pickButton);
-		pickButton.addActionListener(new ActionListener() {
+		JButton pickSourceFolderButton = new JButton("Pick folder");
+		pickSourceFolderButton.setToolTipText("Select the folder containing the source CSV files");
+		sourceFolderFieldPanel.add(pickSourceFolderButton);
+		pickSourceFolderButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				pickSourceFolder();
 			}
@@ -686,12 +818,12 @@ public class JCdmBuilderMain {
 		sourceServerFolderField.setText("");
 		sourceServerFolderField.setToolTipText("Specify the name of the folder containing the CSV files here");
 		sourceViaServerFolderFieldPanel.add(sourceServerFolderField);
-		JButton pickFolderButton = new JButton("Pick folder");
-		pickFolderButton.setToolTipText("Select the name of the folder containing the source CSV files");
-		sourceViaServerFolderFieldPanel.add(pickFolderButton);
-		pickFolderButton.addActionListener(new ActionListener() {
+		JButton picksourceViaServerFolderButton = new JButton("Pick folder");
+		picksourceViaServerFolderButton.setToolTipText("Select the folder containing the source CSV files");
+		sourceViaServerFolderFieldPanel.add(picksourceViaServerFolderButton);
+		picksourceViaServerFolderButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				pickSourceServerFolder();
+				pickSourceFolder();
 			}
 		});
 		sourceServerFolderPanel.add(sourceViaServerFolderFieldPanel);
@@ -734,13 +866,6 @@ public class JCdmBuilderMain {
 		sourceServerFolderPanel.add(new JLabel("Local path server folder"));
 		sourceServerFolderPanel.add(sourceServerTempLocalFolderField);
 		
-		// Link fields
-		sourceFolderField.getDocument().addDocumentListener(new TextFieldLink(sourceFolderField, sourceServerFolderField));
-		sourceDelimiterField.getDocument().addDocumentListener(new TextFieldLink(sourceDelimiterField, sourceServerDelimiterField));
-		sourceQuoteField.getDocument().addDocumentListener(new TextFieldLink(sourceQuoteField, sourceServerQuoteField));
-		sourceNullValueField.getDocument().addDocumentListener(new TextFieldLink(sourceNullValueField, sourceServerNullValueField));
-		
-		
 		sourceCards = new JPanel(new CardLayout());
 		sourceCards.add(sourceFolderPanel, SOURCEFOLDER);
 		sourceCards.add(sourceServerFolderPanel, SOURCEVIASERVERFOLDER);
@@ -782,6 +907,7 @@ public class JCdmBuilderMain {
 				etlTypeModel.addElement(ETLTYPE_BULK_LOAD);
 				bulkLoadPossible = true;
 			}
+			
 			if (currentETLType != null) {
 				if ((!bulkLoadPossible) && (currentETLType.equals(ETLTYPE_BULK_LOAD))) {
 					etlType.setSelectedItem(ETLTYPE_LOAD);
@@ -1080,41 +1206,32 @@ public class JCdmBuilderMain {
 					parameterValue = args[argNr];
 					targetUserField.setText(parameterValue);
 				}
-				//TODO
-				/*S
-				if (parameter.equals("-sourceserver")) {
-					argNr++;
-					parameterValue = args[argNr];
-					sourceServerField.setText(parameterValue);
-				}
-				if (parameter.equals("-sourcetype")) {
-					argNr++;
-					parameterValue = args[argNr];
-					sourceType.setSelectedItem(parameterValue);
-				}
-				if (parameter.equals("-sourcedatabase")) {
-					argNr++;
-					parameterValue = args[argNr];
-					sourceDatabaseField.setText(parameterValue);
-				}
-				if (parameter.equals("-sourceuser")) {
-					argNr++;
-					parameterValue = args[argNr];
-					sourceUserField.setText(parameterValue);
-				}
-				if (parameter.equals("-sourcepassword")) {
-					argNr++;
-					parameterValue = args[argNr];
-					sourcePasswordField.setText(parameterValue);
-				}
-				*/
 				if (parameter.equals("-vocabsourcetype")) {
 					argNr++;
 					parameterValue = args[argNr];
-					if (parameterValue.toLowerCase().contains("database") || parameterValue.toLowerCase().contains("schema"))
-						vocabSchemaTypeButton.doClick();
-					else
-						vocabFileTypeButton.doClick();
+					int vocabSourceTypNumber = Integer.parseInt(parameterValue);
+					vocabSourceType.setSelectedIndex(vocabSourceTypNumber - 1);
+				}
+				if (parameter.equals("-vocabfolder")) {
+					argNr++;
+					parameterValue = args[argNr];
+					vocabFolderField.setText(parameterValue);
+				}
+				if (parameter.equals("-vocabschema")) {
+					argNr++;
+					parameterValue = args[argNr];
+					vocabSchemaField.setText(parameterValue);
+				}
+				if (parameter.equals("-etltype")) {
+					argNr++;
+					parameterValue = args[argNr];
+					int etlNumber = Integer.parseInt(parameterValue);
+					etlType.setSelectedIndex(etlNumber - 1);
+				}
+				if (parameter.equals("-versionid")) {
+					argNr++;
+					parameterValue = args[argNr];
+					versionIdField.setText(parameterValue);
 				}
 				if (parameter.equals("-sourcefolder")) {
 					argNr++;
@@ -1131,27 +1248,6 @@ public class JCdmBuilderMain {
 					argNr++;
 					parameterValue = args[argNr];
 					sourceServerTempLocalFolderField.setText(parameterValue);
-				}
-				if (parameter.equals("-vocabfolder")) {
-					argNr++;
-					parameterValue = args[argNr];
-					vocabFolderField.setText(parameterValue);
-				}
-				if (parameter.equals("-vocabschema")) {
-					argNr++;
-					parameterValue = args[argNr];
-					vocabSchemaField.setText(parameterValue);
-				}
-				if (parameter.equals("-versionid")) {
-					argNr++;
-					parameterValue = args[argNr];
-					versionIdField.setText(parameterValue);
-				}
-				if (parameter.equals("-etlnumber")) {
-					argNr++;
-					parameterValue = args[argNr];
-					int etlNumber = Integer.parseInt(parameterValue);
-					etlType.setSelectedIndex(etlNumber - 1);
 				}
 			}
 			parameter = null;
@@ -1229,7 +1325,7 @@ public class JCdmBuilderMain {
 	}
 	
 	
-	private void pickVocabFile() {
+	private void pickVocabFolder() {
 		JFileChooser fileChooser = new JFileChooser(new File(vocabFolderField.getText().trim().equals("") ? folderField.getText() : vocabFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select vocabulary folder");
@@ -1244,15 +1340,6 @@ public class JCdmBuilderMain {
 		int returnVal = fileChooser.showDialog(frame, "Select source folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			sourceFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
-	}
-	
-	
-	private void pickSourceServerFolder() {
-		JFileChooser fileChooser = new JFileChooser(new File(sourceFolderField.getText().trim().equals("") ? folderField.getText() : sourceServerFolderField.getText()));
-		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-		int returnVal = fileChooser.showDialog(frame, "Select source server folder");
-		if (returnVal == JFileChooser.APPROVE_OPTION)
-			sourceServerFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
 	}
 	
 	
@@ -1449,12 +1536,19 @@ public class JCdmBuilderMain {
 			for (JComponent component : componentsToDisableWhenRunning)
 				component.setEnabled(false);
 			try {
-				if (vocabFileTypeButton.isSelected()) {
+				if (vocabSourceType.getSelectedItem().toString().equals(VOCABTYPE_LOAD)) {
 					InsertVocabularyInServer process = new InsertVocabularyInServer();
 					DbSettings dbSettings = getTargetDbSettings();
 					if (dbSettings != null)
 						process.process(vocabFolderField.getText(), dbSettings);
-				} else {
+				}
+				else if (vocabSourceType.getSelectedItem().toString().equals(VOCABTYPE_BULK_LOAD)) {
+					InsertVocabularyInServer process = new InsertVocabularyInServer();
+					DbSettings dbSettings = getTargetDbSettings();
+					if (dbSettings != null)
+						process.process(vocabFolderField.getText(), vocabServerTempFolderField.getText(), vocabServerTempLocalFolderField.getText(), dbSettings, frame, folderField.getText());
+				}
+				else if (vocabSourceType.getSelectedItem().toString().equals(VOCABTYPE_SCHEMA_LOAD)) {
 					CopyVocabularyFromSchema process = new CopyVocabularyFromSchema();
 					DbSettings dbSettings = getTargetDbSettings();
 					if (dbSettings != null)

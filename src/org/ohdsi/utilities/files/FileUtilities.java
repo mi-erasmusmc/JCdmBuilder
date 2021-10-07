@@ -15,17 +15,69 @@
  ******************************************************************************/
 package org.ohdsi.utilities.files;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 
+import org.ohdsi.utilities.StringUtilities;
+
 public class FileUtilities {
+	static int CR = 13;
+	static int LF = 10;
+	
 	public static void decompressGZIP(String sourceFilename, String targetFilename) throws FileNotFoundException, IOException{
 		copyStream(new GZIPInputStream(new FileInputStream(sourceFilename)), new FileOutputStream(targetFilename)); 
+	}
+	
+	public static List<String> splitCSVFile(File file, String destinationFolder, String fileNamePrefix, char quote, int maxSize) throws IOException {
+		StringUtilities.outputWithTime("Split file " + file.getName() + " into:");
+		List<String> fileParts = new ArrayList<String>();
+		int fileNr = 0;
+		int fileSize = 0;
+		BufferedReader fileReader = new BufferedReader(new FileReader(file));
+		BufferedWriter fileWriter = null;
+		String record = getNextCSVRecord(fileReader, (int) quote);
+		String header = null;
+		while (record != null) {
+			if (fileWriter == null) {
+				fileNr++;
+				String partFileName = fileNamePrefix + "_" + Integer.toString(fileNr) + "_" + file.getName();
+				String partFileNamePath = destinationFolder + File.separator + partFileName;
+				fileParts.add(partFileName);
+				StringUtilities.outputWithTime("    " + partFileNamePath);
+				fileWriter = new BufferedWriter(new FileWriter(new File(partFileNamePath)));
+				if (header == null) {
+					header = record;
+				}
+				else {
+					fileWriter.append(header);
+					fileSize += header.length();
+				}
+			}
+			fileWriter.append(record);
+			fileSize += record.length();
+			if (fileSize > maxSize) {
+				fileWriter.close();
+				fileWriter = null;
+				fileSize = 0;
+			}
+			record = getNextCSVRecord(fileReader, (int) quote);
+		}
+		if (fileWriter != null) {
+			fileWriter.close();
+		}
+		return fileParts;
 	}
 	
 	private static final void copyStream(InputStream source, OutputStream dest){
@@ -49,5 +101,53 @@ public class FileUtilities {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}  
+	}
+	
+	private static String getNextCSVRecord(BufferedReader csvFileReader, int quote) throws IOException {
+		String record = null;
+		boolean eol = false;
+		boolean quoted = false;
+		int lastCharNum = -2;
+		while (!eol) {
+			int charNum = lastCharNum == -2 ? csvFileReader.read() : lastCharNum;
+			lastCharNum = -2;
+			if (charNum != -1) {
+				if (!quoted) {
+					if (charNum == LF) {
+						record = (record == null ? "" : record) + ((char)charNum);
+						eol = true;
+						break;
+					}
+					else if ((quote != 0) && (charNum == quote)) {
+						quoted = true;
+						record = (record == null ? "" : record) + ((char)charNum);
+					}
+					else {
+						record = (record == null ? "" : record) + ((char)charNum);
+					}
+				}
+				else {
+					if ((quote != 0) && (charNum == quote)) {
+						record = (record == null ? "" : record) + ((char)charNum);
+						charNum = csvFileReader.read();
+						if (charNum != quote) {
+							quoted = false;
+							lastCharNum = charNum;
+						}
+						else {
+							record = (record == null ? "" : record) + ((char)charNum);
+						}
+					}
+					else {
+						record = (record == null ? "" : record) + ((char)charNum);
+					}
+				}
+			}
+			else {
+				// EOF
+				break;
+			}
+		}
+		return record;
 	}
 }

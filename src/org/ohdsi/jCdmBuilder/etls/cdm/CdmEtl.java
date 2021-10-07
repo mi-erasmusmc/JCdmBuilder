@@ -1,11 +1,6 @@
 package org.ohdsi.jCdmBuilder.etls.cdm;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,12 +22,11 @@ import org.ohdsi.jCdmBuilder.ErrorReport;
 import org.ohdsi.jCdmBuilder.JCdmBuilderMain;
 import org.ohdsi.jCdmBuilder.cdm.Cdm;
 import org.ohdsi.utilities.StringUtilities;
+import org.ohdsi.utilities.files.FileUtilities;
 import org.ohdsi.utilities.files.ReadCSVFileWithHeader;
 import org.ohdsi.utilities.files.Row;
 
 public class CdmEtl {
-	static int CR = 13;
-	static int LF = 10;
 	
 	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
@@ -80,7 +74,7 @@ public class CdmEtl {
 		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 	
-	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
+	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCdmVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 		
@@ -91,7 +85,7 @@ public class CdmEtl {
 		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema))
 			tables.add(table.toLowerCase());
 		
-		if (targetCmdVersion.equals("5.0.1")) {
+		if (targetCdmVersion.equals("5.0.1")) {
 			connection.execute("TRUNCATE TABLE _version");
 			String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
 			connection.execute("INSERT INTO _version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
@@ -133,7 +127,7 @@ public class CdmEtl {
 								FileUtils.copyFile(file, temporarySourceFile);
 							}
 							else { // Split file in parts of less than 2 GB.
-								fileParts = splitFile(file, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
+								fileParts = FileUtilities.splitCSVFile(file, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
 							}
 						}
 						
@@ -182,94 +176,6 @@ public class CdmEtl {
 		}
 		
 		StringUtilities.outputWithTime("Finished inserting tables");
-	}
-	
-	private List<String> splitFile(File file, String destinationFolder, String fileNamePrefix, char quote, int maxSize) throws IOException {
-		StringUtilities.outputWithTime("Split file " + file.getName() + " into:");
-		List<String> fileParts = new ArrayList<String>();
-		int fileNr = 0;
-		int fileSize = 0;
-		BufferedReader fileReader = new BufferedReader(new FileReader(file));
-		BufferedWriter fileWriter = null;
-		String record = getNextCSVRecord(fileReader, (int) quote);
-		String header = null;
-		while (record != null) {
-			if (fileWriter == null) {
-				fileNr++;
-				String partFileName = fileNamePrefix + "_" + Integer.toString(fileNr) + "_" + file.getName();
-				String partFileNamePath = destinationFolder + File.separator + partFileName;
-				fileParts.add(partFileName);
-				StringUtilities.outputWithTime("    " + partFileNamePath);
-				fileWriter = new BufferedWriter(new FileWriter(new File(partFileNamePath)));
-				if (header == null) {
-					header = record;
-				}
-				else {
-					fileWriter.append(header);
-					fileSize += header.length();
-				}
-			}
-			fileWriter.append(record);
-			fileSize += record.length();
-			if (fileSize > maxSize) {
-				fileWriter.close();
-				fileWriter = null;
-				fileSize = 0;
-			}
-			record = getNextCSVRecord(fileReader, (int) quote);
-		}
-		if (fileWriter != null) {
-			fileWriter.close();
-		}
-		return fileParts;
-	}
-	
-	private String getNextCSVRecord(BufferedReader csvFileReader, int quote) throws IOException {
-		String record = null;
-		boolean eol = false;
-		boolean quoted = false;
-		int lastCharNum = -2;
-		while (!eol) {
-			int charNum = lastCharNum == -2 ? csvFileReader.read() : lastCharNum;
-			lastCharNum = -2;
-			if (charNum != -1) {
-				if (!quoted) {
-					if (charNum == LF) {
-						record = (record == null ? "" : record) + ((char)charNum);
-						eol = true;
-						break;
-					}
-					else if (charNum == quote) {
-						quoted = true;
-						record = (record == null ? "" : record) + ((char)charNum);
-					}
-					else {
-						record = (record == null ? "" : record) + ((char)charNum);
-					}
-				}
-				else {
-					if (charNum == quote) {
-						record = (record == null ? "" : record) + ((char)charNum);
-						charNum = csvFileReader.read();
-						if (charNum != quote) {
-							quoted = false;
-							lastCharNum = charNum;
-						}
-						else {
-							record = (record == null ? "" : record) + ((char)charNum);
-						}
-					}
-					else {
-						record = (record == null ? "" : record) + ((char)charNum);
-					}
-				}
-			}
-			else {
-				// EOF
-				break;
-			}
-		}
-		return record;
 	}
 	
 	private void handleError(Exception e, JFrame frame, String errorFolder, String item, boolean continueOnError) {
