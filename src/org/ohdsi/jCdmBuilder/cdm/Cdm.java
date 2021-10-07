@@ -86,9 +86,9 @@ public class Cdm {
 		connection.setContext(cdm.getClass());
 		
 		try {
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 			
-			String schema = currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase;
+			String schema = currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 			
 			StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " indices if they exist");
 			Map<String, List<String>> indices = connection.getIndices(schema);
@@ -125,9 +125,9 @@ public class Cdm {
 		connection.setContext(cdm.getClass());
 		
 		try {
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 			
-			String schema = currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase;
+			String schema = currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 
 			StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " foreign key constraints if they exist");
 			Map<String, List<String>> foreignKeyConstraints = connection.getForeignKeyConstraints(schema);
@@ -155,11 +155,11 @@ public class Cdm {
 		connection.setContext(cdm.getClass());
 		
 		try {
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 			
 			StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " tables if they exist");
-			for (String tableName : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase)) {
-				connection.dropTableIfExists(dbSettings.database, tableName);
+			for (String tableName : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema)) {
+				connection.dropTableIfExists(dbSettings.cdmSchema, tableName);
 			}
 			StringUtilities.outputWithTime("Done");
 		}
@@ -179,10 +179,10 @@ public class Cdm {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.setContext(cdm.getClass());
 		try {
-			connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 			
 			StringUtilities.outputWithTime("Deleting " + (currentStructure == CDM ? "CDM" : "Results") + " schema if it exists");
-			connection.dropSchemaIfExists(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+			connection.dropSchemaIfExists(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 			StringUtilities.outputWithTime("Done");
 		}
 		catch (Exception e) {
@@ -200,10 +200,10 @@ public class Cdm {
 
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.setContext(cdm.getClass());
-		connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 		
 		StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " schema");
-		connection.createSchema(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		connection.createSchema(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 		
 		connection.close();
 		StringUtilities.outputWithTime("Done");
@@ -253,7 +253,7 @@ public class Cdm {
 			}
 
 			if (resourceStream != null) {
-				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
@@ -272,7 +272,7 @@ public class Cdm {
 				
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 							
 				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " data structure");
 				if (idsToBigInt) {
@@ -294,8 +294,8 @@ public class Cdm {
 						if (line.contains(" REFERENCES ")) {
 							String tableName = StringUtilities.findBetween(line, " REFERENCES ", "(");
 							String searchTableName = tableName.trim().toLowerCase();
-							if (!connection.getTableNames(dbSettings.resultsDatabase).contains(searchTableName)) {
-								String schemaPrefix = dbSettings.database + ".";
+							if (!connection.getTableNames(dbSettings.resultsSchema).contains(searchTableName)) {
+								String schemaPrefix = dbSettings.cdmSchema + ".";
 								sqlLines.set(i, line.replace(" REFERENCES " + tableName + "(", " REFERENCES " + schemaPrefix + tableName.trim() + " ("));
 							}
 						}
@@ -354,7 +354,7 @@ public class Cdm {
 
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " indices");
-				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
@@ -373,7 +373,7 @@ public class Cdm {
 				
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 				
 				connection.execute(StringUtilities.join(sqlLines, "\n"));
 				
@@ -428,7 +428,7 @@ public class Cdm {
 
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Creating constraints");
-				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
@@ -447,7 +447,7 @@ public class Cdm {
 				
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 				
 				connection.execute(StringUtilities.join(sqlLines, "\n"));
 				
@@ -498,7 +498,7 @@ public class Cdm {
 			}
 			
 			if (resourceStream != null) {
-				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
@@ -520,7 +520,7 @@ public class Cdm {
 
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 				
 				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results") + " data structure");
 				if (idsToBigInt) {
@@ -583,7 +583,7 @@ public class Cdm {
 			
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results") + " indices");
-				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
@@ -602,7 +602,7 @@ public class Cdm {
 				
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 				
 				connection.execute(StringUtilities.join(sqlLines, "\n"));
 				
@@ -654,7 +654,7 @@ public class Cdm {
 			
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results") + " constraints");
-				String schemaName = currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase;
+				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
@@ -673,7 +673,7 @@ public class Cdm {
 				
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.database : dbSettings.resultsDatabase);
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 				
 				connection.execute(StringUtilities.join(sqlLines, "\n"));
 				

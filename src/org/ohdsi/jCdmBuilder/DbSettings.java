@@ -31,8 +31,8 @@ public class DbSettings {
 	public DbType		dbType;
 	public String		user;
 	public String		password;
-	public String		database;
-	public String		resultsDatabase;
+	public String		cdmSchema;
+	public String		resultsSchema;
 	public String		server;
 	public String		domain;
 	

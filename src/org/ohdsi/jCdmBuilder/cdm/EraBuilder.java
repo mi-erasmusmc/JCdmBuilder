@@ -69,7 +69,7 @@ public class EraBuilder {
 
 		sql = SqlTranslate.translateSql(sql, "sql server", dbms);
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.use(dbSettings.database);
+		connection.use(dbSettings.cdmSchema);
 		connection.execute(sql);
 		if (domain == DRUG_ERA)
 			StringUtilities.outputWithTime("Finished constructing drug eras");

@@ -417,7 +417,7 @@ public class JCdmBuilderMain {
 		if (message.equals("OK")) {
 			messageType = JOptionPane.INFORMATION_MESSAGE;
 			messageTitle = "Connection succesful";
-			message = "Succesfully connected to " + dbSettings.database + " on server " + dbSettings.server;
+			message = "Succesfully connected to " + dbSettings.cdmSchema + " on server " + dbSettings.server;
 		}
 		JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), messageTitle, messageType);
 	}
@@ -432,7 +432,7 @@ public class JCdmBuilderMain {
 				connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 
 				try {
-					connection.getTableNames(dbSettings.database);
+					connection.getTableNames(dbSettings.cdmSchema);
 					connection.close();
 				} catch (Exception e) {
 					result = "Could not connect to database: " + e.getMessage();
@@ -1277,7 +1277,7 @@ public class JCdmBuilderMain {
 		
 		if (testConnectionToDb)
 			try {
-				connection.getTableNames(dbSettings.database);
+				connection.getTableNames(dbSettings.cdmSchema);
 			} catch (Exception e) {
 				String message = "Could not connect to database: " + e.getMessage();
 				JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error connecting to server", JOptionPane.ERROR_MESSAGE);
@@ -1294,8 +1294,8 @@ public class JCdmBuilderMain {
 		dbSettings.user = targetUserField.getText();
 		dbSettings.password = targetPasswordField.getText();
 		dbSettings.server = targetServerField.getText();
-		dbSettings.database = targetSchemaField.getText();
-		dbSettings.resultsDatabase = targetResultsSchemaField.getText();
+		dbSettings.cdmSchema = targetSchemaField.getText();
+		dbSettings.resultsSchema = targetResultsSchemaField.getText();
 		if (targetType.getSelectedItem().toString().equals("MySQL"))
 			dbSettings.dbType = DbType.MYSQL;
 		else if (targetType.getSelectedItem().toString().equals("Oracle"))
@@ -1316,7 +1316,7 @@ public class JCdmBuilderMain {
 			}
 		}
 		
-		if (dbSettings.database.trim().length() == 0) {
+		if (dbSettings.cdmSchema.trim().length() == 0) {
 			String message = "Please specify a name for the target database";
 			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Database error", JOptionPane.ERROR_MESSAGE);
 			return null;

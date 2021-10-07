@@ -738,7 +738,7 @@ public class RichConnection {
 			execute("ALTER USER " + schema.toUpperCase() + " QUOTA UNLIMITED ON USERS");
 		}
 		else {
-			execute("CREATE SCHEMA " + schema + ";");
+			execute("CREATE SCHEMA " + schema.toLowerCase() + ";");
 		}
 	}
 

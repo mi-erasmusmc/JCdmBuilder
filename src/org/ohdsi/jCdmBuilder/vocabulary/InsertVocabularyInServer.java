@@ -35,10 +35,10 @@ public class InsertVocabularyInServer {
 
 	public void process(String folder, DbSettings dbSettings) {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.use(dbSettings.database);
+		connection.use(dbSettings.cdmSchema);
 
 		Set<String> tables = new HashSet<String>();
-		for (String table : connection.getTableNames(dbSettings.database))
+		for (String table : connection.getTableNames(dbSettings.cdmSchema))
 			tables.add(table.toLowerCase());
 
 		for (File file : new File(folder).listFiles()) {
@@ -46,11 +46,11 @@ public class InsertVocabularyInServer {
 				String table = file.getName().substring(0, file.getName().length() - 4);
 				if (tables.contains(table.toLowerCase())) {
 					StringUtilities.outputWithTime("Inserting data for table " + table);
-					connection.execute("TRUNCATE TABLE " + dbSettings.database + "." + table);
+					connection.execute("TRUNCATE TABLE " + dbSettings.cdmSchema + "." + table);
 					Iterator<Row> iterator = new ReadAthenaFile(file.getAbsolutePath()).iterator();
-					Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
-					Map<String, String> columnTypes = connection.getFieldTypes(dbSettings.database, table);
-					connection.insertIntoTable(filteredIterator, dbSettings.database + "." + table, columnTypes, false, "");
+					Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.cdmSchema, table), table);
+					Map<String, String> columnTypes = connection.getFieldTypes(dbSettings.cdmSchema, table);
+					connection.insertIntoTable(filteredIterator, dbSettings.cdmSchema + "." + table, columnTypes, false, "");
 				}
 			}
 		}

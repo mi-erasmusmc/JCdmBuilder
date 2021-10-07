@@ -6,7 +6,7 @@ import org.ohdsi.jCdmBuilder.DbSettings;
 import org.ohdsi.utilities.StringUtilities;
 
 public class CopyVocabularyFromSchema {
-	public void process(String schema, DbSettings dbSettings) {
+	public void process(String vocabSchema, DbSettings dbSettings) {
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.MSSQL) {
 			resourceName = "CopyVocabFromSchema - SQL Server.sql";
@@ -17,11 +17,12 @@ public class CopyVocabularyFromSchema {
 			throw new RuntimeException("Copying vocabulary not implemented for Oracle. Contact JCDMBuilder maintainer if needed.");
 		}
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.use(dbSettings.database);
+		connection.use(dbSettings.cdmSchema);
 		connection.setContext(CopyVocabularyFromSchema.class);
 		connection.setVerbose(true);
 		StringUtilities.outputWithTime("Copying vocabulary tables");
-		connection.executeResource(resourceName, "@vocab_schema", schema);
+		connection.executeResource(resourceName, "@target_schema", dbSettings.cdmSchema);
+		connection.executeResource(resourceName, "@vocab_schema", vocabSchema);
 		connection.close();
 		StringUtilities.outputWithTime("Done");
 	}

@@ -36,19 +36,19 @@ public class CdmEtl {
 	
 	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		connection.use(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 		
 		char delimiter = delimiterString.trim().toLowerCase().equals("tab") ? '\t' : delimiterString.charAt(0);
 		char quote     = quoteString.charAt(0);
 		
 		Set<String> tables = new HashSet<String>();
-		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase))
+		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema))
 			tables.add(table.toLowerCase());
 		
 		if (targetCmdVersion.equals("5.0.1")) {
-			connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + "_version");
+			connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + "_version");
 			String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-			connection.execute("INSERT INTO " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + "_version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
+			connection.execute("INSERT INTO " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + "_version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
 		}
 
 		for (File file : new File(folder).listFiles()) {
@@ -59,18 +59,18 @@ public class CdmEtl {
 					table = file.getName().substring(0, file.getName().length() - 4);
 					if (tables.contains(table.toLowerCase())) {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
-						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
+						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table);
 						Iterator<Row> iterator = new ReadCSVFileWithHeader(file.getAbsolutePath(), delimiter, quote).iterator();
-						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.database, table), table);
-						Map<String, String> columnTypes = connection.getFieldTypes(dbSettings.database, table);
-						connection.insertIntoTable(filteredIterator, (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table, columnTypes, false, nullValueString);
+						Iterator<Row> filteredIterator = new RowFilterIterator(iterator, connection.getFieldNames(dbSettings.cdmSchema, table), table);
+						Map<String, String> columnTypes = connection.getFieldTypes(dbSettings.cdmSchema, table);
+						connection.insertIntoTable(filteredIterator, (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table, columnTypes, false, nullValueString);
 					}
 				}
 			} catch (Exception e) {
 				handleError(e, frame, errorFolder, "Table " + table, continueOnError);
 				if (continueOnError || JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-					connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
+					connection.use(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 				}
 				else {
 					throw new Exception("NO ERROR");
@@ -82,13 +82,13 @@ public class CdmEtl {
 	
 	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCmdVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
+		connection.use(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 		
 		char delimiter = delimiterString.trim().toLowerCase().equals("tab") ? '\t' : delimiterString.charAt(0);
 		char quote     = quoteString.charAt(0);
 		
 		Set<String> tables = new HashSet<String>();
-		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase))
+		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema))
 			tables.add(table.toLowerCase());
 		
 		if (targetCmdVersion.equals("5.0.1")) {
@@ -105,7 +105,7 @@ public class CdmEtl {
 					table = file.getName().substring(0, file.getName().length() - 4);
 					if (tables.contains(table.toLowerCase())) {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
-						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table);
+						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table);
 
 						String temporarySourceFileName = file.getName();
 						String temporarySourceFileNamePath = file.getAbsolutePath();
@@ -125,7 +125,7 @@ public class CdmEtl {
 								}
 							}
 							if (FileUtils.sizeOf(file) < 2000000000L) {
-								temporarySourceFileName = databaseName + "_" + dbSettings.database + "_" + file.getName();
+								temporarySourceFileName = databaseName + "_" + dbSettings.cdmSchema + "_" + file.getName();
 								temporarySourceFileNamePath = temporaryServerFolder + File.separator + temporarySourceFileName;
 								File temporarySourceFile = new File(temporarySourceFileNamePath);
 								StringUtilities.outputWithTime("Copy file " + file.getName() + " to " + temporarySourceFile.getAbsolutePath());
@@ -133,7 +133,7 @@ public class CdmEtl {
 								FileUtils.copyFile(file, temporarySourceFile);
 							}
 							else { // Split file in parts of less than 2 GB.
-								fileParts = splitFile(file, temporaryServerFolder, databaseName + "_" + dbSettings.database, quote, 2000000000);
+								fileParts = splitFile(file, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
 							}
 						}
 						
@@ -142,15 +142,15 @@ public class CdmEtl {
 							// PostgreSQL
 							if (dbSettings.dbType == DbType.POSTGRESQL) {
 								StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + fileName + " into table " + table);
-								connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH DELIMITER '" + delimiter + "' NULL '" + (nullValueString == null ? "" : nullValueString) + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
+								connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH DELIMITER '" + delimiter + "' NULL '" + (nullValueString == null ? "" : nullValueString) + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
 							}
 							// Microsoft SQL Server
 							else if (dbSettings.dbType == DbType.MSSQL) {
-								connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH (FORMAT = 'CSV', FIRSTROW = 2, FIELDTERMINATOR = '" + delimiter + "', FIELDQUOTE = '" + quote + "', ROWTERMINATOR = '\n');");
+								connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH (FORMAT = 'CSV', FIRSTROW = 2, FIELDTERMINATOR = '" + delimiter + "', FIELDQUOTE = '" + quote + "', ROWTERMINATOR = '\n');");
 							}
 							// Oracle
 							else if (dbSettings.dbType == DbType.ORACLE) {
-								connection.execute("LOAD DATA INFILE '" + temporaryLocalServerFolder + "/" + fileName + "' INTO TABLE " + (currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase) + "." + table + " FIELD TERMINATED BY '" + delimiter + "' OPTIONALLY ENCLOSED BY '" + quote + "' LINES TERMINATED BY '\n';");
+								connection.execute("LOAD DATA INFILE '" + temporaryLocalServerFolder + "/" + fileName + "' INTO TABLE " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table + " FIELD TERMINATED BY '" + delimiter + "' OPTIONALLY ENCLOSED BY '" + quote + "' LINES TERMINATED BY '\n';");
 							}
 
 							temporarySourceFileNamePath = temporaryServerFolder + File.separator + fileName;
@@ -173,7 +173,7 @@ public class CdmEtl {
 				handleError(e, frame, errorFolder, "Table " + table, continueOnError);
 				if (continueOnError || JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-					connection.use(currentStructure == Cdm.CDM ? dbSettings.database : dbSettings.resultsDatabase);
+					connection.use(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 				}
 				else {
 					throw new Exception("NO ERROR");

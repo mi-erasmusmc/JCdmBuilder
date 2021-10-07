@@ -26,7 +26,7 @@ public class SqlDump {
 	public void process(DbSettings dbSettings, String sql, String filename) {
 		StringUtilities.outputWithTime("Writing query results to file: " + filename);
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.use(dbSettings.database);
+		connection.use(dbSettings.cdmSchema);
 		WriteCSVFileWithHeader out = new WriteCSVFileWithHeader(filename);
 		int rowCount = 0;
 		for (Row row : connection.query(sql)) {
