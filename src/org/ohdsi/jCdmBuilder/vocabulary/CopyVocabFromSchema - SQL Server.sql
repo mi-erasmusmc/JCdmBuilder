@@ -11,43 +11,43 @@ DROP TABLE @target_schema.vocabulary;
 
 SELECT * 
 INTO @target_schema.concept
-FROM @vocab_schema.dbo.concept;
+FROM @vocab_schema.concept;
 
 SELECT * 
 INTO @target_schema.concept_ancestor
-FROM @vocab_schema.dbo.concept_ancestor;
+FROM @vocab_schema.concept_ancestor;
 
 SELECT * 
 INTO @target_schema.concept_class
-FROM @vocab_schema.dbo.concept_class;
+FROM @vocab_schema.concept_class;
 
 SELECT * 
 INTO @target_schema.concept_relationship
-FROM @vocab_schema.dbo.concept_relationship;
+FROM @vocab_schema.concept_relationship;
 
 SELECT * 
 INTO @target_schema.concept_synonym
-FROM @vocab_schema.dbo.concept_synonym;
+FROM @vocab_schema.concept_synonym;
 
 SELECT * 
 INTO @target_schema.domain
-FROM @vocab_schema.dbo.domain;
+FROM @vocab_schema.domain;
 
 SELECT * 
 INTO @target_schema.drug_strength
-FROM @vocab_schema.dbo.drug_strength;
+FROM @vocab_schema.drug_strength;
 
 SELECT * 
 INTO @target_schema.relationship
-FROM @vocab_schema.dbo.relationship;
+FROM @vocab_schema.relationship;
 
 SELECT * 
 INTO @target_schema.source_to_concept_map
-FROM @vocab_schema.dbo.source_to_concept_map;
+FROM @vocab_schema.source_to_concept_map;
 
 SELECT * 
 INTO @target_schema.vocabulary
-FROM @vocab_schema.dbo.vocabulary;
+FROM @vocab_schema.vocabulary;
 
 ALTER TABLE @target_schema.concept REBUILD WITH ( DATA_COMPRESSION = PAGE );
 ALTER TABLE @target_schema.concept_ancestor REBUILD WITH ( DATA_COMPRESSION = PAGE );
