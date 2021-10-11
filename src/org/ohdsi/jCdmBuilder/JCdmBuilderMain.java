@@ -485,9 +485,9 @@ public class JCdmBuilderMain {
 		if (settingsFile.getValue("Locations", "Target CDM Version")         != null) targetCdmVersion.setSelectedItem(settingsFile.getValue("Locations", "Target CDM Version"));
 		
 		// Vocabulary
-		if (settingsFile.getValue("Vocabulary", "Source Type")               != null) vocabSourceType.setSelectedItem(settingsFile.getValue("Vocabulary", "Vocabulary Source Type"));
-		if (settingsFile.getValue("Vocabulary", "Source Folder")             != null) vocabFolderField.setText(settingsFile.getValue("Vocabulary", "Vocabulary Data Folder"));
-		if (settingsFile.getValue("Vocabulary", "Source Schema")             != null) vocabSchemaField.setText(settingsFile.getValue("Vocabulary", "Vocabulary Schema"));
+		if (settingsFile.getValue("Vocabulary", "Source Type")               != null) vocabSourceType.setSelectedItem(settingsFile.getValue("Vocabulary", "Source Type"));
+		if (settingsFile.getValue("Vocabulary", "Source Folder")             != null) vocabFolderField.setText(settingsFile.getValue("Vocabulary", "Source Folder"));
+		if (settingsFile.getValue("Vocabulary", "Source Schema")             != null) vocabSchemaField.setText(settingsFile.getValue("Vocabulary", "Source Schema"));
 		
 		// ETL
 		if (settingsFile.getValue("ETL", "ETL Type")                         != null) etlType.setSelectedItem(settingsFile.getValue("ETL", "ETL Type"));
