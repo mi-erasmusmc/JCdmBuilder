@@ -74,7 +74,7 @@ import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.IniFile;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "0.4.1";
+	public static final String VERSION = "5.4.0.1";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 	
@@ -86,6 +86,12 @@ public class JCdmBuilderMain {
 	private static String[]					DATABASE_TYPES							= new String[] { DATABASE_TYPE_POSTGRESQL, DATABASE_TYPE_ORACLE, DATABASE_TYPE_SQLSERVER };
 	private static HashSet<String>			BULK_LOAD_DATABASE_TYPES				= new HashSet<String>() {
 																						private static final long serialVersionUID = 946936162824903605L;
+																						{
+																							add(DATABASE_TYPE_POSTGRESQL);
+																							add(DATABASE_TYPE_SQLSERVER);
+																						}};
+	private static HashSet<String>			SCHEMA_LOAD_DATABASE_TYPES				= new HashSet<String>() {
+																						private static final long serialVersionUID = 2059669382590652555L;
 																						{
 																							add(DATABASE_TYPE_POSTGRESQL);
 																							add(DATABASE_TYPE_SQLSERVER);
@@ -371,7 +377,7 @@ public class JCdmBuilderMain {
 		targetPanel.add(new JLabel("CDM version"));
 		targetCdmVersion = new JComboBox<String>(Cdm.availableVersions);
 		targetCdmVersion.setToolTipText("Select the CMD version");
-		targetCdmVersion.setSelectedIndex(2);
+		targetCdmVersion.setSelectedItem(VERSION.substring(0, VERSION.lastIndexOf('.')));
 		
 		targetType.addItemListener(new ItemListener() {
 			
@@ -691,22 +697,26 @@ public class JCdmBuilderMain {
 	
 	private void updateVocabSourceType() {
 		if ((targetType != null) && (vocabSourceType != null)) {
-			String currentETLType = (String) vocabSourceType.getSelectedItem();
+			String currentVocabSourceType = (String) vocabSourceType.getSelectedItem();
 			vocabSourceTypeModel.removeAllElements();
 			vocabSourceTypeModel.addElement(VOCABTYPE_LOAD);
 			boolean bulkLoadPossible = false;
+			boolean schemaLoadPossible = false;
 			if (BULK_LOAD_DATABASE_TYPES.contains((String) targetType.getSelectedItem())) {
 				vocabSourceTypeModel.addElement(VOCABTYPE_BULK_LOAD);
 				bulkLoadPossible = true;
 			}
-			vocabSourceTypeModel.addElement(VOCABTYPE_SCHEMA_LOAD);
+			if (SCHEMA_LOAD_DATABASE_TYPES.contains((String) targetType.getSelectedItem())) {
+				vocabSourceTypeModel.addElement(VOCABTYPE_SCHEMA_LOAD);
+				schemaLoadPossible = true;
+			}
 			
-			if (currentETLType != null) {
-				if ((!bulkLoadPossible) && (currentETLType.equals(VOCABTYPE_BULK_LOAD))) {
+			if (currentVocabSourceType != null) {
+				if (((!bulkLoadPossible) && (currentVocabSourceType.equals(VOCABTYPE_BULK_LOAD))) || ((!schemaLoadPossible) && (currentVocabSourceType.equals(VOCABTYPE_SCHEMA_LOAD)))) {
 					vocabSourceType.setSelectedItem(VOCABTYPE_LOAD);
 				}
 				else {
-					vocabSourceType.setSelectedItem(currentETLType);
+					vocabSourceType.setSelectedItem(currentVocabSourceType);
 				}
 			}
 		}
@@ -941,12 +951,12 @@ public class JCdmBuilderMain {
 		executeCheckboxPanel.add(executeIndicesCheckBox);
 		executeConstraintsCheckBox = new JCheckBox("Create CDM constraints");
 		executeCheckboxPanel.add(executeConstraintsCheckBox);
-		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
-		executeCheckboxPanel.add(executeResultsStructureCheckBox);
 		executeConditionErasCheckBox = new JCheckBox("Create condition eras");
 		executeCheckboxPanel.add(executeConditionErasCheckBox);
 		executeDrugErasCheckBox = new JCheckBox("Create drug eras");
 		executeCheckboxPanel.add(executeDrugErasCheckBox);
+		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
+		executeCheckboxPanel.add(executeResultsStructureCheckBox);
 		executeResultsDataCheckBox = new JCheckBox("Load Results Data");
 		executeCheckboxPanel.add(executeResultsDataCheckBox);
 		executeResultsIndicesCheckBox = new JCheckBox("Create Results indices");
@@ -1000,7 +1010,7 @@ public class JCdmBuilderMain {
 							executeResultsDataWhenReady || 
 							executeResultsIndicesWhenReady) {
 						if (
-								(!etlType.getSelectedItem().equals("2. PostgreSQL only: Bulk Load CSV files from server in CDM format to server")) ||
+								(!etlType.getSelectedItem().equals(ETLTYPE_BULK_LOAD)) ||
 								(targetType.getSelectedItem().equals("PostgreSQL")) ||
 								(targetType.getSelectedItem().equals("SQL Server"))) {
 							runAll();
@@ -1267,10 +1277,10 @@ public class JCdmBuilderMain {
 					executeIndicesWhenReady = true;
 				if (parameter.equals("-executeconstraints"))
 					executeConstraintsWhenReady = true;
-				if (parameter.equals("-executedrugeras"))
-					executeDrugErasWhenReady = true;
 				if (parameter.equals("-executeconditioneras"))
 					executeConditionErasWhenReady = true;
+				if (parameter.equals("-executedrugeras"))
+					executeDrugErasWhenReady = true;
 				if (parameter.equals("-executeresultsstructure"))
 					executeResultsStructureWhenReady = true;
 				if (parameter.equals("-executeresultsdata"))
@@ -1283,6 +1293,18 @@ public class JCdmBuilderMain {
 					idsToBigInt = true;
 					System.out.println("IDs will be converted to BIGINT");
 				}
+
+				executeStructureCheckBox.setSelected(executeCdmStructureWhenReady);
+				executeVocabCheckBox.setSelected(executeVocabWhenReady);
+				executeETLCheckBox.setSelected(executeEtlWhenReady);
+				executeIndicesCheckBox.setSelected(executeIndicesWhenReady);
+				executeConstraintsCheckBox.setSelected(executeConstraintsWhenReady);
+				executeConditionErasCheckBox.setSelected(executeConditionErasWhenReady);
+				executeDrugErasCheckBox.setSelected(executeDrugErasWhenReady);
+				executeResultsStructureCheckBox.setSelected(executeResultsStructureWhenReady);
+				executeResultsDataCheckBox.setSelected(executeResultsDataWhenReady);
+				executeResultsIndicesCheckBox.setSelected(executeResultsIndicesWhenReady);
+				continueOnErrorCheckBox.setSelected(continueOnError);
 			}
 		}
 	}
@@ -1452,10 +1474,6 @@ public class JCdmBuilderMain {
 				ConstraintThread constraintThread = new ConstraintThread(Cdm.CDM);
 				constraintThread.run();
 			}
-			if (executeResultsStructureWhenReady) {
-				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
-				structureThread.run();
-			}
 			if (executeConditionErasWhenReady) {
 				EraThread eraThread = new EraThread(EraThread.CONDITIONS);
 				eraThread.run();
@@ -1463,6 +1481,10 @@ public class JCdmBuilderMain {
 			if (executeDrugErasWhenReady) {
 				EraThread eraThread = new EraThread(EraThread.DRUGS);
 				eraThread.run();
+			}
+			if (executeResultsStructureWhenReady) {
+				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
+				structureThread.run();
 			}
 			if (executeResultsDataWhenReady) {
 				EtlThread etlThread = new EtlThread(Cdm.RESULTS, Integer.MAX_VALUE);
