@@ -80,96 +80,101 @@ public class Cdm {
 	
 	
 	private static void dropConstraints(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
-		CdmVx cdm = getCDM(version);
+		if ((dbSettings.dbType != DbType.POSTGRESQL) && (dbSettings.dbType != DbType.ORACLE)) {
+			CdmVx cdm = getCDM(version);
+			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+			connection.setContext(cdm.getClass());
+			
+			try {
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
+				
+				String schema = currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
+				
+				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " indices if they exist");
+				Map<String, List<String>> indices = connection.getIndices(schema);
+				for (String tableName : indices.keySet()) {
+					for (String index : indices.get(tableName)) {
+						connection.dropIndexIfExists(schema, tableName, index);
+					}
+				}
+				StringUtilities.outputWithTime("Done");
 
-		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.setContext(cdm.getClass());
-		
-		try {
-			connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
-			
-			String schema = currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
-			
-			StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " indices if they exist");
-			Map<String, List<String>> indices = connection.getIndices(schema);
-			for (String tableName : indices.keySet()) {
-				for (String index : indices.get(tableName)) {
-					connection.dropIndexIfExists(schema, tableName, index);
+				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " primary key constraints if they exist");
+				Map<String, List<String>> primaryKeyConstraints = connection.getPrimaryKeyConstraints(schema);
+				for (String tableName : primaryKeyConstraints.keySet()) {
+					for (String primaryKeyConstraint : primaryKeyConstraints.get(tableName)) {
+						connection.dropConstraintIfExists(schema, tableName, primaryKeyConstraint);
+					}
+				}
+				StringUtilities.outputWithTime("Done");
+			}
+			catch (Exception e) {
+				if (dbSettings.dbType != DbType.MSSQL) {
+					throw e;
 				}
 			}
-			StringUtilities.outputWithTime("Done");
-
-			StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " primary key constraints if they exist");
-			Map<String, List<String>> primaryKeyConstraints = connection.getPrimaryKeyConstraints(schema);
-			for (String tableName : primaryKeyConstraints.keySet()) {
-				for (String primaryKeyConstraint : primaryKeyConstraints.get(tableName)) {
-					connection.dropConstraintIfExists(schema, tableName, primaryKeyConstraint);
-				}
-			}
-			StringUtilities.outputWithTime("Done");
+			
+			connection.close();
 		}
-		catch (Exception e) {
-			if (dbSettings.dbType != DbType.MSSQL) {
-				throw e;
-			}
-		}
-		
-		connection.close();
 	}
 	
 	
 	private static void dropIndices(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
-		CdmVx cdm = getCDM(version);
+		if ((dbSettings.dbType != DbType.POSTGRESQL) && (dbSettings.dbType != DbType.ORACLE)) {
+			CdmVx cdm = getCDM(version);
 
-		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.setContext(cdm.getClass());
-		
-		try {
-			connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
+			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+			connection.setContext(cdm.getClass());
 			
-			String schema = currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
+			try {
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
+				
+				String schema = currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 
-			StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " foreign key constraints if they exist");
-			Map<String, List<String>> foreignKeyConstraints = connection.getForeignKeyConstraints(schema);
-			for (String tableName : foreignKeyConstraints.keySet()) {
-				for (String foreignKeyConstraint : foreignKeyConstraints.get(tableName)) {
-					connection.dropConstraintIfExists(schema, tableName, foreignKeyConstraint);
+				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " foreign key constraints if they exist");
+				Map<String, List<String>> foreignKeyConstraints = connection.getForeignKeyConstraints(schema);
+				for (String tableName : foreignKeyConstraints.keySet()) {
+					for (String foreignKeyConstraint : foreignKeyConstraints.get(tableName)) {
+						connection.dropConstraintIfExists(schema, tableName, foreignKeyConstraint);
+					}
+				}
+				StringUtilities.outputWithTime("Done");
+			}
+			catch (Exception e) {
+				if (dbSettings.dbType != DbType.MSSQL) {
+					throw e;
 				}
 			}
-			StringUtilities.outputWithTime("Done");
+			
+			connection.close();
 		}
-		catch (Exception e) {
-			if (dbSettings.dbType != DbType.MSSQL) {
-				throw e;
-			}
-		}
-		
-		connection.close();
 	}
 	
 	
 	private static void dropTables(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
-		CdmVx cdm = getCDM(version);
+		if ((dbSettings.dbType != DbType.POSTGRESQL) && (dbSettings.dbType != DbType.ORACLE)) {
+			CdmVx cdm = getCDM(version);
 
-		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-		connection.setContext(cdm.getClass());
-		
-		try {
-			connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
+			RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+			connection.setContext(cdm.getClass());
 			
-			StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " tables if they exist");
-			for (String tableName : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema)) {
-				connection.dropTableIfExists(dbSettings.cdmSchema, tableName);
+			try {
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
+				
+				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " tables if they exist");
+				for (String tableName : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema)) {
+					connection.dropTableIfExists(dbSettings.cdmSchema, tableName);
+				}
+				StringUtilities.outputWithTime("Done");
 			}
-			StringUtilities.outputWithTime("Done");
-		}
-		catch (Exception e) {
-			if (dbSettings.dbType != DbType.MSSQL) {
-				throw e;
+			catch (Exception e) {
+				if (dbSettings.dbType != DbType.MSSQL) {
+					throw e;
+				}
 			}
+			
+			connection.close();
 		}
-		
-		connection.close();
 	}
 	
 	
