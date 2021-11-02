@@ -67,7 +67,7 @@ public class InsertVocabularyInServer {
 		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 	
-	public void process(String folder, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, JFrame frame, String errorFolder) throws Exception {
+	public void process(String folder, String workingFolder, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, JFrame frame, String errorFolder) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(dbSettings.cdmSchema);
 		
@@ -111,7 +111,7 @@ public class InsertVocabularyInServer {
 								FileUtils.copyFile(file, temporarySourceFile);
 							}
 							else { // Split file in parts of less than 2 GB.
-								fileParts = FileUtilities.splitCSVFile(file, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, (char) 0, 2000000000);
+								fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, (char) 0, 2000000000);
 							}
 						}
 						
