@@ -42,14 +42,23 @@ There is also a command-line-interface. Type `java -jar JCDMBuilder_v?.?.?.?.jar
 Interface
 =========
 
-The interface consists of four tabs:
+The interface consists of a menu and four tabs.
 
-* The Locations tab contains the location of the working folder and all information for connecting to the target database.
-* The Vocabulary tab contains all information on the location of the vocabulary files/schema and how to load it.
-* The ETL tab contains information on the location of the data files and the format and how to load them.
-* The Execute tab contains checkboxes where you can specify what you want to do. Be aware that the order of the checkboxes specifies the order the actions should be performed in. The interface allows you to perform them one by one but in tha case you should keep track yourself of which actions you already have done.
+
+_The File menu_
+
+The File menu contains three options:
+
+| Option | Description |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| Load settings | Load the settings from a settings file saved earlier. |
+| Save settings | Save the settings (with exception of the password) to a settings file. |
+| Exit | Exit the JCDMBuilder. |
+
 
 _The Locations tab_
+
+The Locations tab contains the location of the working folder and all information for connecting to the target database.
 
 | Field | Description |
 | ------------------------ | ----------------------------------------------------------------------------- |
@@ -93,6 +102,7 @@ SQL Server:
 
 _The Vocabulary tab_
 
+The Vocabulary tab contains all information on the location of the vocabulary files/schema and how to load it.
 At the top of this tab is a drop down list containing three options. For each of the options different fields are shown.
 The options and their corresponding fields are: 
 
@@ -127,6 +137,7 @@ This option is not available for Oracle.
 
 _The ETL tab_
 
+The ETL tab contains information on the location of the data files and the format and how to load them.
 At the top of this tab is a drop down list containing two options. For each of the options different fields are shown.
 Next to the drop down list is a field where you can specify a version number.
 The options and their corresponding fields are:
@@ -159,6 +170,7 @@ This option is not available for Oracle.
 
 _The Execute tab_
 
+On the Execute tab you can specify what you want to do.
 The box "Steps to execute" on this tab contains check boxes for all the steps to perform which lets you choose which steps to perform.
 Be aware that the order in which they are listed is also the order in which they should be performed.
 The "execute options" box contains a checkbox where you can specify if the JCDMBuilder should continue after an error has occurred during the ETL, indices and constraints.
