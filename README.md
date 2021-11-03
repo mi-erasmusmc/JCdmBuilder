@@ -93,8 +93,8 @@ SQL Server:
 
 _The Vocabulary tab_
 
-At the top of the tab is a dropdown list containing three options. For each of the options different fields are shown.
-The options an their corresponding fields are: 
+At the top of this tab is a drop down list containing three options. For each of the options different fields are shown.
+The options and their corresponding fields are: 
 
 1. Load ATHENA CSV files to server
 
@@ -124,10 +124,75 @@ This option is not available for Oracle.
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Schema | The schema where the source vocabulary is stored. The user specified in the Locations tab should also have access to this schema. |
 
+
 _The ETL tab_
+
+At the top of this tab is a drop down list containing two options. For each of the options different fields are shown.
+Next to the drop down list is a field where you can specify a version number.
+The options and their corresponding fields are:
+
+1. Load CSV files in CDM format to server
+
+With this option the records are inserted directly into the database.
+
+| Field | Description |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| Folder | The folder where the CSV files of the data are stored. |
+| Delimiter | The character that is used as a field delimiter. Enter the text tab for a tab. |
+| Quote | The character that is used to quote strings that contain the delimiter. |
+| Null value | The string that is used to represent the Null value. |
+
+2. Bulk Load CSV files in CDM format to server
+
+With this option the files are first copied to a folder on the database server and then loaded into the database in bulk mode.
+This option is not available for Oracle.
+
+| Field | Description |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| Folder | The folder where the CSV files of the data are stored. |
+| Delimiter | The character that is used as a field delimiter. Enter the text tab for a tab. |
+| Quote | The character that is used to quote strings that contain the delimiter. |
+| Null value | The string that is used to represent the Null value. |
+| Server folder | The folder that is mapped to a folder on the database server where the files can be copied to for the import. |
+| Local path server folder | The path on the database server where the files are copied to. |
 
 
 _The Execute tab_
+
+The box "Steps to execute" on this tab contains check boxes for all the steps to perform which lets you choose which steps to perform.
+Be aware that the order in which they are listed is also the order in which they should be performed.
+The "execute options" box contains a checkbox where you can specify if the JCDMBuilder should continue after an error has occurred during the ETL, indices and constraints.
+With the Execute button you start the process.
+
+
+Command Line Interface
+======================
+
+From the command line you can start the JCDMBuilder with the following command:
+
+java -jar JCDMBuilder-vx.x.x.x [options]
+
+The available options are:
+
+| Option | Description |
+| -settingsfile <file>                | Use the specified settings file. |
+| -targetpassword <password>          | Set target database password. The password is not in the settingsfile. |
+| -idtobigint                         | When creating the CDM structure, use BIGINT instead of INT for all IDs. |
+
+The following options allow the steps to be automatically executed. Steps are executed in order: 
+
+| Option | Description |
+| -executecdmstructure                | Create default CDM structure on startup. |
+| -executevocab                       | Insert vocabulary on startup. |
+| -executeetl                         | Execute ETL on startup. |
+| -executeindices                     | Create required indices on startup. |
+| -executeconstraints                 | Add constraints on startup. |
+| -executeconditioneras               | Create condition eras on startup. |
+| -executedrugeras                    | Create drug eras on startup. |
+| -executeresultsstructure            | Create results structure on startup. |
+| -executeresultsdata                 | Load results data on startup. |
+| -executeresultsindices              | Create results indices on startup. |
+| -continueonerror                    | Continue after error during ETL, creating indices, and creating constraints. |
 
 
 Getting Involved
