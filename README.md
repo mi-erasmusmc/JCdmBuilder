@@ -176,9 +176,9 @@ The available options are:
 
 | Option | Description |
 | ------------------------ | ----------------------------------------------------------------------------- |
-| -settingsfile <file>                | Use the specified settings file. |
-| -targetpassword <password>          | Set target database password. The password is not in the settingsfile. |
-| -idtobigint                         | When creating the CDM structure, use BIGINT instead of INT for all IDs. |
+| -settingsfile \<file\> | Use the specified settings file. |
+| -targetpassword \<password\> | Set target database password. The password is not in the settingsfile. |
+| -idtobigint | When creating the CDM structure, use BIGINT instead of INT for all IDs. |
 
 The following options allow the steps to be automatically executed. Steps are executed in order: 
 
