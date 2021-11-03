@@ -176,6 +176,9 @@ The available options are:
 
 | Option | Description |
 | ------------------------ | ----------------------------------------------------------------------------- |
+| -usage | Show the available options. |
+| -help | Show the available options. |
+| ? | Show the available options. |
 | -settingsfile \<file\> | Use the specified settings file. |
 | -targetpassword \<password\> | Set target database password. The password is not in the settingsfile. |
 | -idtobigint | When creating the CDM structure, use BIGINT instead of INT for all IDs. |
