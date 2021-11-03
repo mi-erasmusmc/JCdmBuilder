@@ -74,7 +74,7 @@ import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.IniFile;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "5.4.0.2";
+	public static final String VERSION = "5.4.0.3";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 	
@@ -1540,7 +1540,7 @@ public class JCdmBuilderMain {
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerQuoteField.getText(), sourceServerNullValueField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
+						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerQuoteField.getText(), sourceServerNullValueField.getText(), folderField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
 				
 			} catch (Exception e) {
@@ -1571,7 +1571,7 @@ public class JCdmBuilderMain {
 					InsertVocabularyInServer process = new InsertVocabularyInServer();
 					DbSettings dbSettings = getTargetDbSettings();
 					if (dbSettings != null)
-						process.process(vocabFolderField.getText(), vocabServerTempFolderField.getText(), vocabServerTempLocalFolderField.getText(), dbSettings, frame, folderField.getText());
+						process.process(vocabFolderField.getText(), folderField.getText(), vocabServerTempFolderField.getText(), vocabServerTempLocalFolderField.getText(), dbSettings, frame, folderField.getText());
 				}
 				else if (vocabSourceType.getSelectedItem().toString().equals(VOCABTYPE_SCHEMA_LOAD)) {
 					CopyVocabularyFromSchema process = new CopyVocabularyFromSchema();

@@ -74,7 +74,7 @@ public class CdmEtl {
 		StringUtilities.outputWithTime("Finished inserting tables");
 	}
 	
-	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCdmVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
+	public void process(int currentStructure, String folder, String delimiterString, String quoteString, String nullValueString, String workingFolder, String temporaryServerFolder, String temporaryLocalServerFolder, DbSettings dbSettings, int maxPersons, int versionId, String targetCdmVersion, JFrame frame, String errorFolder, boolean continueOnError) throws Exception {
 		RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 		
@@ -127,7 +127,7 @@ public class CdmEtl {
 								FileUtils.copyFile(file, temporarySourceFile);
 							}
 							else { // Split file in parts of less than 2 GB.
-								fileParts = FileUtilities.splitCSVFile(file, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
+								fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
 							}
 						}
 						

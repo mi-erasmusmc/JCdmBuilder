@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 
+import org.apache.commons.io.FileUtils;
 import org.ohdsi.utilities.StringUtilities;
 
 public class FileUtilities {
@@ -40,7 +41,7 @@ public class FileUtilities {
 		copyStream(new GZIPInputStream(new FileInputStream(sourceFilename)), new FileOutputStream(targetFilename)); 
 	}
 	
-	public static List<String> splitCSVFile(File file, String destinationFolder, String fileNamePrefix, char quote, int maxSize) throws IOException {
+	public static List<String> splitCSVFile(File file, String tempFolder, String destinationFolder, String fileNamePrefix, char quote, int maxSize) throws IOException {
 		StringUtilities.outputWithTime("Split file " + file.getName() + " into:");
 		List<String> fileParts = new ArrayList<String>();
 		int fileNr = 0;
@@ -49,14 +50,17 @@ public class FileUtilities {
 		BufferedWriter fileWriter = null;
 		String record = getNextCSVRecord(fileReader, (int) quote);
 		String header = null;
+		String temporaryPartFileNamePath = null;
+		String destinationPartFileNamePath = null;
 		while (record != null) {
 			if (fileWriter == null) {
 				fileNr++;
 				String partFileName = fileNamePrefix + "_" + Integer.toString(fileNr) + "_" + file.getName();
-				String partFileNamePath = destinationFolder + File.separator + partFileName;
+				temporaryPartFileNamePath = tempFolder + File.separator + partFileName;
+				destinationPartFileNamePath = destinationFolder + File.separator + partFileName;
 				fileParts.add(partFileName);
-				StringUtilities.outputWithTime("    " + partFileNamePath);
-				fileWriter = new BufferedWriter(new FileWriter(new File(partFileNamePath)));
+				StringUtilities.outputWithTime("    " + temporaryPartFileNamePath);
+				fileWriter = new BufferedWriter(new FileWriter(new File(temporaryPartFileNamePath)));
 				if (header == null) {
 					header = record;
 				}
@@ -69,6 +73,14 @@ public class FileUtilities {
 			fileSize += record.length();
 			if (fileSize > maxSize) {
 				fileWriter.close();
+				if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
+					File tempFile = new File(temporaryPartFileNamePath);
+					File destinationFile = new File(destinationPartFileNamePath);
+					StringUtilities.outputWithTime("    Copy " + temporaryPartFileNamePath + " to " + destinationPartFileNamePath);
+					FileUtils.copyFile(tempFile, destinationFile);
+					StringUtilities.outputWithTime("    Delete " + temporaryPartFileNamePath);
+					FileUtils.forceDelete(tempFile);
+				}
 				fileWriter = null;
 				fileSize = 0;
 			}
@@ -76,7 +88,16 @@ public class FileUtilities {
 		}
 		if (fileWriter != null) {
 			fileWriter.close();
+			if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
+				File tempFile = new File(temporaryPartFileNamePath);
+				File destinationFile = new File(destinationPartFileNamePath);
+				StringUtilities.outputWithTime("    Copy " + temporaryPartFileNamePath + " to " + destinationPartFileNamePath);
+				FileUtils.copyFile(tempFile, destinationFile);
+				StringUtilities.outputWithTime("    Delete " + temporaryPartFileNamePath);
+				FileUtils.forceDelete(tempFile);
+			}
 		}
+		StringUtilities.outputWithTime("Split file " + file.getName() + " finished");
 		return fileParts;
 	}
 	

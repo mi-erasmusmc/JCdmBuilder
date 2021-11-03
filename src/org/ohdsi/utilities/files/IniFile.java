@@ -195,8 +195,18 @@ public class IniFile {
 	}
 	
 	
+	public List<String> getGroups() {
+		return groupOrder;
+	}
+	
+	
 	public Map<String, String> getGroup(String group) {
 		return iniFileMap.get(group);
+	}
+	
+	
+	public List<String> getGroupVariables(String group) {
+		return groupVariableOrder.get(group);
 	}
 	
 	
