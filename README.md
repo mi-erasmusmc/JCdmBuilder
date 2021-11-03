@@ -20,7 +20,7 @@ Screenshot
 
 Technology
 ============
-JCdmBuilder is a Java program.  
+JCdmBuilder is a Java program to load data into a CDM database as part of an ETL.
 
 System Requirements
 ============
@@ -36,6 +36,7 @@ Getting Started
 1. Under the [Releases](https://github.com/OHDSI/JCdmBuilder/releases) tab, download the latest JCDMBuilder jar file.
 2. Double-click on the jar file to start the application.
 
+The first three numbers in the version number correspond to the last accepted release of the CDM that is implemented in the JCDMBuilder. 
 There is also a command-line-interface. Type `java -jar JCDMBuilder_v?.?.?.?.jar -usage` for more information.
 
 Interface
@@ -92,6 +93,36 @@ SQL Server:
 
 _The Vocabulary tab_
 
+At the top of the tab is a dropdown list containing three options. For each of the options different fields are shown.
+The options an their corresponding fields are: 
+
+1. Load ATHENA CSV files to server
+
+With this option the records are inserted directly into the database.
+
+| Field | Description |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| Folder | The folder where the CSV files of the vocabulary are stored. |
+
+2. Bulk Load ATHENA CSV files from server to server
+
+With this option the files are first copied to a folder on the database server and then loaded into the database in bulk mode.
+This option is not available for Oracle.
+
+| Field | Description |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| Folder | The folder where the CSV files of the vocabulary are stored. |
+| Server folder | The folder that is mapped to a folder on the database server where the files can be copied to for the import. |
+| Local path server folder | The path on the database server where the files are copied to. |
+
+3. Load vocabulary from schema
+
+With this option the vocabulary is copied from another schema in the database.
+This option is not available for Oracle.
+
+| Field | Description |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| Schema | The schema where the source vocabulary is stored. The user specified in the Locations tab should also have access to this schema. |
 
 _The ETL tab_
 
