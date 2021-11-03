@@ -1,12 +1,11 @@
 JCdmBuilder
 ==============
 
-The JCdmBuilder is a Java program that offers various tools that can be used when contructing a data in the OMOP Common Data Model (CDM). It can also be used to transform some specific observational datasets from their native formats and schemas into the CDM.  
+The JCdmBuilder is a Java program that offers various tools that can be used for loading data in the OMOP Common Data Model (CDM).  
 
 Features
 ========
-* This builder supports the following ETLs:
-* You can also load data in CDM format from CSV files into the database.
+* You can load data in CDM format from CSV files into the database.
 * Creating the database structure and indices for CDM version 5.0.1, 5.3.0, 5.3.1, 5.4.0, prepared for version 6.0.
 * Loading the vocabulary from files into the database.
 * Automatically creating condition and drug eras.
@@ -20,7 +19,7 @@ Screenshot
 
 Technology
 ============
-JCdmBuilder is a Java program to load data into a CDM database as part of an ETL.
+JCdmBuilder is a Java program.
 
 System Requirements
 ============
