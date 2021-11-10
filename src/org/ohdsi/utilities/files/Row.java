@@ -25,35 +25,38 @@ import org.ohdsi.utilities.StringUtilities;
 public class Row {
 	private List<String>			cells;
 	private Map<String, Integer>	fieldName2ColumnIndex;
-
+	
 	public Row() {
 		fieldName2ColumnIndex = new HashMap<String, Integer>();
 		cells = new ArrayList<String>();
 	}
-
+	
 	public Row(List<String> cells, Map<String, Integer> fieldName2ColumnIndex) {
 		this.cells = cells;
 		this.fieldName2ColumnIndex = fieldName2ColumnIndex;
 	}
-
+	
 	public Row(Row row) {
 		cells = new ArrayList<String>(row.cells);
 		fieldName2ColumnIndex = new HashMap<String, Integer>(row.fieldName2ColumnIndex);
 	}
-
-	public String get(String fieldName) {
-		int index;
+	
+	public String get(String fieldName, boolean required) {
+		Integer index;
 		try {
 			index = fieldName2ColumnIndex.get(fieldName);
 		} catch (NullPointerException e) {
-			throw new RuntimeException("Field \"" + fieldName + "\" not found");
+			index = null;
+			if (required) {
+				throw new RuntimeException("Field \"" + fieldName + "\" not found");
+			}
 		}
-		if (cells.size() <= index)
+		if ((index == null) || (cells.size() <= index))
 			return null;
 		else
 			return cells.get(index);
 	}
-
+	
 	public List<String> getFieldNames() {
 		List<String> names = new ArrayList<String>(fieldName2ColumnIndex.size());
 		for (int i = 0; i < fieldName2ColumnIndex.size(); i++)
@@ -62,64 +65,68 @@ public class Row {
 			names.set(entry.getValue(), entry.getKey());
 		return names;
 	}
-
+	
 	public int getInt(String fieldName) {
-		return Integer.parseInt(get(fieldName).trim());
+		return Integer.parseInt(get(fieldName, true).trim());
 	}
-
+	
 	public long getLong(String fieldName) {
-		return Long.parseLong(get(fieldName));
+		return Long.parseLong(get(fieldName, true));
 	}
-
+	
 	public double getDouble(String fieldName) {
-		return Double.parseDouble(get(fieldName));
+		return Double.parseDouble(get(fieldName, true));
 	}
-
+	
 	public void add(String fieldName, String value) {
 		fieldName2ColumnIndex.put(fieldName, cells.size());
 		cells.add(value);
 	}
-
+	
 	public void add(String fieldName, int value) {
 		add(fieldName, Integer.toString(value));
 	}
-
+	
 	public void add(String fieldName, boolean value) {
 		add(fieldName, Boolean.toString(value));
 	}
-
+	
 	public void add(String fieldName, double value) {
 		add(fieldName, Double.toString(value));
 	}
-
+	
 	public void add(String fieldName, long value) {
 		add(fieldName, Long.toString(value));
 	}
-
+	
 	public void set(String fieldName, String value) {
 		cells.set(fieldName2ColumnIndex.get(fieldName), value);
 	}
-
+	
 	public void set(String fieldName, int value) {
 		set(fieldName, Integer.toString(value));
 	}
-
+	
 	public void set(String fieldName, long value) {
 		set(fieldName, Long.toString(value));
 	}
-
+	
 	public void set(String fieldName, double value) {
 		set(fieldName, Double.toString(value));
 	}
-
+	
 	public List<String> getCells() {
 		return cells;
 	}
-
+	
 	public Map<String, Integer> getfieldName2ColumnIndex() {
 		return fieldName2ColumnIndex;
 	}
-
+	
+	public boolean hasField(String fieldName) {
+		return fieldName2ColumnIndex.containsKey(fieldName);
+	}
+	
 	public String toString() {
 		List<String> data = new ArrayList<String>(cells);
 		for (String fieldName : fieldName2ColumnIndex.keySet()) {
@@ -129,10 +136,10 @@ public class Row {
 		}
 		return StringUtilities.join(data, ",");
 	}
-
+	
 	public void remove(String field) {
 		Integer index = fieldName2ColumnIndex.remove(field);
-		cells.remove((int) index);
+		cells.remove((int)index);
 		Map<String, Integer> tempMap = new HashMap<String, Integer>();
 		for (Map.Entry<String, Integer> entry : fieldName2ColumnIndex.entrySet())
 			if (entry.getValue() > index)
@@ -141,11 +148,11 @@ public class Row {
 				tempMap.put(entry.getKey(), entry.getValue());
 		fieldName2ColumnIndex = tempMap;
 	}
-
+	
 	public int size() {
 		return cells.size();
 	}
-
+	
 	public void upperCaseFieldNames() {
 		Map<String, Integer> tempMap = new HashMap<String, Integer>();
 		for (Map.Entry<String, Integer> entry : fieldName2ColumnIndex.entrySet())

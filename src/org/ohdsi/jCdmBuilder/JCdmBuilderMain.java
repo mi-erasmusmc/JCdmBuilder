@@ -72,7 +72,7 @@ import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.IniFile;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "5.4.0.4";
+	public static final String VERSION = "5.4.0.5";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 	
@@ -384,17 +384,17 @@ public class JCdmBuilderMain {
 				updateETLType();
 				updateVocabSourceType();
 				
-				if (arg0.getItem().toString().equals("Oracle")) {
+				if (arg0.getItem().toString().equals(DATABASE_TYPE_ORACLE)) {
 					targetServerField.setToolTipText("For Oracle servers this field contains the SID, servicename, and optionally the port: '<host>/<sid>', '<host>:<port>/<sid>', '<host>/<service name>', or '<host>:<port>/<service name>'.");
 					targetUserField.setToolTipText("For Oracle servers this field contains the name of the user used to log in.");
 					targetPasswordField.setToolTipText("For Oracle servers this field contains the password corresponding to the user.");
 					targetSchemaField.setToolTipText("For Oracle servers this field contains the schema (i.e. 'user' in Oracle terms) containing the target tables. The user will be created with the same password.");
-				} else if (arg0.getItem().toString().equals("PostgreSQL")) {
+				} else if (arg0.getItem().toString().equals(DATABASE_TYPE_POSTGRESQL)) {
 					targetServerField.setToolTipText("For PostgreSQL servers this field contains the host name and database name (<host>/<database>).");
 					targetUserField.setToolTipText("The user used to log in to the server.");
 					targetPasswordField.setToolTipText("The password used to log in to the server.");
 					targetSchemaField.setToolTipText("For PostgreSQL servers this field contains the schema containing the target tables.");
-				} else if (arg0.getItem().toString().equals("SQL Server")) {
+				} else if (arg0.getItem().toString().equals(DATABASE_TYPE_SQLSERVER)) {
 					targetServerField.setToolTipText("For Microsoft SQL Server this field contains the server address, the database and optionally the port: '<host>:<port>;database=<database>;', or  '<host>;database=<database>;'");
 					targetUserField.setToolTipText("The user used to log in to the server. Optionally, the domain can be specified as <domain>/<user> (e.g. 'MyDomain/Joe').");
 					targetPasswordField.setToolTipText("The password used to log in to the server.");
@@ -1296,14 +1296,8 @@ public class JCdmBuilderMain {
 		dbSettings.server = targetServerField.getText();
 		dbSettings.cdmSchema = targetSchemaField.getText();
 		dbSettings.resultsSchema = targetResultsSchemaField.getText();
-		if (targetType.getSelectedItem().toString().equals("MySQL"))
-			dbSettings.dbType = DbType.MYSQL;
-		else if (targetType.getSelectedItem().toString().equals("Oracle"))
-			dbSettings.dbType = DbType.ORACLE;
-		else if (targetType.getSelectedItem().toString().equals("PostgreSQL"))
-			dbSettings.dbType = DbType.POSTGRESQL;
-		else if (targetType.getSelectedItem().toString().equals("SQL Server")) {
-			dbSettings.dbType = DbType.MSSQL;
+		dbSettings.dbType = DbType.getDbType(targetType.getSelectedItem().toString());
+		if (dbSettings.dbType == DbType.MSSQL) {
 			if (targetUserField.getText().length() != 0) { // Not using windows authentication
 				String[] parts = targetUserField.getText().split("/");
 				if (parts.length < 2) {

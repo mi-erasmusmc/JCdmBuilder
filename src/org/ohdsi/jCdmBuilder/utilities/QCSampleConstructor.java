@@ -145,9 +145,9 @@ public class QCSampleConstructor {
 					}
 					List<String> rowPlus = new ArrayList<String>();
 					for (String fieldName : row.getFieldNames()) {
-						rowPlus.add(row.get(fieldName));
+						rowPlus.add(row.get(fieldName, true));
 						if (fieldName.endsWith("_CONCEPT_ID")) {
-							String conceptId = row.get(fieldName);
+							String conceptId = row.get(fieldName, true);
 							if (StringUtilities.isNumber(conceptId)) {
 								String name = conceptIdToName.get(Integer.parseInt(conceptId));
 								if (name == null)
@@ -181,7 +181,7 @@ public class QCSampleConstructor {
 		conceptIdToName = new HashMap<Integer, String>();
 		for (Row row : connection.query("SELECT concept_id, concept_name FROM concept;")){
 			row.upperCaseFieldNames();
-			conceptIdToName.put(row.getInt("CONCEPT_ID"), row.get("CONCEPT_NAME"));
+			conceptIdToName.put(row.getInt("CONCEPT_ID"), row.get("CONCEPT_NAME", true));
 		}
 	}
 

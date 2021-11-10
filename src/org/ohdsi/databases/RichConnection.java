@@ -374,7 +374,7 @@ public class RichConnection {
 			throw new RuntimeException("Database type not supported");
 
 		for (Row row : query(query))
-			names.add(row.get(row.getFieldNames().get(0)));
+			names.add(row.get(row.getFieldNames().get(0), true));
 		return names;
 	}
 
@@ -401,9 +401,9 @@ public class RichConnection {
 		}
 
 		for (Row row : query(query)) {
-			String tableName = row.get(row.getFieldNames().get(0));
+			String tableName = row.get(row.getFieldNames().get(0), true);
 			if (!tableName.equals("")) {
-				names.add(row.get(row.getFieldNames().get(0)));
+				names.add(row.get(row.getFieldNames().get(0), true));
 			}
 		}
 		return names;
@@ -413,21 +413,21 @@ public class RichConnection {
 		List<String> names = new ArrayList<String>();
 		if (dbType == DbType.MSSQL) {
 			for (Row row : query("SELECT name FROM sys.syscolumns WHERE id=OBJECT_ID('" + schema + "." + table + "')"))
-				names.add(row.get("name"));
+				names.add(row.get("name", true));
 		}
 		else if (dbType == DbType.MYSQL) {
 			for (Row row : query("SHOW COLUMNS FROM " + table)) {
-				names.add(row.get("COLUMN_NAME"));
+				names.add(row.get("COLUMN_NAME", true));
 			}
 		}
 		else if (dbType == DbType.POSTGRESQL) {
 			for (Row row : query("SELECT column_name FROM information_schema.columns WHERE table_name='" + table.toLowerCase() + "'")) {
-				names.add(row.get("column_name"));
+				names.add(row.get("column_name", true));
 			}
 		}
 		else if (dbType == DbType.ORACLE) {
 			for (Row row : query("SELECT COLUMN_NAME FROM ALL_TAB_COLS WHERE TABLE_NAME = '" + table.toUpperCase() + "' AND owner = '" + schema.toUpperCase() + "' AND NOT REGEXP_LIKE(COLUMN_NAME, '^SYS_')")) {
-				names.add(row.get("COLUMN_NAME"));
+				names.add(row.get("COLUMN_NAME", true));
 			}
 		}
 		else {
@@ -441,8 +441,8 @@ public class RichConnection {
 		Map<String, String> types = new HashMap<String, String>();
 		if (dbType == DbType.MSSQL) {
 			for (Row row : query("SELECT c.name as column_name, t.name as data_type FROM sys.syscolumns c LEFT OUTER JOIN sys.types t ON t.system_type_id = c.xtype WHERE id=OBJECT_ID('" + schema + "." + table + "')")) {
-				String columnName = row.get("column_name").toUpperCase();
-				String columnType = row.get("data_type").toUpperCase();
+				String columnName = row.get("column_name", true).toUpperCase();
+				String columnType = row.get("data_type", true).toUpperCase();
 				types.put(columnName, columnType);
 			}
 		}
@@ -455,15 +455,15 @@ public class RichConnection {
 		//}
 		else if (dbType == DbType.POSTGRESQL) {
 			for (Row row : query("SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = '" + schema.toLowerCase() + "' AND table_name='" + table.toLowerCase() + "'")) {
-				String columnName = row.get("column_name").toUpperCase();
-				String columnType = row.get("data_type").toUpperCase();
+				String columnName = row.get("column_name", true).toUpperCase();
+				String columnType = row.get("data_type", true).toUpperCase();
 				types.put(columnName, columnType);
 			}
 		}
 		else if (dbType == DbType.ORACLE) {
 			for (Row row : query("SELECT COLUMN_NAME, DATA_TYPE FROM ALL_TAB_COLS WHERE TABLE_NAME = '" + table.toUpperCase() + "' AND owner = '" + schema.toUpperCase() + "' AND NOT REGEXP_LIKE(COLUMN_NAME, '^SYS_')")) {
-				String columnName = row.get("COLUMN_NAME").toUpperCase();
-				String columnType = row.get("DATA_TYPE").toUpperCase();
+				String columnName = row.get("COLUMN_NAME", true).toUpperCase();
+				String columnType = row.get("DATA_TYPE", true).toUpperCase();
 				types.put(columnName, columnType);
 			}
 		}
@@ -482,8 +482,8 @@ public class RichConnection {
 		Map<String, List<String>> foreignKeyConstraints = new HashMap<String, List<String>>();
 		if (dbType == DbType.MSSQL) {
 			for (Row row : query("SELECT fk_tab.name as fk_table_name, fk.name as fk_constraint_name FROM sys.foreign_keys fk INNER JOIN sys.tables fk_tab ON fk_tab.object_id = fk.parent_object_id WHERE schema_name(fk_tab.schema_id) = '" + schema.toUpperCase() + "'" + (table == null ? "" : " AND fk_tab.name = '" + table.toUpperCase() + "'") + ";")) {
-				String tableName = row.get("fk_table_name");
-				String constraintName = row.get("fk_constraint_name");
+				String tableName = row.get("fk_table_name", true);
+				String constraintName = row.get("fk_constraint_name", true);
 				List<String> tableConstraints = foreignKeyConstraints.get(tableName);
 				if ( tableConstraints == null) {
 					tableConstraints = new ArrayList<String>();
@@ -494,8 +494,8 @@ public class RichConnection {
 		}
 		else if (dbType == DbType.POSTGRESQL) {
 			for (Row row : query("SELECT rel.relname, con.conname FROM pg_catalog.pg_constraint con INNER JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid INNER JOIN pg_catalog.pg_namespace nsp ON nsp.oid = connamespace WHERE nsp.nspname = '" + schema.toLowerCase() + "' AND con.contype = 'f'" + (table == null ? "" : " AND rel.relname = '" + table.toLowerCase() + "'") + ";")) {
-				String tableName = row.get("relname");
-				String constraintName = row.get("conname");
+				String tableName = row.get("relname", true);
+				String constraintName = row.get("conname", true);
 				List<String> tableConstraints = foreignKeyConstraints.get(tableName);
 				if ( tableConstraints == null) {
 					tableConstraints = new ArrayList<String>();
@@ -506,8 +506,8 @@ public class RichConnection {
 		}
 		else if (dbType == DbType.ORACLE) {
 			for (Row row : query("SELECT TABLE_NAME, CONSTRAINT_NAME FROM ALL_CONSTRAINTS WHERE OWNER = '" + schema.toUpperCase() + "' AND CONSTRAINT_TYPE = 'R'" + (table == null ? "" : " AND TABLE_NAME = '" + table.toUpperCase() + "'") + ";")) {
-				String tableName = row.get("TABLE_NAME");
-				String constraintName = row.get("CONSTRAINT_NAME");
+				String tableName = row.get("TABLE_NAME", true);
+				String constraintName = row.get("CONSTRAINT_NAME", true);
 				List<String> tableConstraints = foreignKeyConstraints.get(tableName);
 				if ( tableConstraints == null) {
 					tableConstraints = new ArrayList<String>();
@@ -532,8 +532,8 @@ public class RichConnection {
 		Map<String, List<String>> indices = new HashMap<String, List<String>>();
 		if (dbType == DbType.MSSQL) {
 			for (Row row : query("SELECT object_name(i.object_id) As tablename, i.name AS indexname FROM sys.indexes i LEFT OUTER JOIN sys.objects o ON i.object_id = o.object_id WHERE i.is_hypothetical = 0 AND i.index_id != 0 AND i.is_primary_key = 'false' AND schema_name(o.schema_id) = '" + schema.toLowerCase() + "'" + (table == null ? "" : " AND object_name(i.object_id) = '" + table.toUpperCase() + "'") + ";")) {
-				String tableName = row.get("table_name");
-				String indexName = row.get("constraint_name");
+				String tableName = row.get("table_name", true);
+				String indexName = row.get("constraint_name", true);
 				List<String> tableIndices = indices.get(tableName);
 				if ( tableIndices == null) {
 					tableIndices = new ArrayList<String>();
@@ -544,8 +544,8 @@ public class RichConnection {
 		}
 		else if (dbType == DbType.POSTGRESQL) {
 			for (Row row : query("SELECT tablename, indexname FROM pg_indexes WHERE indexdef NOT LIKE '% UNIQUE %' AND schemaname = '" + schema.toLowerCase() + "'" + (table == null ? "" : " AND tablename = '" + table.toLowerCase() + "'") + ";")) {
-				String tableName = row.get("tablename");
-				String indexName = row.get("indexname");
+				String tableName = row.get("tablename", true);
+				String indexName = row.get("indexname", true);
 				List<String> tableIndices = indices.get(tableName);
 				if ( tableIndices == null) {
 					tableIndices = new ArrayList<String>();
@@ -556,8 +556,8 @@ public class RichConnection {
 		}
 		else if (dbType == DbType.ORACLE) {
 			for (Row row : query("SELECT TABLE_NAME, INDEX_NAME FROM ALL_INDEXES WHERE UNIQUENESS = 'NONUNIQUE' AND OWNER = '" + schema.toUpperCase() + "'" + (table == null ? "" : " AND TABLE_NAME = '" + table.toUpperCase() + "'") + ";")) {
-				String tableName = row.get("TABLE_NAME");
-				String indexName = row.get("INDEX_NAME");
+				String tableName = row.get("TABLE_NAME", true);
+				String indexName = row.get("INDEX_NAME", true);
 				List<String> tableIndices = indices.get(tableName);
 				if ( tableIndices == null) {
 					tableIndices = new ArrayList<String>();
@@ -582,8 +582,8 @@ public class RichConnection {
 		Map<String, List<String>> primaryKeyConstraints = new HashMap<String, List<String>>();
 		if (dbType == DbType.MSSQL) {
 			for (Row row : query("SELECT t.[name] AS table_name, isnull(c.[name], i.[name]) AS constraint_name FROM sys.objects t LEFT OUTER JOIN sys.indexes i ON t.object_id = i.object_id LEFT OUTER JOIN sys.key_constraints c ON i.object_id = c.parent_object_id AND i.index_id = c.unique_index_id WHERE is_unique = 1 AND t.[type] = 'U' AND c.[type] = 'PK' AND t.is_ms_shipped <> 1 AND schema_name(t.schema_id) = '" + schema.toLowerCase() + "'" + (table == null ? "" : " AND t.[name] = '" + table.toUpperCase() + "'") + ";")) {
-				String tableName = row.get("table_name");
-				String constraintName = row.get("constraint_name");
+				String tableName = row.get("table_name", true);
+				String constraintName = row.get("constraint_name", true);
 				List<String> tableConstraints = primaryKeyConstraints.get(tableName);
 				if ( tableConstraints == null) {
 					tableConstraints = new ArrayList<String>();
@@ -594,8 +594,8 @@ public class RichConnection {
 		}
 		else if (dbType == DbType.POSTGRESQL) {
 			for (Row row : query("SELECT rel.relname, con.conname FROM pg_catalog.pg_constraint con INNER JOIN pg_catalog.pg_class rel ON rel.oid = con.conrelid INNER JOIN pg_catalog.pg_namespace nsp ON nsp.oid = connamespace WHERE nsp.nspname = '" + schema.toLowerCase() + "' AND con.contype = 'p'" + (table == null ? "" : " AND rel.relname = '" + table.toLowerCase() + "'") + ";")) {
-				String tableName = row.get("relname");
-				String constraintName = row.get("conname");
+				String tableName = row.get("relname", true);
+				String constraintName = row.get("conname", true);
 				List<String> tableConstraints = primaryKeyConstraints.get(tableName);
 				if ( tableConstraints == null) {
 					tableConstraints = new ArrayList<String>();
@@ -606,8 +606,8 @@ public class RichConnection {
 		}
 		else if (dbType == DbType.ORACLE) {
 			for (Row row : query("SELECT TABLE_NAME, CONSTRAINT_NAME FROM ALL_CONSTRAINTS WHERE OWNER = '" + schema.toUpperCase() + "' AND CONSTRAINT_TYPE = 'P'" + (table == null ? "" : " AND TABLE_NAME = '" + table.toUpperCase() + "'") + ";")) {
-				String tableName = row.get("TABLE_NAME");
-				String constraintName = row.get("CONSTRAINT_NAME");
+				String tableName = row.get("TABLE_NAME", true);
+				String constraintName = row.get("CONSTRAINT_NAME", true);
 				List<String> tableConstraints = primaryKeyConstraints.get(tableName);
 				if ( tableConstraints == null) {
 					tableConstraints = new ArrayList<String>();
@@ -896,7 +896,7 @@ public class RichConnection {
 			PreparedStatement statement = connection.prepareStatement(sql);
 			for (Row row : rows) {
 				for (int i = 0; i < columns.size(); i++) {
-					String value = row.get(columns.get(i));
+					String value = row.get(columns.get(i), true);
 					if (value != null && (nullValueString != null) && value.equals(nullValueString))
 						value = null;
 					if (dbType == DbType.POSTGRESQL) {// PostgreSQL does not allow unspecified types
@@ -1147,7 +1147,7 @@ public class RichConnection {
 			fields.add(new FieldInfo(field));
 		for (Row row : rows) {
 			for (FieldInfo fieldInfo : fields) {
-				String value = row.get(fieldInfo.name);
+				String value = row.get(fieldInfo.name, true);
 				if (fieldInfo.isNumeric && !StringUtilities.isInteger(value))
 					fieldInfo.isNumeric = false;
 				if (value.length() > fieldInfo.maxLength)
@@ -1228,21 +1228,21 @@ public class RichConnection {
 				first = false;
 			else
 				sql.append(',');
-			sql.append(row.get("COLUMN_NAME"));
+			sql.append(row.get("COLUMN_NAME", true));
 			sql.append(' ');
 			if (targetConnection.dbType == DbType.ORACLE) {
-				if (row.get("DATA_TYPE").equals("bigint"))
+				if (row.get("DATA_TYPE", true).equals("bigint"))
 					sql.append("number");
-				else if (row.get("DATA_TYPE").equals("varchar"))
+				else if (row.get("DATA_TYPE", true).equals("varchar"))
 					sql.append("VARCHAR(512)");
 				else
-					sql.append(row.get("DATA_TYPE"));
+					sql.append(row.get("DATA_TYPE", true));
 			} else if (targetConnection.dbType == DbType.MYSQL) {
-				sql.append(row.get("DATA_TYPE"));
-				if (row.get("DATA_TYPE").equals("varchar"))
+				sql.append(row.get("DATA_TYPE", true));
+				if (row.get("DATA_TYPE", true).equals("varchar"))
 					sql.append("(max)");
 			} else if (targetConnection.dbType == DbType.POSTGRESQL) {
-				sql.append(row.get("DATA_TYPE"));
+				sql.append(row.get("DATA_TYPE", true));
 			}
 		}
 		sql.append(");");

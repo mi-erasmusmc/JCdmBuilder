@@ -348,25 +348,25 @@ public class CSVFileChecker {
 		OneToManyList<String, Row> tableToFields = new OneToManyList<String, Row>();
 		while (iterator.hasNext()) {
 			Row row = iterator.next();
-			if (row.get("Table").trim().length() != 0)
-				tableToFields.put(row.get("Table"), row);
+			if (row.get("Table", true).trim().length() != 0)
+				tableToFields.put(row.get("Table", true), row);
 		}
 		for (String table : tableToFields.keySet()) {
 			System.out.println("Checking " + table);
 			List<ColumnInfo> columnInfos = new ArrayList<ColumnInfo>();
 			for (Row row : tableToFields.get(table))
-				if (row.get("Check").equals("1")) {
+				if (row.get("Check", true).equals("1")) {
 					ColumnInfo info = new ColumnInfo();
-					info.header = row.get("Field");
-					if (row.get("Type").toLowerCase().equals("integer")) {
+					info.header = row.get("Field", true);
+					if (row.get("Type", true).toLowerCase().equals("integer")) {
 						info.isInteger = true;
 						info.isDateFormat1 = false;
 						info.isReal = false;
-					} else if (row.get("Type").toLowerCase().equals("real")) {
+					} else if (row.get("Type", true).toLowerCase().equals("real")) {
 						info.isInteger = false;
 						info.isDateFormat1 = false;
 						info.isReal = true;
-					} else if (row.get("Type").toLowerCase().equals("date")) {
+					} else if (row.get("Type", true).toLowerCase().equals("date")) {
 						info.isInteger = false;
 						info.isDateFormat1 = true;
 						info.isReal = false;

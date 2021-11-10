@@ -216,7 +216,7 @@ public class CdmEtl {
 			for (String fieldName : row.getFieldNames()) {
 				String normFieldName = fieldName.toLowerCase().trim();
 				if (allowedFields.contains(normFieldName))
-					filteredRow.add(normFieldName, row.get(fieldName));
+					filteredRow.add(normFieldName, row.get(fieldName, true));
 				else if (ignoredFields.add(fieldName))
 					System.err.println("Ignoring field " + fieldName);
 			}

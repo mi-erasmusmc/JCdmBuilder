@@ -194,7 +194,7 @@ public class InsertVocabularyInServer {
 			Row filteredRow = new Row();
 			for (String fieldName : row.getFieldNames()) {
 				if (allowedFields.contains(fieldName.toLowerCase()))
-					filteredRow.add(fieldName, row.get(fieldName));
+					filteredRow.add(fieldName, row.get(fieldName, true));
 				else if (ignoredFields.add(fieldName))
 					System.err.println("Ignoring field " + fieldName);
 			}
