@@ -13,9 +13,28 @@ Features
 * Supports bulk load from CSV files for PostgreSQL and SQL Server.
 * Command line interface for automated execution.
 
-Screenshot
+Screenshots
 ===========
-<img src="https://github.com/mi-erasmusmc/JCdmBuilder/blob/master/man/Screenshot_5.4.0.4.png" alt="JCdmBuilder" title="JCdmBuilder" />
+
+<img src="man/Screenshot_5.4.0.5_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
+
+_The Locations tab._
+<br><br>
+
+<img src="man/Screenshot_5.4.0.5_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
+
+_The Vocabulary tab._
+<br><br>
+
+<img src="man/Screenshot_5.4.0.5_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
+
+_The ETL tab._
+<br><br>
+
+<img src="man/Screenshot_5.4.0.5_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
+
+_The Execute tab._
+<br><br>
 
 Technology
 ============
@@ -35,8 +54,9 @@ Getting Started
 1. Under the [Releases](https://github.com/OHDSI/JCdmBuilder/releases) tab, download the latest JCDMBuilder jar file.
 2. Double-click on the jar file to start the application.
 
-The first three numbers in the version number correspond to the last accepted release of the CDM that is implemented in the JCDMBuilder. 
-There is also a command-line-interface. Type `java -jar JCDMBuilder_v?.?.?.?.jar -usage` for more information.
+The first three numbers in the version number correspond to the last accepted release of the CDM that is implemented in the JCDMBuilder. <br>
+There is also a command-line-interface. Type `java -jar JCDMBuilder_v?.?.?.?.jar -usage` for more information or see the 
+the section on the command line interface below.
 
 Interface
 =========
@@ -48,7 +68,7 @@ _The File menu_
 
 The File menu contains three options:
 
-| Option | Description |
+| **Option** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Load settings | Load the settings from a settings file saved earlier. |
 | Save settings | Save the settings (with exception of the password) to a settings file. |
@@ -59,7 +79,7 @@ _The Locations tab_
 
 The Locations tab contains the location of the working folder and all information for connecting to the target database.
 
-| Field | Description |
+| **Field** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 |Working folder | This is the folder where the log file (Console.txt) and the error files are written. |
 
@@ -67,7 +87,7 @@ The section "Target CDM Location" contains all information on how to connect to 
 
 Oracle:
 
-| Field | Description |
+| **Field** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Server location | \<server name/IP-address\>[\:\<port\>]/\<SID\> |
 | User name | The user used to connect to the database. This user should have the right to create and remove a schema/user. |
@@ -78,7 +98,7 @@ Oracle:
 
 PostgreSQL:
 
-| Field | Description |
+| **Field** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Server location | \<server name/IP-address\>[\:\<port\>]/\<database name\> |
 | User name | The user used to connect to the database. This user should have the right to create and remove a schema. |
@@ -89,7 +109,7 @@ PostgreSQL:
 
 SQL Server:
 
-| Field | Description |
+| **Field** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Server location | \<server name/IP-address\>[\:\<port\>];database=\<database name\>; |
 | User name | The user used to connect to the database. |
@@ -109,7 +129,7 @@ The options and their corresponding fields are:
 
 With this option the records are inserted directly into the database.
 
-| Field | Description |
+| **Field** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Folder | The folder where the CSV files of the vocabulary are stored. |
 
@@ -118,7 +138,7 @@ With this option the records are inserted directly into the database.
 With this option the files are first copied to a folder on the database server and then loaded into the database in bulk mode.
 This option is not available for Oracle.
 
-| Field | Description |
+| **Field** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Folder | The folder where the CSV files of the vocabulary are stored. |
 | Server folder | The folder that is mapped to a folder on the database server where the files can be copied to for the import. |
@@ -129,7 +149,7 @@ This option is not available for Oracle.
 With this option the vocabulary is copied from another schema in the database.
 This option is not available for Oracle.
 
-| Field | Description |
+| **Field** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Schema | The schema where the source vocabulary is stored. The user specified in the Locations tab should also have access to this schema. |
 
@@ -145,7 +165,7 @@ The options and their corresponding fields are:
 
 With this option the records are inserted directly into the database.
 
-| Field | Description |
+| **Field** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Folder | The folder where the CSV files of the data are stored. |
 | Delimiter | The character that is used as a field delimiter. Enter the text tab for a tab. |
@@ -157,7 +177,7 @@ With this option the records are inserted directly into the database.
 With this option the files are first copied to a folder on the database server and then loaded into the database in bulk mode.
 This option is not available for Oracle.
 
-| Field | Description |
+| **Field** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | Folder | The folder where the CSV files of the data are stored. |
 | Delimiter | The character that is used as a field delimiter. Enter the text tab for a tab. |
@@ -185,7 +205,7 @@ java -jar JCDMBuilder-vx.x.x.x [options]
 
 The available options are:
 
-| Option | Description |
+| **Option** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | -usage | Show the available options. |
 | -help | Show the available options. |
@@ -196,7 +216,7 @@ The available options are:
 
 The following options allow the steps to be automatically executed. Steps are executed in order: 
 
-| Option | Description |
+| **Option** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
 | -executecdmstructure                | Create default CDM structure on startup. |
 | -executevocab                       | Insert vocabulary on startup. |
@@ -213,19 +233,12 @@ The following options allow the steps to be automatically executed. Steps are ex
 
 Getting Involved
 =============
-* User Guide:  To be developed
 * Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers">OHDSI Forum</a>
 * We use the <a href="../../issues">GitHub issue tracker</a> for all bugs/issues/enhancements
 
 License
 =======
 JCdmBuilder is licensed under Apache License 2.0
-
-Development
-===========
-
-### Development status
-Alpha
 
 Acknowledgements
 ================
