@@ -16,22 +16,22 @@ Features
 Screenshots
 ===========
 
-<img src="man/Screenshot_5.4.0.5_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
+<img src="man/Screenshot_5.4.0.6_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
 
 _The Locations tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.5_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
+<img src="man/Screenshot_5.4.0.6_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
 
 _The Vocabulary tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.5_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
+<img src="man/Screenshot_5.4.0.6_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
 
 _The ETL tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.5_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
+<img src="man/Screenshot_5.4.0.6_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
 
 _The Execute tab._
 <br><br>
