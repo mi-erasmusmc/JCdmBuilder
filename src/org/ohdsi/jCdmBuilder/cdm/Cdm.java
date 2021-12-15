@@ -15,10 +15,14 @@
  ******************************************************************************/
 package org.ohdsi.jCdmBuilder.cdm;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -210,75 +214,80 @@ public class Cdm {
 		StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " schema");
 		connection.createSchema(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 		
+		if ((currentStructure == RESULTS) && (dbSettings.tempSchema != null) && (!dbSettings.tempSchema.equals(""))) {
+			if (!connection.schemaExists(dbSettings.tempSchema)) {
+				connection.createSchema(dbSettings.tempSchema);
+				connection.grantFullAccessForEveryOneToSchema(dbSettings.tempSchema);
+			}
+		}
+		
 		connection.close();
 		StringUtilities.outputWithTime("Done");
 	}
 	
 	
-	public static void createTables(int currentStructure, DbSettings dbSettings, String version, String sourceFolder, boolean idsToBigInt) {
+	public static void createTables(int currentStructure, DbSettings dbSettings, String version, String sourceFolder, boolean idsToBigInt, String webAPIServer, String webAPIPort) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.structureOracle() : cdm.resultsStructureOracle();
+			resourceName = currentStructure == CDM ? cdm.structureOracle() : getResultsDefintionURL(dbSettings, webAPIServer, webAPIPort);
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : cdm.resultsStructureMSSQL();
+			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : getResultsDefintionURL(dbSettings, webAPIServer, webAPIPort);
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : cdm.resultsStructurePostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : getResultsDefintionURL(dbSettings, webAPIServer, webAPIPort);
 		}
 
 		if (resourceName != null) {
-			InputStream resourceStream = null;
-			if (sourceFolder != null) {
-				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
-				if (localFile.exists()) {
-					if (localFile.canRead()) {
-						try {
-							resourceStream = new FileInputStream(localFile);
-							StringUtilities.outputWithTime("Using local definition: " + resourceName);
-						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
+			List<String> sqlLines = new ArrayList<>();
+			if (currentStructure != RESULTS) {
+				InputStream resourceStream = null;
+				if (sourceFolder != null) {
+					File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+					if (localFile.exists()) {
+						if (localFile.canRead()) {
+							try {
+								resourceStream = new FileInputStream(localFile);
+								StringUtilities.outputWithTime("Using local definition: " + resourceName);
+							} catch (FileNotFoundException e) {
+								throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
+							}
 						}
-					}
-					else {
-						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
-					}
-				}
-			}
-			
-			if (resourceStream == null) {
-				resourceName = version + "/" + resourceName;
-				URL resourceURL = cdm.getClass().getResource(resourceName);
-				if (resourceURL != null) {
-					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
-				}
-				else {
-					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " data structure definition not found");
-				}
-			}
-
-			if (resourceStream != null) {
-				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
-				List<String> sqlLines = new ArrayList<>();
-				for (String line : new ReadTextFile(resourceStream)) {
-					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
+						else {
+							throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
 						}
-						if (line.contains("CREATE TABLE ")) {
-							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
-						}
-						if (line.contains("INSERT INTO ")) {
-							line = line.replace("INSERT INTO ", "INSERT INTO " + schemaName + ".");
-						}
-						sqlLines.add(line);
 					}
 				}
 				
-				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
-				connection.setContext(cdm.getClass());
-				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
-							
+				if (resourceStream == null) {
+					resourceName = version + "/" + resourceName;
+					URL resourceURL = cdm.getClass().getResource(resourceName);
+					if (resourceURL != null) {
+						resourceStream = cdm.getClass().getResourceAsStream(resourceName);
+					}
+					else {
+						StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " data structure definition not found");
+					}
+				}
+
+				if (resourceStream != null) {
+					String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
+					for (String line : new ReadTextFile(resourceStream)) {
+						if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+							while (line.contains("  ")) {
+								line = line.replaceAll("  ", " ");
+							}
+							if (line.contains("CREATE TABLE ")) {
+								line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
+							}
+							if (line.contains("INSERT INTO ")) {
+								line = line.replace("INSERT INTO ", "INSERT INTO " + schemaName + ".");
+							}
+							sqlLines.add(line);
+						}
+					}
+				}
+				
 				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " data structure");
 				if (idsToBigInt) {
 					StringUtilities.outputWithTime("- Converting IDs to BIGINT");
@@ -290,7 +299,34 @@ public class Cdm {
 							sqlLines.set(i, line.replace("INTEGER", "BIGINT"));
 					}
 				}
-				
+			}
+			else {
+		        try {
+		            URL url = new URL(resourceName);
+		             
+		            // read text returned by server
+		            BufferedReader urlReader = new BufferedReader(new InputStreamReader(url.openStream()));
+		             
+		            String line;
+		            while ((line = urlReader.readLine()) != null) {
+		                sqlLines.add(line);
+		            }
+		            urlReader.close();
+		             
+		        }
+		        catch (MalformedURLException e) {
+		            System.out.println("Malformed URL: " + e.getMessage());
+		        }
+		        catch (IOException e) {
+		            System.out.println("I/O Error: " + e.getMessage());
+		        }
+			}
+
+			if (sqlLines.size() > 0) {
+				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
+/* NOT USED ANYMORE				
 				if (currentStructure == Cdm.RESULTS) {
 					StringUtilities.outputWithTime("- Adding CDM schema prefixes");
 					for (int i = 0; i < sqlLines.size(); i++) {
@@ -306,7 +342,7 @@ public class Cdm {
 						}
 					}
 				}
-				
+*/				
 				connection.execute(StringUtilities.join(sqlLines, "\n"));
 				
 				connection.close();
@@ -314,6 +350,23 @@ public class Cdm {
 			}
 		}
 	}
+	
+	
+	private static String getResultsDefintionURL(DbSettings dbSettings, String webAPIServer, String webAPIPort) {
+		String url = "http://";
+		
+		url += ((webAPIServer == null) || webAPIServer.equals("")) ? DbSettings.getServerNameFromServer(dbSettings.server) : webAPIServer;
+		url += ":" + (((webAPIPort == null) || webAPIPort.equals("")) ? "8080" : webAPIPort);
+		url += "/WebAPI/ddl/results?";
+		url += "dialect=" + dbSettings.dbType.getDialect();
+		url += "&schema=" + dbSettings.resultsSchema;
+		url += "&vocabSchema=" + dbSettings.cdmSchema;
+		url += "&tempSchema=" + dbSettings.tempSchema;
+		url += "&initConceptHierarchy=true";
+		
+		return url;
+	}
+	
 	
 	public static void createIndices(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
 		CdmVx cdm = getCDM(version);

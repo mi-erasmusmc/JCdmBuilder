@@ -16,13 +16,12 @@
 package org.ohdsi.databases;
 
 public class DbType {
-	public static DbType	MYSQL		= new DbType("MySQL");
 	public static DbType	MSSQL		= new DbType("SQL Server");
 	public static DbType	MSAZURE    	= new DbType("Azure");
 	public static DbType	ORACLE		= new DbType("Oracle");
 	public static DbType	POSTGRESQL	= new DbType("PostgreSQL");
 	
-	private static DbType[] allDbTypes = new DbType[] { MYSQL, MSSQL, ORACLE, POSTGRESQL };
+	private static DbType[] allDbTypes = new DbType[] { MSSQL, ORACLE, POSTGRESQL };
 	
 	public static DbType getDbType(String name) {
 		DbType dbType = null;
@@ -44,5 +43,13 @@ public class DbType {
 	
 	public String toString() {
 		return name;
+	}
+	
+	public String getDialect() {
+		String dialect = name.toLowerCase();
+		if (dialect.equals("azure")) {
+			dialect = "sql server";
+		}
+		return dialect;
 	}
 }

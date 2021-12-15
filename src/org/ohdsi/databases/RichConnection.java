@@ -383,11 +383,13 @@ public class RichConnection {
 	public List<String> getDatabaseNames() {
 		List<String> names = new ArrayList<String>();
 		String query = null;
-		if (dbType == DbType.MYSQL)
-			query = "SHOW DATABASES";
-		else if (dbType == DbType.MSSQL)
+		if (dbType == DbType.MSSQL)
 			query = "SELECT name FROM master..sysdatabases";
-		else
+		/*
+		else if (dbType == DbType.MYSQL)
+			query = "SHOW DATABASES";
+		*/
+		else 
 			throw new RuntimeException("Database type not supported");
 
 		for (Row row : query(query))
@@ -398,12 +400,7 @@ public class RichConnection {
 	public List<String> getTableNames(String schema) {
 		List<String> names = new ArrayList<String>();
 		String query = null;
-		if (dbType == DbType.MYSQL) {
-			if (schema == null)
-				query = "SHOW TABLES";
-			else
-				query = "SHOW TABLES IN " + schema;
-		} else if (dbType == DbType.MSSQL) {
+		if (dbType == DbType.MSSQL) {
 			query = "IF SCHEMA_ID('" + schema + "') IS NOT NULL" + 
 					"    SELECT TABLE_NAME" + 
 					"    FROM INFORMATION_SCHEMA.TABLES" + 
@@ -411,9 +408,19 @@ public class RichConnection {
 					"      AND TABLE_SCHEMA = '" + schema + "' " + 
 					"ELSE" + 
 					"    SELECT '' AS TABLE_NAME";
-		} else if (dbType == DbType.ORACLE) {
+		}
+		/*
+		else if (dbType == DbType.MYSQL) {
+			if (schema == null)
+				query = "SHOW TABLES";
+			else
+				query = "SHOW TABLES IN " + schema;
+		}
+		*/
+		else if (dbType == DbType.ORACLE) {
 			query = "SELECT table_name FROM all_tables WHERE owner='" + schema.toUpperCase() + "'";
-		} else if (dbType == DbType.POSTGRESQL) {
+		}
+		else if (dbType == DbType.POSTGRESQL) {
 			query = "SELECT table_name FROM information_schema.tables WHERE table_schema = '" + schema.toLowerCase() + "'";
 		}
 
@@ -432,11 +439,13 @@ public class RichConnection {
 			for (Row row : query("SELECT name FROM sys.syscolumns WHERE id=OBJECT_ID('" + schema + "." + table + "')"))
 				names.add(row.get("name", true));
 		}
+		/*
 		else if (dbType == DbType.MYSQL) {
 			for (Row row : query("SHOW COLUMNS FROM " + table)) {
 				names.add(row.get("COLUMN_NAME", true));
 			}
 		}
+		*/
 		else if (dbType == DbType.POSTGRESQL) {
 			for (Row row : query("SELECT column_name FROM information_schema.columns WHERE table_name='" + table.toLowerCase() + "'")) {
 				names.add(row.get("column_name", true));
@@ -463,13 +472,15 @@ public class RichConnection {
 				types.put(columnName, columnType);
 			}
 		}
-		//else if (dbType == DbType.MYSQL) {
-		//	for (Row row : query("SHOW COLUMNS FROM " + table)) {
-		//		String columnName = row.get("COLUMN_NAME");
-		//		String columnType = row.get("data_type").toUpperCase();
-		//		types.put(columnName, columnType);
-		//	}
-		//}
+		/*
+		else if (dbType == DbType.MYSQL) {
+			for (Row row : query("SHOW COLUMNS FROM " + table)) {
+				String columnName = row.get("COLUMN_NAME");
+				String columnType = row.get("data_type").toUpperCase();
+				types.put(columnName, columnType);
+			}
+		}
+		*/
 		else if (dbType == DbType.POSTGRESQL) {
 			for (Row row : query("SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = '" + schema.toLowerCase() + "' AND table_name='" + table.toLowerCase() + "'")) {
 				String columnName = row.get("column_name", true).toUpperCase();
@@ -533,8 +544,10 @@ public class RichConnection {
 				tableConstraints.add(constraintName);
 			}
 		}
-		//else if (dbType == DbType.MYSQL) {
-		//}
+		/*
+		else if (dbType == DbType.MYSQL) {
+		}
+		*/
 		else {
 			throw new RuntimeException("DB type not supported");
 		}
@@ -583,8 +596,10 @@ public class RichConnection {
 				tableIndices.add(indexName);
 			}
 		}
-		//else if (dbType == DbType.MYSQL) {
-		//}
+		/*
+		else if (dbType == DbType.MYSQL) {
+		}
+		*/
 		else {
 			throw new RuntimeException("DB type not supported");
 		}
@@ -633,8 +648,10 @@ public class RichConnection {
 				tableConstraints.add(constraintName);
 			}
 		}
-		//else if (dbType == DbType.MYSQL) {
-		//}
+		/*
+		else if (dbType == DbType.MYSQL) {
+		}
+		*/
 		else {
 			throw new RuntimeException("DB type not supported");
 		}
@@ -748,6 +765,26 @@ public class RichConnection {
 			execute(query);
 		}
 	}
+	
+	public boolean schemaExists(String schema) {
+		boolean exists = false;
+		String query = null;
+		if (dbType == DbType.ORACLE) {
+			query = "SELECT " + schema.toUpperCase() + " FROM dba_users";
+		}
+		else if (dbType == DbType.MSSQL) {
+			query = "SELECT * FROM sys.schemas WHERE name = '" + schema.toLowerCase() + "'";
+		}
+		else if (dbType == DbType.POSTGRESQL) {
+			query = "SELECT * FROM pg_catalog.pg_namespace WHERE nspname = '" + schema.toLowerCase() + "'";
+		}
+		if (query != null) {
+			if (query(query).iterator().hasNext()) {
+				exists = true;
+			}
+		}
+		return exists;
+	}
 
 	public void createSchema(String schema) {
 		if (dbType == DbType.ORACLE) {
@@ -756,6 +793,12 @@ public class RichConnection {
 		}
 		else {
 			execute("CREATE SCHEMA " + schema.toLowerCase() + ";");
+		}
+	}
+	
+	public void grantFullAccessForEveryOneToSchema(String schema) {
+		if (dbType == DbType.POSTGRESQL) {
+			execute("GRANT ALL ON SCHEMA " + schema.toLowerCase() + " TO public");
 		}
 	}
 
@@ -1199,14 +1242,7 @@ public class RichConnection {
 		}
 
 		public String toString() {
-			if (dbType == DbType.MYSQL) {
-				if (isNumeric)
-					return columnNameToSqlName(name) + " int(" + maxLength + ")";
-				else if (maxLength > 255)
-					return columnNameToSqlName(name) + " text";
-				else
-					return columnNameToSqlName(name) + " varchar(255)";
-			} else if (dbType == DbType.MSSQL) {
+			if (dbType == DbType.MSSQL) {
 				if (isNumeric) {
 					if (maxLength < 10)
 						return columnNameToSqlName(name) + " int";
@@ -1216,7 +1252,18 @@ public class RichConnection {
 					return columnNameToSqlName(name) + " varchar(max)";
 				else
 					return columnNameToSqlName(name) + " varchar(255)";
-			} else
+			}
+			/*
+			else if (dbType == DbType.MYSQL) {
+				if (isNumeric)
+					return columnNameToSqlName(name) + " int(" + maxLength + ")";
+				else if (maxLength > 255)
+					return columnNameToSqlName(name) + " text";
+				else
+					return columnNameToSqlName(name) + " varchar(255)";
+			}
+			*/
+			else
 				throw new RuntimeException("Create table syntax not specified for type " + dbType);
 		}
 	}
@@ -1232,14 +1279,17 @@ public class RichConnection {
 		sql.append(targetTable);
 		sql.append("(");
 		boolean first = true;
-		String query;
-		if (dbType == DbType.ORACLE || dbType == DbType.MSSQL)
-			query = "SELECT COLUMN_NAME,DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_CATALOG='" + sourceDatabase + "' AND TABLE_NAME='" + sourceTable
-					+ "';";
+		String query = null;
+		if (dbType == DbType.ORACLE || dbType == DbType.MSSQL) {
+			query = "SELECT COLUMN_NAME,DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_CATALOG='" + sourceDatabase + "' AND TABLE_NAME='" + sourceTable + "';";
+		}
+		/*
+		else if (dbType == DbType.MYSQL) {
+			query = "SELECT COLUMN_NAME,DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + sourceDatabase + "' AND TABLE_NAME = '" + sourceTable + "';";
+		}
+		*/
 		else
-			// mysql
-			query = "SELECT COLUMN_NAME,DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + sourceDatabase + "' AND TABLE_NAME = '"
-					+ sourceTable + "';";
+			throw new RuntimeException("Copy table syntax not specified for type " + dbType);
 
 		for (Row row : query(query)) {
 			if (first)
@@ -1255,11 +1305,15 @@ public class RichConnection {
 					sql.append("VARCHAR(512)");
 				else
 					sql.append(row.get("DATA_TYPE", true));
-			} else if (targetConnection.dbType == DbType.MYSQL) {
+			}
+			/*
+			else if (targetConnection.dbType == DbType.MYSQL) {
 				sql.append(row.get("DATA_TYPE", true));
 				if (row.get("DATA_TYPE", true).equals("varchar"))
 					sql.append("(max)");
-			} else if (targetConnection.dbType == DbType.POSTGRESQL) {
+			}
+			*/
+			else if (targetConnection.dbType == DbType.POSTGRESQL) {
 				sql.append(row.get("DATA_TYPE", true));
 			}
 		}

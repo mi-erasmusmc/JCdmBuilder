@@ -58,8 +58,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
+import javax.swing.text.DocumentFilter;
+import javax.swing.text.PlainDocument;
 
 import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
@@ -79,7 +86,6 @@ public class JCdmBuilderMain {
 	private static String					DATABASE_TYPE_POSTGRESQL				= "PostgreSQL";
 	private static String					DATABASE_TYPE_ORACLE					= "Oracle";
 	private static String					DATABASE_TYPE_SQLSERVER					= "SQL Server";
-	private static String					DATABASE_TYPE_MYSQL						= "MySQL";
 	
 	private static String[]					DATABASE_TYPES							= new String[] { DATABASE_TYPE_POSTGRESQL, DATABASE_TYPE_ORACLE, DATABASE_TYPE_SQLSERVER };
 	private static HashSet<String>			BULK_LOAD_DATABASE_TYPES				= new HashSet<String>() {
@@ -142,6 +148,7 @@ public class JCdmBuilderMain {
 	private JTextField						targetServerField;
 	private JTextField						targetSchemaField;
 	private JTextField						targetResultsSchemaField;
+	private JTextField                      targetTempSchemaField;
 	private JComboBox<String>				targetCdmVersion;
 	//private JComboBox<String>				sourceType;
 	private JTextField						sourceDelimiterField;
@@ -159,6 +166,8 @@ public class JCdmBuilderMain {
 	private JTextField						sourceServerTempFolderField;
 	private JTextField						sourceServerTempLocalFolderField;
 	private JPanel							sourceCards;
+	private JTextField                      webAPIServerField;
+	private JTextField                      webAPIPortField;
 	private boolean							executeCdmStructureWhenReady		    = false;
 	private boolean							executeVocabWhenReady				    = false;
 	private boolean							executeEtlWhenReady					    = false;
@@ -298,8 +307,26 @@ public class JCdmBuilderMain {
 		JPanel etlPanel = createEtlPanel();
 		tabbedPane.addTab("ETL", null, etlPanel, "Extract, Transform and Load the data into the OMOP CDM");
 		
+		JPanel webAPIPanel = createWebAPIPanel();
+		tabbedPane.addTab("WebAPI", null, webAPIPanel, "WebAPI Defintion");
+		
 		JPanel executePanel = createExecutePanel();
 		tabbedPane.addTab("Execute", null, executePanel, "Run multiple steps automatically");
+		
+		tabbedPane.addChangeListener(new ChangeListener() {
+			public void stateChanged(ChangeEvent changeEvent) {
+				JTabbedPane sourceTabbedPane = (JTabbedPane) changeEvent.getSource();
+				int index = sourceTabbedPane.getSelectedIndex();
+				if (sourceTabbedPane.getTitleAt(index).equals("WebAPI")) {
+					if (webAPIServerField.getText().equals("") && (!targetServerField.getText().equals(""))) {
+						webAPIServerField.setText(DbSettings.getServerNameFromServer(targetServerField.getText()));
+					}
+					if (webAPIPortField.getText().equals("")) {
+						webAPIPortField.setText("8080");
+					}
+				}
+			}
+		});
 		
 		// Link fields
 		vocabFolderField.getDocument().addDocumentListener(new TextFieldLink(vocabFolderField, vocabServerFolderField));
@@ -372,6 +399,11 @@ public class JCdmBuilderMain {
 		targetPanel.add(new JLabel("Results Schema name"));
 		targetResultsSchemaField = new JTextField("");
 		targetPanel.add(targetResultsSchemaField);
+		targetPanel.add(new JLabel("Temp schema"));
+		targetTempSchemaField = new JTextField();
+		targetTempSchemaField.setText("");
+		targetTempSchemaField.setToolTipText("Specify the WebAPI temp schema.");
+		targetPanel.add(targetTempSchemaField);
 		targetPanel.add(new JLabel("CDM version"));
 		targetCdmVersion = new JComboBox<String>(Cdm.availableVersions);
 		targetCdmVersion.setToolTipText("Select the CMD version");
@@ -486,6 +518,7 @@ public class JCdmBuilderMain {
 		if (settingsFile.getValue("Locations", "Target User Name")           != null) targetUserField.setText(settingsFile.getValue("Locations", "Target User Name"));
 		if (settingsFile.getValue("Locations", "Target CDM Schema Name")     != null) targetSchemaField.setText(settingsFile.getValue("Locations", "Target CDM Schema Name"));
 		if (settingsFile.getValue("Locations", "Target Results Schema Name") != null) targetResultsSchemaField.setText(settingsFile.getValue("Locations", "Target Results Schema Name"));
+		if (settingsFile.getValue("Locations", "Target Temp Schema Name")    != null) targetTempSchemaField.setText(settingsFile.getValue("Locations", "Target Temp Schema Name"));
 		if (settingsFile.getValue("Locations", "Target CDM Version")         != null) targetCdmVersion.setSelectedItem(settingsFile.getValue("Locations", "Target CDM Version"));
 		
 		// Vocabulary
@@ -502,6 +535,10 @@ public class JCdmBuilderMain {
 		if (settingsFile.getValue("ETL", "Source Null Value")                != null) sourceNullValueField.setText(settingsFile.getValue("ETL", "Source Null Value"));
 		if (settingsFile.getValue("ETL", "Server Temp Folder")               != null) sourceServerTempFolderField.setText(settingsFile.getValue("ETL", "Server Temp Folder"));
 		if (settingsFile.getValue("ETL", "Local Path Server Temp Folder")    != null) sourceServerTempLocalFolderField.setText(settingsFile.getValue("ETL", "Local Path Server Temp Folder"));
+		
+		// WebAPI
+		if (settingsFile.getValue("WebAPI", "Server")                        != null) webAPIServerField.setText(settingsFile.getValue("WebAPI", "Server"));
+		if (settingsFile.getValue("WebAPI", "Port")                          != null) webAPIPortField.setText(settingsFile.getValue("WebAPI", "Port"));
 	}
 	
 	
@@ -516,6 +553,7 @@ public class JCdmBuilderMain {
 		settingsFile.setValue("Locations", "Target User Name", targetUserField.getText(), null);
 		settingsFile.setValue("Locations", "Target CDM Schema Name", targetSchemaField.getText(), null);
 		settingsFile.setValue("Locations", "Target Results Schema Name", targetResultsSchemaField.getText(), null);
+		settingsFile.setValue("Locations", "Target Temp Schema Name",targetTempSchemaField.getText(), null);
 		settingsFile.setValue("Locations", "Target CDM Version", targetCdmVersion.getSelectedItem().toString(), null);
 		
 		// Vocabulary
@@ -534,6 +572,10 @@ public class JCdmBuilderMain {
 		settingsFile.setValue("ETL", "Source Null Value", sourceNullValueField.getText(), null);
 		settingsFile.setValue("ETL", "Server Temp Folder", sourceServerTempFolderField.getText(), null);
 		settingsFile.setValue("ETL", "Local Path Server Temp Folder", sourceServerTempLocalFolderField.getText(), null);
+		
+		// WebAPI
+		settingsFile.setValue("WebAPI", "Server", webAPIServerField.getText(), null);
+		settingsFile.setValue("WebAPI", "Port", webAPIPortField.getText(), null);
 		
 		settingsFile.writeFile();
 	}
@@ -928,6 +970,43 @@ public class JCdmBuilderMain {
 	}
 	
 	
+	private JPanel createWebAPIPanel() {
+		JPanel panel = new JPanel(new BorderLayout());
+		
+		JPanel mainPanel = new JPanel();
+		mainPanel.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.fill = GridBagConstraints.BOTH;
+		c.weightx = 0.5;
+
+		JPanel webAPIPanel = new JPanel();
+		webAPIPanel.setLayout(new GridLayout(0, 2));
+		webAPIPanel.setBorder(BorderFactory.createTitledBorder("WebAPI Definition"));
+		
+		webAPIPanel.add(new JLabel("Server"));
+		webAPIServerField = new JTextField();
+		webAPIServerField.setText("");
+		webAPIServerField.setToolTipText("Specify the WebAPI server.");
+		webAPIPanel.add(webAPIServerField);
+		
+		webAPIPanel.add(new JLabel("Port"));
+		webAPIPortField = new JTextField();
+		webAPIPortField.setText("");
+		webAPIPortField.setToolTipText("Specify the server port used by the WebAPI. Default is 8080.");
+		((PlainDocument) webAPIPortField.getDocument()).setDocumentFilter(new IntegerFilter());
+		webAPIPanel.add(webAPIPortField);
+
+		c.gridx = 0;
+		c.gridy = 0;
+		c.gridwidth = 1;
+		mainPanel.add(webAPIPanel, c);
+		
+		panel.add(mainPanel, BorderLayout.NORTH);
+		
+		return panel;
+	}
+	
+	
 	private JPanel createExecutePanel() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
@@ -956,9 +1035,9 @@ public class JCdmBuilderMain {
 		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
 		executeCheckboxPanel.add(executeResultsStructureCheckBox);
 		executeResultsDataCheckBox = new JCheckBox("Load Results Data");
-		executeCheckboxPanel.add(executeResultsDataCheckBox);
+		// NOT USED ANYMORE? executeCheckboxPanel.add(executeResultsDataCheckBox);
 		executeResultsIndicesCheckBox = new JCheckBox("Create Results indices");
-		executeCheckboxPanel.add(executeResultsIndicesCheckBox);
+		// NOT USED ANYMORE? executeCheckboxPanel.add(executeResultsIndicesCheckBox);
 		c.gridx = 0;
 		c.gridy = 0;
 		panel.add(executeCheckboxPanel, c);
@@ -1118,8 +1197,8 @@ public class JCdmBuilderMain {
 		System.out.println("-executeconditioneras              Create condition eras on startup");
 		System.out.println("-executedrugeras                   Create drug eras on startup");
 		System.out.println("-executeresultsstructure           Create results structure on startup");
-		System.out.println("-executeresultsdata                Load results data on startup");
-		System.out.println("-executeresultsindices             Create results indices on startup");
+		// NOT USED ANYMORE? System.out.println("-executeresultsdata                Load results data on startup");
+		// NOT USED ANYMORE? System.out.println("-executeresultsindices             Create results indices on startup");
 		System.out.println("-continueonerror                   Continue after error during ETL, creating");
 		System.out.println("                                   indices, and creating constraints.");
 	}
@@ -1171,10 +1250,10 @@ public class JCdmBuilderMain {
 					executeDrugErasWhenReady = true;
 				if (parameter.equals("-executeresultsstructure"))
 					executeResultsStructureWhenReady = true;
-				if (parameter.equals("-executeresultsdata"))
-					executeResultsDataWhenReady = true;
-				if (parameter.equals("-executeresultsindices"))
-					executeResultsIndicesWhenReady = true;
+				// NOT USED ANYMORE? if (parameter.equals("-executeresultsdata"))
+				// NOT USED ANYMORE? 	executeResultsDataWhenReady = true;
+				// NOT USED ANYMORE? if (parameter.equals("-executeresultsindices"))
+				// NOT USED ANYMORE? 	executeResultsIndicesWhenReady = true;
 				if (parameter.equals("-continueonerror"))
 					continueOnError = true;
 				if (parameter.equals("-idstobigint")) {
@@ -1285,6 +1364,56 @@ public class JCdmBuilderMain {
 			}
 		
 		connection.close();
+	}
+	
+	
+	private class IntegerFilter extends DocumentFilter {
+		
+		@Override
+		public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+			Document doc = webAPIPortField.getDocument();
+			StringBuilder sb = new StringBuilder();
+			sb.append(doc.getText(0, doc.getLength()));
+			sb.insert(offset, string);
+		
+			if (test(sb)) {
+				super.insertString(fb, offset, string, attr);
+			}
+		}
+		
+		@Override
+		public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attr) throws BadLocationException {
+			Document doc = webAPIPortField.getDocument();
+			StringBuilder sb = new StringBuilder();
+			sb.append(doc.getText(0, doc.getLength()));
+			sb.replace(offset, offset + length, text);
+		
+			if (sb.toString().equals("") || test(sb)) {
+				super.replace(fb, offset, length, text, attr);
+			}
+		}
+		
+		@Override
+		public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
+			Document doc = webAPIPortField.getDocument();
+			StringBuilder sb = new StringBuilder();
+			sb.append(doc.getText(0, doc.getLength()));
+			sb.delete(offset, offset + length);
+		
+			if (sb.toString().equals("") || test(sb)) {
+				super.remove(fb, offset, length);
+			}
+		}
+		
+		private boolean test(StringBuilder sb) {	
+			try {
+				Integer.parseInt(sb.toString());
+				return true;
+			} catch (NumberFormatException exception) {
+				return false;
+			}
+			
+		}
 	}
 	
 	
@@ -1513,7 +1642,7 @@ public class JCdmBuilderMain {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
 				Cdm.createSchema(structure, dbSettings, version);
-				Cdm.createTables(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt);
+				Cdm.createTables(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt, webAPIServerField.getText(), webAPIPortField.getText());
 				Cdm.createPatchTables(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt);
 			} catch (Exception e) {
 				handleError(e);

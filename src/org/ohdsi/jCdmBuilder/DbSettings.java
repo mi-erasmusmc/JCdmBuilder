@@ -33,9 +33,22 @@ public class DbSettings {
 	public String		password;
 	public String		cdmSchema;
 	public String		resultsSchema;
+	public String		tempSchema;
 	public String		server;
 	public String		domain;
 	
 	// CSV file settings
 	public char			delimiter	= ',';
+	
+	
+	public static String getServerNameFromServer(String server) {
+		String serverName = server;
+		if (serverName.contains("/")) {
+			serverName = serverName.substring(0, serverName.indexOf("/"));
+		}
+		if (serverName.contains(":")) {
+			serverName = serverName.substring(0, serverName.indexOf(":"));
+		}
+		return serverName;
+	}
 }
