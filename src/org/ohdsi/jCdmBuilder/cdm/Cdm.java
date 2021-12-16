@@ -213,16 +213,21 @@ public class Cdm {
 		
 		StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " schema");
 		connection.createSchema(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
+		StringUtilities.outputWithTime("Done");
 		
 		if ((currentStructure == RESULTS) && (dbSettings.tempSchema != null) && (!dbSettings.tempSchema.equals(""))) {
 			if (!connection.schemaExists(dbSettings.tempSchema)) {
+				StringUtilities.outputWithTime("Creating Temp schema");
 				connection.createSchema(dbSettings.tempSchema);
 				connection.grantFullAccessForEveryOneToSchema(dbSettings.tempSchema);
+				StringUtilities.outputWithTime("Done");
+			}
+			else {
+				StringUtilities.outputWithTime("Temp schema already exists");
 			}
 		}
 		
 		connection.close();
-		StringUtilities.outputWithTime("Done");
 	}
 	
 	
@@ -288,7 +293,6 @@ public class Cdm {
 					}
 				}
 				
-				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " data structure");
 				if (idsToBigInt) {
 					StringUtilities.outputWithTime("- Converting IDs to BIGINT");
 					Pattern pattern = Pattern.compile("[^t]_id\\s+integer");
@@ -315,14 +319,15 @@ public class Cdm {
 		             
 		        }
 		        catch (MalformedURLException e) {
-		            System.out.println("Malformed URL: " + e.getMessage());
+					throw new RuntimeException("ERROR Malformed URL: " + resourceName);
 		        }
 		        catch (IOException e) {
-		            System.out.println("I/O Error: " + e.getMessage());
+					StringUtilities.outputWithTime("WebAPI not found");
 		        }
 			}
 
 			if (sqlLines.size() > 0) {
+				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " data structure");
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
 				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);

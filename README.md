@@ -16,22 +16,27 @@ Features
 Screenshots
 ===========
 
-<img src="man/Screenshot_5.4.0.6_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
+<img src="man/Screenshot_5.4.0.7_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
 
 _The Locations tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.6_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
+<img src="man/Screenshot_5.4.0.7_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
 
 _The Vocabulary tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.6_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
+<img src="man/Screenshot_5.4.0.7_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
 
 _The ETL tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.6_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
+<img src="man/Screenshot_5.4.0.7_WebAPI.png" alt="JCdmBuilder" title="JCdmBuilder WebAPI Tab" />
+
+_The WebAPI tab._
+<br><br>
+
+<img src="man/Screenshot_5.4.0.7_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
 
 _The Execute tab._
 <br><br>
@@ -94,6 +99,7 @@ Oracle:
 | Password | The password of the user. This password will also be used for the CDM and Results schama's/users. |
 | CDM Schema name | The name of the schema/user that will hold the CDM tables. |
 | Results Schema name | The name of the schema/user that will hold the Results tables of Achilles/Atlas. |
+| Temp Schema name | The name of the schema that will hold temporary tables of Achilles/Atlas. |
 | CDM version | The version of the OMOP CDM to be used. |
 
 PostgreSQL:
@@ -105,6 +111,7 @@ PostgreSQL:
 | Password | The password of the user. |
 | CDM Schema name | The name of the schema that will hold the CDM tables. |
 | Results Schema name | The name of the schema that will hold the Results tables of Achilles/Atlas. |
+| Temp Schema name | The name of the schema that will hold temporary tables of Achilles/Atlas. |
 | CDM version | The version of the OMOP CDM to be used. |
 
 SQL Server:
@@ -116,6 +123,7 @@ SQL Server:
 | Password | The password of the user. |
 | CDM Schema name | The name of the schema that will hold the CDM tables. |
 | Results Schema name | The name of the schema that will hold the Results tables of Achilles/Atlas. |
+| Temp Schema name | The name of the schema that will hold temporary tables of Achilles/Atlas. |
 | CDM version | The version of the OMOP CDM to be used. |
 
 
@@ -185,6 +193,16 @@ This option is not available for Oracle.
 | Null value | The string that is used to represent the Null value. |
 | Server folder | The folder that is mapped to a folder on the database server where the files can be copied to for the import. |
 | Local path server folder | The path on the database server where the files are copied to. |
+
+
+_The WebAPI tab_
+
+The WebAPI tab contains information about the server where the WebAPI is installed. When you don't have a WebAPI installed enter a non existing server name.
+
+| **Field** | **Description** |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| Server | The name of the server where the WebAPI is installed. |
+| Port | The port used by the WebAPI. |
 
 
 _The Execute tab_

@@ -1425,6 +1425,7 @@ public class JCdmBuilderMain {
 		dbSettings.server = targetServerField.getText();
 		dbSettings.cdmSchema = targetSchemaField.getText();
 		dbSettings.resultsSchema = targetResultsSchemaField.getText();
+		dbSettings.tempSchema = targetTempSchemaField.getText();
 		dbSettings.dbType = DbType.getDbType(targetType.getSelectedItem().toString());
 		if (dbSettings.dbType == DbType.MSSQL) {
 			if (targetUserField.getText().length() != 0) { // Not using windows authentication
