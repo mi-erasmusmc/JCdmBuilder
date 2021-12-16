@@ -244,8 +244,6 @@ The following options allow the steps to be automatically executed. Steps are ex
 | -executeconditioneras               | Create condition eras on startup. |
 | -executedrugeras                    | Create drug eras on startup. |
 | -executeresultsstructure            | Create results structure on startup. |
-| -executeresultsdata                 | Load results data on startup. |
-| -executeresultsindices              | Create results indices on startup. |
 | -continueonerror                    | Continue after error during ETL, creating indices, and creating constraints. |
 
 
