@@ -137,8 +137,6 @@ public class JCdmBuilderMain {
 	private JCheckBox						executeConditionErasCheckBox;
 	private JCheckBox						executeDrugErasCheckBox;
 	private JCheckBox						executeResultsStructureCheckBox;
-	private JCheckBox						executeResultsDataCheckBox;
-	private JCheckBox						executeResultsIndicesCheckBox;
 	private JComboBox<String>				etlType;
 	private DefaultComboBoxModel<String>	etlTypeModel;
 	private JComboBox<String>				targetType;
@@ -176,8 +174,6 @@ public class JCdmBuilderMain {
 	private boolean							executeConditionErasWhenReady		    = false;
 	private boolean							executeDrugErasWhenReady			    = false;
 	private boolean							executeResultsStructureWhenReady	    = false;
-	private boolean							executeResultsDataWhenReady		        = false;
-	private boolean							executeResultsIndicesWhenReady		    = false;
 	private boolean							idsToBigInt							    = false;
 	private boolean             			continueOnError                         = false;
 	private IniFile							settingsFile							= null;
@@ -247,9 +243,7 @@ public class JCdmBuilderMain {
 				executeConditionErasWhenReady || 
 				executeDrugErasWhenReady || 
 				executeConditionErasWhenReady || 
-				executeResultsStructureWhenReady ||
-				executeResultsDataWhenReady ||
-				executeResultsIndicesWhenReady) {
+				executeResultsStructureWhenReady) {
 			autoStart = true;
 			ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
 			AutoRunThread autoRunThread = new AutoRunThread();
@@ -1034,10 +1028,6 @@ public class JCdmBuilderMain {
 		executeCheckboxPanel.add(executeDrugErasCheckBox);
 		executeResultsStructureCheckBox = new JCheckBox("Create Results Structure");
 		executeCheckboxPanel.add(executeResultsStructureCheckBox);
-		executeResultsDataCheckBox = new JCheckBox("Load Results Data");
-		// NOT USED ANYMORE? executeCheckboxPanel.add(executeResultsDataCheckBox);
-		executeResultsIndicesCheckBox = new JCheckBox("Create Results indices");
-		// NOT USED ANYMORE? executeCheckboxPanel.add(executeResultsIndicesCheckBox);
 		c.gridx = 0;
 		c.gridy = 0;
 		panel.add(executeCheckboxPanel, c);
@@ -1074,8 +1064,6 @@ public class JCdmBuilderMain {
 					executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
 					executeDrugErasWhenReady = executeDrugErasCheckBox.isSelected();
 					executeResultsStructureWhenReady = executeResultsStructureCheckBox.isSelected();
-					executeResultsDataWhenReady = executeResultsDataCheckBox.isSelected();
-					executeResultsIndicesWhenReady = executeResultsIndicesCheckBox.isSelected();
 					if (	executeCdmStructureWhenReady || 
 							executeVocabWhenReady || 
 							executeEtlWhenReady || 
@@ -1083,9 +1071,7 @@ public class JCdmBuilderMain {
 							executeConstraintsWhenReady || 
 							executeConditionErasWhenReady || 
 							executeDrugErasWhenReady || 
-							executeResultsStructureWhenReady || 
-							executeResultsDataWhenReady || 
-							executeResultsIndicesWhenReady) {
+							executeResultsStructureWhenReady) {
 						if (
 								(!etlType.getSelectedItem().equals(ETLTYPE_BULK_LOAD)) ||
 								(targetType.getSelectedItem().equals("PostgreSQL")) ||
@@ -1197,8 +1183,6 @@ public class JCdmBuilderMain {
 		System.out.println("-executeconditioneras              Create condition eras on startup");
 		System.out.println("-executedrugeras                   Create drug eras on startup");
 		System.out.println("-executeresultsstructure           Create results structure on startup");
-		// NOT USED ANYMORE? System.out.println("-executeresultsdata                Load results data on startup");
-		// NOT USED ANYMORE? System.out.println("-executeresultsindices             Create results indices on startup");
 		System.out.println("-continueonerror                   Continue after error during ETL, creating");
 		System.out.println("                                   indices, and creating constraints.");
 	}
@@ -1213,8 +1197,6 @@ public class JCdmBuilderMain {
 		executeConditionErasWhenReady		    = false;
 		executeDrugErasWhenReady			    = false;
 		executeResultsStructureWhenReady	    = false;
-		executeResultsDataWhenReady		        = false;
-		executeResultsIndicesWhenReady		    = false;
 		idsToBigInt							    = false;
 		continueOnError                         = false;
 		
@@ -1274,8 +1256,6 @@ public class JCdmBuilderMain {
 		executeConditionErasCheckBox.setSelected(executeConditionErasWhenReady);
 		executeDrugErasCheckBox.setSelected(executeDrugErasWhenReady);
 		executeResultsStructureCheckBox.setSelected(executeResultsStructureWhenReady);
-		executeResultsDataCheckBox.setSelected(executeResultsDataWhenReady);
-		executeResultsIndicesCheckBox.setSelected(executeResultsIndicesWhenReady);
 		continueOnErrorCheckBox.setSelected(continueOnError);
 	}
 	
@@ -1500,14 +1480,6 @@ public class JCdmBuilderMain {
 			if (executeResultsStructureWhenReady) {
 				StructureThread structureThread = new StructureThread(Cdm.RESULTS);
 				structureThread.run();
-			}
-			if (executeResultsDataWhenReady) {
-				EtlThread etlThread = new EtlThread(Cdm.RESULTS, Integer.MAX_VALUE);
-				etlThread.run();
-			}
-			if (executeResultsIndicesWhenReady) {
-				IndexThread indexThread = new IndexThread(Cdm.RESULTS);
-				indexThread.run();
 			}
 
 			StringUtilities.outputWithTime("Ready");

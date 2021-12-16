@@ -28,10 +28,6 @@ public class DBConnector {
 	public static Connection connect(String server, String domain, String user, String password, DbType dbType) {
 		if (dbType.equals(DbType.MSSQL))
 			return DBConnector.connectToMSSQL(server, domain, user, password);
-		/*
-		else if (dbType.equals(DbType.MYSQL))
-			return DBConnector.connectToMySQL(server, user, password);
-		*/
 		else if (dbType.equals(DbType.ORACLE))
 			return DBConnector.connectToOracle(server, domain, user, password);
 		else if (dbType.equals(DbType.POSTGRESQL))

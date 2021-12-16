@@ -331,25 +331,7 @@ public class Cdm {
 				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
 				connection.setContext(cdm.getClass());
 				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
-/* NOT USED ANYMORE				
-				if (currentStructure == Cdm.RESULTS) {
-					StringUtilities.outputWithTime("- Adding CDM schema prefixes");
-					for (int i = 0; i < sqlLines.size(); i++) {
-						String line = sqlLines.get(i);
-						// Check for reference to other table in other schema.
-						if (line.contains(" REFERENCES ")) {
-							String tableName = StringUtilities.findBetween(line, " REFERENCES ", "(");
-							String searchTableName = tableName.trim().toLowerCase();
-							if (!connection.getTableNames(dbSettings.resultsSchema).contains(searchTableName)) {
-								String schemaPrefix = dbSettings.cdmSchema + ".";
-								sqlLines.set(i, line.replace(" REFERENCES " + tableName + "(", " REFERENCES " + schemaPrefix + tableName.trim() + " ("));
-							}
-						}
-					}
-				}
-*/				
 				connection.execute(StringUtilities.join(sqlLines, "\n"));
-				
 				connection.close();
 				StringUtilities.outputWithTime("Done");
 			}

@@ -409,14 +409,6 @@ public class RichConnection {
 					"ELSE" + 
 					"    SELECT '' AS TABLE_NAME";
 		}
-		/*
-		else if (dbType == DbType.MYSQL) {
-			if (schema == null)
-				query = "SHOW TABLES";
-			else
-				query = "SHOW TABLES IN " + schema;
-		}
-		*/
 		else if (dbType == DbType.ORACLE) {
 			query = "SELECT table_name FROM all_tables WHERE owner='" + schema.toUpperCase() + "'";
 		}
@@ -439,13 +431,6 @@ public class RichConnection {
 			for (Row row : query("SELECT name FROM sys.syscolumns WHERE id=OBJECT_ID('" + schema + "." + table + "')"))
 				names.add(row.get("name", true));
 		}
-		/*
-		else if (dbType == DbType.MYSQL) {
-			for (Row row : query("SHOW COLUMNS FROM " + table)) {
-				names.add(row.get("COLUMN_NAME", true));
-			}
-		}
-		*/
 		else if (dbType == DbType.POSTGRESQL) {
 			for (Row row : query("SELECT column_name FROM information_schema.columns WHERE table_name='" + table.toLowerCase() + "'")) {
 				names.add(row.get("column_name", true));
@@ -472,15 +457,6 @@ public class RichConnection {
 				types.put(columnName, columnType);
 			}
 		}
-		/*
-		else if (dbType == DbType.MYSQL) {
-			for (Row row : query("SHOW COLUMNS FROM " + table)) {
-				String columnName = row.get("COLUMN_NAME");
-				String columnType = row.get("data_type").toUpperCase();
-				types.put(columnName, columnType);
-			}
-		}
-		*/
 		else if (dbType == DbType.POSTGRESQL) {
 			for (Row row : query("SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = '" + schema.toLowerCase() + "' AND table_name='" + table.toLowerCase() + "'")) {
 				String columnName = row.get("column_name", true).toUpperCase();
@@ -544,10 +520,6 @@ public class RichConnection {
 				tableConstraints.add(constraintName);
 			}
 		}
-		/*
-		else if (dbType == DbType.MYSQL) {
-		}
-		*/
 		else {
 			throw new RuntimeException("DB type not supported");
 		}
@@ -596,10 +568,6 @@ public class RichConnection {
 				tableIndices.add(indexName);
 			}
 		}
-		/*
-		else if (dbType == DbType.MYSQL) {
-		}
-		*/
 		else {
 			throw new RuntimeException("DB type not supported");
 		}
@@ -648,10 +616,6 @@ public class RichConnection {
 				tableConstraints.add(constraintName);
 			}
 		}
-		/*
-		else if (dbType == DbType.MYSQL) {
-		}
-		*/
 		else {
 			throw new RuntimeException("DB type not supported");
 		}
@@ -799,6 +763,12 @@ public class RichConnection {
 	public void grantFullAccessForEveryOneToSchema(String schema) {
 		if (dbType == DbType.POSTGRESQL) {
 			execute("GRANT ALL ON SCHEMA " + schema.toLowerCase() + " TO public");
+		}
+		else if (dbType == DbType.MSSQL) {
+			execute("GRANT CONTROL ON SCHEMA " + schema.toLowerCase() + " TO public");
+		}
+		else if (dbType == DbType.ORACLE) {
+			//TODO
 		}
 	}
 
@@ -1253,16 +1223,6 @@ public class RichConnection {
 				else
 					return columnNameToSqlName(name) + " varchar(255)";
 			}
-			/*
-			else if (dbType == DbType.MYSQL) {
-				if (isNumeric)
-					return columnNameToSqlName(name) + " int(" + maxLength + ")";
-				else if (maxLength > 255)
-					return columnNameToSqlName(name) + " text";
-				else
-					return columnNameToSqlName(name) + " varchar(255)";
-			}
-			*/
 			else
 				throw new RuntimeException("Create table syntax not specified for type " + dbType);
 		}
@@ -1283,11 +1243,6 @@ public class RichConnection {
 		if (dbType == DbType.ORACLE || dbType == DbType.MSSQL) {
 			query = "SELECT COLUMN_NAME,DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_CATALOG='" + sourceDatabase + "' AND TABLE_NAME='" + sourceTable + "';";
 		}
-		/*
-		else if (dbType == DbType.MYSQL) {
-			query = "SELECT COLUMN_NAME,DATA_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '" + sourceDatabase + "' AND TABLE_NAME = '" + sourceTable + "';";
-		}
-		*/
 		else
 			throw new RuntimeException("Copy table syntax not specified for type " + dbType);
 
@@ -1306,13 +1261,6 @@ public class RichConnection {
 				else
 					sql.append(row.get("DATA_TYPE", true));
 			}
-			/*
-			else if (targetConnection.dbType == DbType.MYSQL) {
-				sql.append(row.get("DATA_TYPE", true));
-				if (row.get("DATA_TYPE", true).equals("varchar"))
-					sql.append("(max)");
-			}
-			*/
 			else if (targetConnection.dbType == DbType.POSTGRESQL) {
 				sql.append(row.get("DATA_TYPE", true));
 			}
