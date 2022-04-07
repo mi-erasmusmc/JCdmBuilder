@@ -547,6 +547,8 @@ public class Cdm {
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						line = line.replaceAll("@CDM_SCHEMA", schemaName);
+						line = line.replaceAll("@cdm_schema", schemaName);
 						while (line.contains("  ")) {
 							line = line.replaceAll("  ", " ");
 						}
@@ -557,6 +559,10 @@ public class Cdm {
 							line = line.replace("DROP TABLE ", "DROP TABLE " + schemaName + ".");
 						}
 						else if (line.contains("CREATE TABLE ")) {
+							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
+						}
+						else if (line.contains("GRANT USAGE ON SCHEMA ")) {
+							
 							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
 						}
 						sqlLines.add(line);
