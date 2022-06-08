@@ -79,7 +79,7 @@ import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.IniFile;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "5.4.0.8";
+	public static final String VERSION = "5.4.0.9";
 	
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 	
@@ -480,7 +480,8 @@ public class JCdmBuilderMain {
 	
 	private String testConnectionResult(DbSettings dbSettings) {
 		String result = "OK";
-		if (dbSettings.server == null || dbSettings.server.equals(""))  result = "Please specify the server";
+		if (dbSettings.server == null || dbSettings.server.equals(""))
+			result = "Please specify the server";
 		else {
 			RichConnection connection;
 			try {
@@ -492,6 +493,8 @@ public class JCdmBuilderMain {
 				} catch (Exception e) {
 					result = "Could not connect to database: " + e.getMessage();
 				}
+
+				result = "OK";
 			} catch (Exception e) {
 				result = "Could not connect: " + e.getMessage();
 			}

@@ -72,7 +72,8 @@ public class RichConnection {
 					break;
 				}
 			}
-			if ((database != null) && (!database.equals(""))) {
+			// Does not work with Azure SQL Server
+			if ((!server.contains("database.windows.net")) && (database != null) && (!database.equals(""))) {
 				execute("ALTER LOGIN " + user + " WITH DEFAULT_DATABASE = [" + database + "];");
 			}
 		}
