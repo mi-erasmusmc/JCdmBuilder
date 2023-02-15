@@ -59,6 +59,7 @@ public class Cdm {
 			"5.3.0",
 			"5.3.1",
 			"5.4.0",
+			"5.4.1",
 			"6.0.0 (preliminary version)"
 	};
 	

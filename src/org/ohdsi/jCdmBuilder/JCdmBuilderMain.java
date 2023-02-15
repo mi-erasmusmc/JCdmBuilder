@@ -1,12 +1,12 @@
 /*******************************************************************************
  * Copyright 2017 Observational Health Data Sciences and Informatics
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,14 +79,14 @@ import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.IniFile;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "5.4.0.9";
-	
+	public static final String VERSION = "5.4.1.0";
+
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
-	
+
 	private static String					DATABASE_TYPE_POSTGRESQL				= "PostgreSQL";
 	private static String					DATABASE_TYPE_ORACLE					= "Oracle";
 	private static String					DATABASE_TYPE_SQLSERVER					= "SQL Server";
-	
+
 	private static String[]					DATABASE_TYPES							= new String[] { DATABASE_TYPE_POSTGRESQL, DATABASE_TYPE_ORACLE, DATABASE_TYPE_SQLSERVER };
 	private static HashSet<String>			BULK_LOAD_DATABASE_TYPES				= new HashSet<String>() {
 																						private static final long serialVersionUID = 946936162824903605L;
@@ -100,23 +100,23 @@ public class JCdmBuilderMain {
 																							add(DATABASE_TYPE_POSTGRESQL);
 																							add(DATABASE_TYPE_SQLSERVER);
 																						}};
-	
+
 	private static String					SOURCEFOLDER					        = "source folder";
 	private static String					SOURCEVIASERVERFOLDER			        = "source via server folder";
 	private static String					SOURCEDATABASE					        = "source database";
 	private static String					VOCABFOLDER						        = "vocab folder";
 	private static String					VOCABVIASERVERFOLDER                    = "vocab via server folder";
 	private static String					VOCABSCHEMA						        = "vocab schema";
-	
+
 	private static String					VOCABTYPE_LOAD							= "1. Load ATHENA CSV files to server";
 	private static String					VOCABTYPE_BULK_LOAD						= "2. Bulk Load ATHENA CSV files from server to server";
 	private static String					VOCABTYPE_SCHEMA_LOAD					= "3. Load vocabulary from schema";
-	
+
 	private static String					ETLTYPE_LOAD							= "1. Load CSV files in CDM format to server";
 	private static String					ETLTYPE_BULK_LOAD						= "2. Bulk Load CSV files from server in CDM format to server";
-	
+
 	public static List<String> 				errors = null;
-	
+
 	private JFrame							frame;
 	private JTabbedPane						tabbedPane;
 	private JTextField						folderField;
@@ -177,17 +177,17 @@ public class JCdmBuilderMain {
 	private boolean							idsToBigInt							    = false;
 	private boolean             			continueOnError                         = false;
 	private IniFile							settingsFile							= null;
-	
+
 	private boolean							fieldLinkActive							= false;
 	private List<JComponent>				componentsToDisableWhenRunning	        = new ArrayList<JComponent>();
 	private boolean             			autoStart                               = false;
-	
-	
+
+
 	public static void main(String[] args) {
 		JCdmBuilderMain.errors = new ArrayList<String>();
 		new JCdmBuilderMain(args);
 	}
-	
+
 
 	/**
 	 * Sets an icon on a JFrame or a JDialog.
@@ -205,15 +205,15 @@ public class JCdmBuilderMain {
 		else
 			((JFrame)container).setIconImage(img);
 	}
-	
-	
+
+
 	public JCdmBuilderMain(String[] args) {
 		if (args.length > 0 && (args[0].toLowerCase().equals("-usage") || args[0].toLowerCase().equals("-help") || args[0].toLowerCase().equals("?"))) {
 			printUsage();
 			return;
 		}
 		frame = new JFrame("JCDMBuilder version " + VERSION);
-		
+
 		frame.addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
 				System.exit(0);
@@ -221,42 +221,42 @@ public class JCdmBuilderMain {
 		});
 		frame.setLayout(new BorderLayout());
 		JCdmBuilderMain.setIcon(frame);
-		
+
 		JMenuBar menuBar = createMenu();
-		
+
 		JComponent tabsPanel = createTabsPanel();
 		JComponent consolePanel = createConsolePanel();
-		
+
 		frame.add(consolePanel, BorderLayout.CENTER);
 		frame.add(tabsPanel, BorderLayout.NORTH);
 		frame.setJMenuBar(menuBar);
-		
+
 		frame.pack();
 		frame.setVisible(true);
 		ObjectExchange.frame = frame;
 		executeParameters(args);
-		if (	executeCdmStructureWhenReady ||  
-				executeVocabWhenReady || 
-				executeEtlWhenReady || 
-				executeIndicesWhenReady || 
-				executeConstraintsWhenReady || 
-				executeConditionErasWhenReady || 
-				executeDrugErasWhenReady || 
-				executeConditionErasWhenReady || 
+		if (	executeCdmStructureWhenReady ||
+				executeVocabWhenReady ||
+				executeEtlWhenReady ||
+				executeIndicesWhenReady ||
+				executeConstraintsWhenReady ||
+				executeConditionErasWhenReady ||
+				executeDrugErasWhenReady ||
+				executeConditionErasWhenReady ||
 				executeResultsStructureWhenReady) {
 			autoStart = true;
 			ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
 			AutoRunThread autoRunThread = new AutoRunThread();
 			autoRunThread.start();
 		}
-		
+
 	}
-	
-	
+
+
 	private JMenuBar createMenu() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu file = new JMenu("File");
-		
+
 		JMenuItem loadMenuItem = new JMenuItem("Load settings");
 		loadMenuItem.setToolTipText("Load Settings");
 		loadMenuItem.addActionListener(new ActionListener() {
@@ -265,7 +265,7 @@ public class JCdmBuilderMain {
 			}
 		});
 		file.add(loadMenuItem);
-		
+
 		JMenuItem saveMenuItem = new JMenuItem("Save settings");
 		saveMenuItem.setToolTipText("Save Settings");
 		saveMenuItem.addActionListener(new ActionListener() {
@@ -274,7 +274,7 @@ public class JCdmBuilderMain {
 			}
 		});
 		file.add(saveMenuItem);
-		
+
 		JMenuItem exitMenuItem = new JMenuItem("Exit");
 		exitMenuItem.setToolTipText("Exit application");
 		exitMenuItem.addActionListener(new ActionListener() {
@@ -283,30 +283,30 @@ public class JCdmBuilderMain {
 			}
 		});
 		file.add(exitMenuItem);
-		
+
 		menuBar.add(file);
 		return menuBar;
 	}
-	
-	
+
+
 	private JComponent createTabsPanel() {
 		tabbedPane = new JTabbedPane();
-		
+
 		JPanel locationPanel = createLocationsPanel();
 		tabbedPane.addTab("Locations", null, locationPanel, "Specify the location of the source data, the CDM, and the working folder");
-		
+
 		JPanel vocabPanel = createVocabPanel();
 		tabbedPane.addTab("Vocabulary", null, vocabPanel, "Upload the vocabulary to the server");
-		
+
 		JPanel etlPanel = createEtlPanel();
 		tabbedPane.addTab("ETL", null, etlPanel, "Extract, Transform and Load the data into the OMOP CDM");
-		
+
 		JPanel webAPIPanel = createWebAPIPanel();
 		tabbedPane.addTab("WebAPI", null, webAPIPanel, "WebAPI Defintion");
-		
+
 		JPanel executePanel = createExecutePanel();
 		tabbedPane.addTab("Execute", null, executePanel, "Run multiple steps automatically");
-		
+
 		tabbedPane.addChangeListener(new ChangeListener() {
 			public void stateChanged(ChangeEvent changeEvent) {
 				JTabbedPane sourceTabbedPane = (JTabbedPane) changeEvent.getSource();
@@ -321,7 +321,7 @@ public class JCdmBuilderMain {
 				}
 			}
 		});
-		
+
 		// Link fields
 		vocabFolderField.getDocument().addDocumentListener(new TextFieldLink(vocabFolderField, vocabServerFolderField));
 		vocabServerFolderField.getDocument().addDocumentListener(new TextFieldLink(vocabServerFolderField, vocabFolderField));
@@ -337,19 +337,19 @@ public class JCdmBuilderMain {
 		sourceServerQuoteField.getDocument().addDocumentListener(new TextFieldLink(sourceServerQuoteField, sourceQuoteField));
 		sourceNullValueField.getDocument().addDocumentListener(new TextFieldLink(sourceNullValueField, sourceServerNullValueField));
 		sourceServerNullValueField.getDocument().addDocumentListener(new TextFieldLink(sourceServerNullValueField, sourceNullValueField));
-		
+
 		return tabbedPane;
 	}
-	
-	
+
+
 	private JPanel createLocationsPanel() {
 		JPanel panel = new JPanel();
-		
+
 		panel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 0.5;
-		
+
 		JPanel folderPanel = new JPanel();
 		folderPanel.setLayout(new BoxLayout(folderPanel, BoxLayout.X_AXIS));
 		folderPanel.setBorder(BorderFactory.createTitledBorder("Working folder"));
@@ -370,7 +370,7 @@ public class JCdmBuilderMain {
 		c.gridy = 0;
 		c.gridwidth = 1;
 		panel.add(folderPanel, c);
-		
+
 		JPanel targetPanel = new JPanel();
 		targetPanel.setLayout(new GridLayout(0, 2));
 		targetPanel.setBorder(BorderFactory.createTitledBorder("Target CDM location"));
@@ -402,14 +402,14 @@ public class JCdmBuilderMain {
 		targetCdmVersion = new JComboBox<String>(Cdm.availableVersions);
 		targetCdmVersion.setToolTipText("Select the CMD version");
 		targetCdmVersion.setSelectedItem(VERSION.substring(0, VERSION.lastIndexOf('.')));
-		
+
 		targetType.addItemListener(new ItemListener() {
-			
+
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
 				updateETLType();
 				updateVocabSourceType();
-				
+
 				if (arg0.getItem().toString().equals(DATABASE_TYPE_ORACLE)) {
 					targetServerField.setToolTipText("For Oracle servers this field contains the SID, servicename, and optionally the port: '<host>/<sid>', '<host>:<port>/<sid>', '<host>/<service name>', or '<host>:<port>/<service name>'.");
 					targetUserField.setToolTipText("For Oracle servers this field contains the name of the user used to log in.");
@@ -435,16 +435,16 @@ public class JCdmBuilderMain {
 		});
 		targetType.setSelectedIndex(1);
 		targetPanel.add(targetCdmVersion);
-		
+
 		c.gridx = 0;
 		c.gridy = 1;
 		c.gridwidth = 1;
 		panel.add(targetPanel, c);
-		
+
 		JPanel testConnectionButtonPanel = new JPanel();
 		testConnectionButtonPanel.setLayout(new BoxLayout(testConnectionButtonPanel, BoxLayout.X_AXIS));
 		testConnectionButtonPanel.add(Box.createHorizontalGlue());
-		
+
 		JButton testConnectionButton = new JButton("Test connection");
 		testConnectionButton.setBackground(new Color(151, 220, 141));
 		testConnectionButton.setToolTipText("Test the connection");
@@ -455,16 +455,16 @@ public class JCdmBuilderMain {
 		});
 		componentsToDisableWhenRunning.add(testConnectionButton);
 		testConnectionButtonPanel.add(testConnectionButton);
-		
+
 		c.gridx = 0;
 		c.gridy = 2;
 		c.gridwidth = 1;
 		panel.add(testConnectionButtonPanel, c);
-		
+
 		return panel;
 	}
-	
-	
+
+
 	private void testConnection(DbSettings dbSettings) {
 		int messageType = JOptionPane.ERROR_MESSAGE;
 		String messageTitle = "Error connecting to server";
@@ -476,8 +476,8 @@ public class JCdmBuilderMain {
 		}
 		JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), messageTitle, messageType);
 	}
-	
-	
+
+
 	private String testConnectionResult(DbSettings dbSettings) {
 		String result = "OK";
 		if (dbSettings.server == null || dbSettings.server.equals(""))
@@ -499,15 +499,15 @@ public class JCdmBuilderMain {
 				result = "Could not connect: " + e.getMessage();
 			}
 		}
-		
+
 		return result;
 	}
-	
-	
+
+
 	private void loadSettings(String fileName) {
 		settingsFile = new IniFile(fileName);
 		settingsFile.readFile();
-		
+
 		// Locations
 		if (settingsFile.getValue("Locations", "Workspace Folder")           != null) folderField.setText(settingsFile.getValue("Locations", "Workspace Folder"));
 		if (settingsFile.getValue("Locations", "Target Database Type")       != null) targetType.setSelectedItem(settingsFile.getValue("Locations", "Target Database Type"));
@@ -517,12 +517,12 @@ public class JCdmBuilderMain {
 		if (settingsFile.getValue("Locations", "Target Results Schema Name") != null) targetResultsSchemaField.setText(settingsFile.getValue("Locations", "Target Results Schema Name"));
 		if (settingsFile.getValue("Locations", "Target Temp Schema Name")    != null) targetTempSchemaField.setText(settingsFile.getValue("Locations", "Target Temp Schema Name"));
 		if (settingsFile.getValue("Locations", "Target CDM Version")         != null) targetCdmVersion.setSelectedItem(settingsFile.getValue("Locations", "Target CDM Version"));
-		
+
 		// Vocabulary
 		if (settingsFile.getValue("Vocabulary", "Source Type")               != null) vocabSourceType.setSelectedItem(settingsFile.getValue("Vocabulary", "Source Type"));
 		if (settingsFile.getValue("Vocabulary", "Source Folder")             != null) vocabFolderField.setText(settingsFile.getValue("Vocabulary", "Source Folder"));
 		if (settingsFile.getValue("Vocabulary", "Source Schema")             != null) vocabSchemaField.setText(settingsFile.getValue("Vocabulary", "Source Schema"));
-		
+
 		// ETL
 		if (settingsFile.getValue("ETL", "ETL Type")                         != null) etlType.setSelectedItem(settingsFile.getValue("ETL", "ETL Type"));
 		if (settingsFile.getValue("ETL", "Version ID")                       != null) versionIdField.setText(settingsFile.getValue("ETL", "Version ID"));
@@ -532,16 +532,16 @@ public class JCdmBuilderMain {
 		if (settingsFile.getValue("ETL", "Source Null Value")                != null) sourceNullValueField.setText(settingsFile.getValue("ETL", "Source Null Value"));
 		if (settingsFile.getValue("ETL", "Server Temp Folder")               != null) sourceServerTempFolderField.setText(settingsFile.getValue("ETL", "Server Temp Folder"));
 		if (settingsFile.getValue("ETL", "Local Path Server Temp Folder")    != null) sourceServerTempLocalFolderField.setText(settingsFile.getValue("ETL", "Local Path Server Temp Folder"));
-		
+
 		// WebAPI
 		if (settingsFile.getValue("WebAPI", "Server")                        != null) webAPIServerField.setText(settingsFile.getValue("WebAPI", "Server"));
 		if (settingsFile.getValue("WebAPI", "Port")                          != null) webAPIPortField.setText(settingsFile.getValue("WebAPI", "Port"));
 	}
-	
-	
+
+
 	private void saveSettings(String fileName) {
 		settingsFile = new IniFile(fileName);
-		
+
 		// Locations
 		settingsFile.addGroup("Locations", null);
 		settingsFile.setValue("Locations", "Workspace Folder", folderField.getText(), null);
@@ -552,13 +552,13 @@ public class JCdmBuilderMain {
 		settingsFile.setValue("Locations", "Target Results Schema Name", targetResultsSchemaField.getText(), null);
 		settingsFile.setValue("Locations", "Target Temp Schema Name",targetTempSchemaField.getText(), null);
 		settingsFile.setValue("Locations", "Target CDM Version", targetCdmVersion.getSelectedItem().toString(), null);
-		
+
 		// Vocabulary
 		settingsFile.addGroup("Vocabulary", null);
 		settingsFile.setValue("Vocabulary", "Source Type", vocabSourceType.getSelectedItem().toString(), null);
 		settingsFile.setValue("Vocabulary", "Source Folder", vocabFolderField.getText(), null);
 		settingsFile.setValue("Vocabulary", "Source Schema", vocabSchemaField.getText(), null);
-		
+
 		// ETL
 		settingsFile.addGroup("ETL", null);
 		settingsFile.setValue("ETL", "ETL Type", etlType.getSelectedItem().toString(), null);
@@ -569,24 +569,24 @@ public class JCdmBuilderMain {
 		settingsFile.setValue("ETL", "Source Null Value", sourceNullValueField.getText(), null);
 		settingsFile.setValue("ETL", "Server Temp Folder", sourceServerTempFolderField.getText(), null);
 		settingsFile.setValue("ETL", "Local Path Server Temp Folder", sourceServerTempLocalFolderField.getText(), null);
-		
+
 		// WebAPI
 		settingsFile.setValue("WebAPI", "Server", webAPIServerField.getText(), null);
 		settingsFile.setValue("WebAPI", "Port", webAPIPortField.getText(), null);
-		
+
 		settingsFile.writeFile();
 	}
-	
-	
+
+
 	private JPanel createVocabPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		
+
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 0.5;
-		
+
 		JPanel vocabSourceTypePanel = new JPanel();
 		vocabSourceTypePanel.setLayout(new BoxLayout(vocabSourceTypePanel, BoxLayout.X_AXIS));
 		vocabSourceTypePanel.setBorder(BorderFactory.createTitledBorder("Vocabulary Source type"));
@@ -595,7 +595,7 @@ public class JCdmBuilderMain {
 		updateVocabSourceType();
 		vocabSourceType.setToolTipText("Select the appropriate vocabulary load process");
 		vocabSourceType.addItemListener(new ItemListener() {
-			
+
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
 				String selection = arg0.getItem().toString();
@@ -613,15 +613,15 @@ public class JCdmBuilderMain {
 		c.gridy = 0;
 		c.gridwidth = 1;
 		mainPanel.add(vocabSourceTypePanel, c);
-		
-		
+
+
 		// Vocabulary Source Type 1 Panel
 		JPanel vocabFolderPanel = new JPanel();
 		vocabFolderPanel.setLayout(new GridLayout(6, 2));
 		vocabFolderPanel.setBorder(BorderFactory.createTitledBorder("Vocabulary source folder location"));
-		
+
 		vocabFolderPanel.add(new JLabel("Folder"));
-		
+
 		JPanel vocabFolderFieldPanel = new JPanel();
 		vocabFolderFieldPanel.setLayout(new BoxLayout(vocabFolderFieldPanel, BoxLayout.X_AXIS));
 		vocabFolderField = new JTextField();
@@ -637,20 +637,20 @@ public class JCdmBuilderMain {
 			}
 		});
 		vocabFolderPanel.add(vocabFolderFieldPanel);
-		
+
 		vocabFolderPanel.add(Box.createHorizontalGlue());
 		vocabFolderPanel.add(Box.createHorizontalGlue());
 		vocabFolderPanel.add(Box.createHorizontalGlue());
 		vocabFolderPanel.add(Box.createHorizontalGlue());
 		vocabFolderPanel.add(Box.createHorizontalGlue());
 		vocabFolderPanel.add(Box.createHorizontalGlue());
-		
-		
+
+
 		// Vocabulary Source Type 2 Panel
 		JPanel vocabServerFolderPanel = new JPanel();
 		vocabServerFolderPanel.setLayout(new GridLayout(6, 2));
 		vocabServerFolderPanel.setBorder(BorderFactory.createTitledBorder("Vocabulary source folder locations"));
-		
+
 		vocabServerFolderPanel.add(new JLabel("Folder"));
 		JPanel vocabViaServerFolderFieldPanel = new JPanel();
 		vocabViaServerFolderFieldPanel.setLayout(new BoxLayout(vocabViaServerFolderFieldPanel, BoxLayout.X_AXIS));
@@ -667,7 +667,7 @@ public class JCdmBuilderMain {
 			}
 		});
 		vocabServerFolderPanel.add(vocabViaServerFolderFieldPanel);
-		
+
 		vocabServerFolderPanel.add(new JLabel("Server folder"));
 		JPanel vocabServerTempFolderFieldPanel = new JPanel();
 		vocabServerTempFolderFieldPanel.setLayout(new BoxLayout(vocabServerTempFolderFieldPanel, BoxLayout.X_AXIS));
@@ -690,13 +690,13 @@ public class JCdmBuilderMain {
 		vocabServerTempLocalFolderField.setToolTipText("Specify the local path on the server of the temporary folder on the server here");
 		vocabServerFolderPanel.add(new JLabel("Local path server folder"));
 		vocabServerFolderPanel.add(vocabServerTempLocalFolderField);
-		
+
 		vocabServerFolderPanel.add(Box.createHorizontalGlue());
 		vocabServerFolderPanel.add(Box.createHorizontalGlue());
 		vocabServerFolderPanel.add(Box.createHorizontalGlue());
 		vocabServerFolderPanel.add(Box.createHorizontalGlue());
-		
-		
+
+
 		// Vocabulary Source Type 3 Panel
 		JPanel vocabSchemaPanel = new JPanel();
 		vocabSchemaPanel.setLayout(new GridLayout(6, 2));
@@ -707,31 +707,31 @@ public class JCdmBuilderMain {
 		vocabSchemaField.setText("");
 		vocabSchemaField.setToolTipText("Specify the name of the schema containing the vocabulary tables here");
 		vocabSchemaPanel.add(vocabSchemaField);
-		
+
 		vocabSchemaPanel.add(Box.createHorizontalGlue());
 		vocabSchemaPanel.add(Box.createHorizontalGlue());
 		vocabSchemaPanel.add(Box.createHorizontalGlue());
 		vocabSchemaPanel.add(Box.createHorizontalGlue());
 		vocabSchemaPanel.add(Box.createHorizontalGlue());
 		vocabSchemaPanel.add(Box.createHorizontalGlue());
-		
+
 		vocabCards = new JPanel(new CardLayout());
 		vocabCards.add(vocabFolderPanel, VOCABFOLDER);
 		vocabCards.add(vocabServerFolderPanel, VOCABVIASERVERFOLDER);
 		vocabCards.add(vocabSchemaPanel, VOCABSCHEMA);
-		
+
 		c.gridx = 0;
 		c.gridy = 1;
 		c.gridwidth = 2;
 		mainPanel.add(vocabCards, c);
 		vocabCards.setMaximumSize(new Dimension(Integer.MAX_VALUE, vocabCards.getPreferredSize().height));
-		
+
 		panel.add(mainPanel, BorderLayout.NORTH);
-		
+
 		return panel;
 	}
-	
-	
+
+
 	private void updateVocabSourceType() {
 		if ((targetType != null) && (vocabSourceType != null)) {
 			String currentVocabSourceType = (String) vocabSourceType.getSelectedItem();
@@ -747,7 +747,7 @@ public class JCdmBuilderMain {
 				vocabSourceTypeModel.addElement(VOCABTYPE_SCHEMA_LOAD);
 				schemaLoadPossible = true;
 			}
-			
+
 			if (currentVocabSourceType != null) {
 				if (((!bulkLoadPossible) && (currentVocabSourceType.equals(VOCABTYPE_BULK_LOAD))) || ((!schemaLoadPossible) && (currentVocabSourceType.equals(VOCABTYPE_SCHEMA_LOAD)))) {
 					vocabSourceType.setSelectedItem(VOCABTYPE_LOAD);
@@ -758,17 +758,17 @@ public class JCdmBuilderMain {
 			}
 		}
 	}
-	
-	
+
+
 	private JPanel createEtlPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		
+
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 0.5;
-		
+
 		JPanel etlTypePanel = new JPanel();
 		etlTypePanel.setLayout(new BoxLayout(etlTypePanel, BoxLayout.X_AXIS));
 		etlTypePanel.setBorder(BorderFactory.createTitledBorder("ETL type"));
@@ -777,7 +777,7 @@ public class JCdmBuilderMain {
 		updateETLType();
 		etlType.setToolTipText("Select the appropriate ETL process");
 		etlType.addItemListener(new ItemListener() {
-			
+
 			@Override
 			public void itemStateChanged(ItemEvent arg0) {
 				String selection = arg0.getItem().toString();
@@ -795,7 +795,7 @@ public class JCdmBuilderMain {
 		c.gridy = 0;
 		c.gridwidth = 1;
 		mainPanel.add(etlTypePanel, c);
-		
+
 		// Ugly but needed for ETLs at JnJ: Allow user to specify a version ID to insert into _version table:
 		JPanel versionIdPanel = new JPanel();
 		versionIdPanel.setLayout(new BoxLayout(versionIdPanel, BoxLayout.X_AXIS));
@@ -808,15 +808,15 @@ public class JCdmBuilderMain {
 		c.gridy = 0;
 		c.gridwidth = 1;
 		mainPanel.add(versionIdPanel, c);
-		
-		
+
+
 		// ETL-Type 1 Panel
 		JPanel sourceFolderPanel = new JPanel();
 		sourceFolderPanel.setLayout(new GridLayout(6, 2));
 		sourceFolderPanel.setBorder(BorderFactory.createTitledBorder("Source folder location"));
-		
+
 		sourceFolderPanel.add(new JLabel("Folder"));
-		
+
 		JPanel sourceFolderFieldPanel = new JPanel();
 		sourceFolderFieldPanel.setLayout(new BoxLayout(sourceFolderFieldPanel, BoxLayout.X_AXIS));
 		sourceFolderField = new JTextField();
@@ -832,32 +832,32 @@ public class JCdmBuilderMain {
 			}
 		});
 		sourceFolderPanel.add(sourceFolderFieldPanel);
-		
+
 		sourceFolderPanel.add(new JLabel("Delimiter"));
 		sourceDelimiterField = new JTextField(",");
 		sourceDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
 		sourceFolderPanel.add(sourceDelimiterField);
-		
+
 		sourceFolderPanel.add(new JLabel("Quote"));
 		sourceQuoteField = new JTextField("\"");
 		sourceQuoteField.setToolTipText("The field quote.");
 		sourceFolderPanel.add(sourceQuoteField);
-		
+
 		sourceFolderPanel.add(new JLabel("Null value"));
 		sourceNullValueField = new JTextField("");
 		sourceNullValueField.setToolTipText("The value that represents the NULL value.");
 		sourceFolderPanel.add(sourceNullValueField);
-		
+
 		sourceFolderPanel.add(Box.createHorizontalGlue());
 		sourceFolderPanel.add(Box.createHorizontalGlue());
 		sourceFolderPanel.add(Box.createHorizontalGlue());
-		
+
 
 		// ETL-Type 2 Panel
 		JPanel sourceServerFolderPanel = new JPanel();
 		sourceServerFolderPanel.setLayout(new GridLayout(6, 2));
 		sourceServerFolderPanel.setBorder(BorderFactory.createTitledBorder("Source Folder locations"));
-		
+
 		sourceServerFolderPanel.add(new JLabel("Folder"));
 		JPanel sourceViaServerFolderFieldPanel = new JPanel();
 		sourceViaServerFolderFieldPanel.setLayout(new BoxLayout(sourceViaServerFolderFieldPanel, BoxLayout.X_AXIS));
@@ -874,22 +874,22 @@ public class JCdmBuilderMain {
 			}
 		});
 		sourceServerFolderPanel.add(sourceViaServerFolderFieldPanel);
-		
+
 		sourceServerFolderPanel.add(new JLabel("Delimiter"));
 		sourceServerDelimiterField = new JTextField(",");
 		sourceServerDelimiterField.setToolTipText("The delimiter that separates values. Enter 'tab' for tab.");
 		sourceServerFolderPanel.add(sourceServerDelimiterField);
-		
+
 		sourceServerFolderPanel.add(new JLabel("Quote"));
 		sourceServerQuoteField = new JTextField("\"");
 		sourceServerQuoteField.setToolTipText("The field quote.");
 		sourceServerFolderPanel.add(sourceServerQuoteField);
-		
+
 		sourceServerFolderPanel.add(new JLabel("Null value"));
 		sourceServerNullValueField = new JTextField("");
 		sourceServerNullValueField.setToolTipText("The value that represents the NULL value.");
 		sourceServerFolderPanel.add(sourceServerNullValueField);
-		
+
 		sourceServerFolderPanel.add(new JLabel("Server folder"));
 		JPanel sourceServerTempFolderFieldPanel = new JPanel();
 		sourceServerTempFolderFieldPanel.setLayout(new BoxLayout(sourceServerTempFolderFieldPanel, BoxLayout.X_AXIS));
@@ -912,21 +912,21 @@ public class JCdmBuilderMain {
 		sourceServerTempLocalFolderField.setToolTipText("Specify the local path on the server of the temporary folder on the server here");
 		sourceServerFolderPanel.add(new JLabel("Local path server folder"));
 		sourceServerFolderPanel.add(sourceServerTempLocalFolderField);
-		
+
 		sourceCards = new JPanel(new CardLayout());
 		sourceCards.add(sourceFolderPanel, SOURCEFOLDER);
 		sourceCards.add(sourceServerFolderPanel, SOURCEVIASERVERFOLDER);
-		
+
 		c.gridx = 0;
 		c.gridy = 1;
 		c.gridwidth = 2;
 		mainPanel.add(sourceCards, c);
 		sourceCards.setMaximumSize(new Dimension(Integer.MAX_VALUE, sourceCards.getPreferredSize().height));
-		
+
 		JPanel etlButtonPanel = new JPanel();
 		etlButtonPanel.setLayout(new BoxLayout(etlButtonPanel, BoxLayout.X_AXIS));
 		etlButtonPanel.add(Box.createHorizontalGlue());
-		
+
 		JButton etl10kButton = new JButton("Perform 10k persons ETL");
 		etl10kButton.setBackground(new Color(151, 220, 141));
 		etl10kButton.setToolTipText("Perform the ETL for the first 10,000 persons");
@@ -937,13 +937,13 @@ public class JCdmBuilderMain {
 		});
 		componentsToDisableWhenRunning.add(etl10kButton);
 		etlButtonPanel.add(etl10kButton);
-		
+
 		panel.add(mainPanel, BorderLayout.NORTH);
-		
+
 		return panel;
 	}
-	
-	
+
+
 	private void updateETLType() {
 		if ((targetType != null) && (etlType != null)) {
 			String currentETLType = (String) etlType.getSelectedItem();
@@ -954,7 +954,7 @@ public class JCdmBuilderMain {
 				etlTypeModel.addElement(ETLTYPE_BULK_LOAD);
 				bulkLoadPossible = true;
 			}
-			
+
 			if (currentETLType != null) {
 				if ((!bulkLoadPossible) && (currentETLType.equals(ETLTYPE_BULK_LOAD))) {
 					etlType.setSelectedItem(ETLTYPE_LOAD);
@@ -965,11 +965,11 @@ public class JCdmBuilderMain {
 			}
 		}
 	}
-	
-	
+
+
 	private JPanel createWebAPIPanel() {
 		JPanel panel = new JPanel(new BorderLayout());
-		
+
 		JPanel mainPanel = new JPanel();
 		mainPanel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
@@ -979,13 +979,13 @@ public class JCdmBuilderMain {
 		JPanel webAPIPanel = new JPanel();
 		webAPIPanel.setLayout(new GridLayout(0, 2));
 		webAPIPanel.setBorder(BorderFactory.createTitledBorder("WebAPI Definition"));
-		
+
 		webAPIPanel.add(new JLabel("Server"));
 		webAPIServerField = new JTextField();
 		webAPIServerField.setText("");
 		webAPIServerField.setToolTipText("Specify the WebAPI server.");
 		webAPIPanel.add(webAPIServerField);
-		
+
 		webAPIPanel.add(new JLabel("Port"));
 		webAPIPortField = new JTextField();
 		webAPIPortField.setText("");
@@ -997,24 +997,24 @@ public class JCdmBuilderMain {
 		c.gridy = 0;
 		c.gridwidth = 1;
 		mainPanel.add(webAPIPanel, c);
-		
+
 		panel.add(mainPanel, BorderLayout.NORTH);
-		
+
 		return panel;
 	}
-	
-	
+
+
 	private JPanel createExecutePanel() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.BOTH;
 		c.weightx = 0.5;
-		
+
 		JPanel executeCheckboxPanel = new JPanel();
 		executeCheckboxPanel.setBorder(BorderFactory.createTitledBorder("Steps to execute"));
 		executeCheckboxPanel.setLayout(new BoxLayout(executeCheckboxPanel, BoxLayout.Y_AXIS));
-		
+
 		executeStructureCheckBox = new JCheckBox("Create CDM Structure");
 		executeCheckboxPanel.add(executeStructureCheckBox);
 		executeVocabCheckBox = new JCheckBox("Insert vocabulary");
@@ -1034,23 +1034,23 @@ public class JCdmBuilderMain {
 		c.gridx = 0;
 		c.gridy = 0;
 		panel.add(executeCheckboxPanel, c);
-		
+
 		JPanel optionsCheckboxPanel = new JPanel();
 		optionsCheckboxPanel.setBorder(BorderFactory.createTitledBorder("Execute options"));
 		optionsCheckboxPanel.setLayout(new BoxLayout(optionsCheckboxPanel, BoxLayout.Y_AXIS));
-		
+
 		continueOnErrorCheckBox = new JCheckBox("Continue on ETL, indices, and constraints errors");
 		optionsCheckboxPanel.add(continueOnErrorCheckBox);
 		optionsCheckboxPanel.add(Box.createVerticalGlue());
 		c.gridx = 1;
 		c.gridy = 0;
 		panel.add(optionsCheckboxPanel, c);
-		
-		
+
+
 		JPanel buttonPanel = new JPanel();
 		buttonPanel.setLayout(new BoxLayout(buttonPanel, BoxLayout.X_AXIS));
 		buttonPanel.add(Box.createHorizontalGlue());
-		
+
 		JButton executeButton = new JButton("Execute");
 		buttonPanel.add(executeButton);
 		executeButton.setBackground(new Color(151, 220, 141));
@@ -1067,13 +1067,13 @@ public class JCdmBuilderMain {
 					executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
 					executeDrugErasWhenReady = executeDrugErasCheckBox.isSelected();
 					executeResultsStructureWhenReady = executeResultsStructureCheckBox.isSelected();
-					if (	executeCdmStructureWhenReady || 
-							executeVocabWhenReady || 
-							executeEtlWhenReady || 
-							executeIndicesWhenReady || 
-							executeConstraintsWhenReady || 
-							executeConditionErasWhenReady || 
-							executeDrugErasWhenReady || 
+					if (	executeCdmStructureWhenReady ||
+							executeVocabWhenReady ||
+							executeEtlWhenReady ||
+							executeIndicesWhenReady ||
+							executeConstraintsWhenReady ||
+							executeConditionErasWhenReady ||
+							executeDrugErasWhenReady ||
 							executeResultsStructureWhenReady) {
 						if (
 								(!etlType.getSelectedItem().equals(ETLTYPE_BULK_LOAD)) ||
@@ -1087,7 +1087,7 @@ public class JCdmBuilderMain {
 					}
 				}
 				else {
-					
+
 				}
 			}
 		});
@@ -1095,15 +1095,15 @@ public class JCdmBuilderMain {
 		c.gridx = 1;
 		c.gridy = 1;
 		panel.add(buttonPanel, c);
-		
+
 		return panel;
 	}
-	
-	
+
+
 	private boolean checkInputs() {
 		boolean result = true;
 		List<String> errors = new ArrayList<String>();
-		
+
 		result = folderExists(folderField.getText().trim(), false, "Working folder", errors);
 		String connectionResult = testConnectionResult(getTargetDbSettings());
 		if (!connectionResult.equals("OK")) {
@@ -1123,19 +1123,19 @@ public class JCdmBuilderMain {
 			}
 			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Incorrect settings", JOptionPane.ERROR_MESSAGE);
 		}
-		
+
 		return result;
 	}
-	
-	
+
+
 	private boolean folderExists(String folderName, boolean mayBeEmpty, String description, List<String> errors) {
 		boolean exists = true;
-		
+
 		if (folderName.equals("")) {
 			if (!mayBeEmpty) {
 				errors.add(description + " is not specified");
 				exists = false;
-			} 
+			}
 		}
 		else {
 			File folder = new File(folderName);
@@ -1144,11 +1144,11 @@ public class JCdmBuilderMain {
 				exists = false;
 			}
 		}
-		
+
 		return exists;
 	}
-	
-	
+
+
 	private JComponent createConsolePanel() {
 		JTextArea consoleArea = new JTextArea();
 		consoleArea.setToolTipText("General progress information");
@@ -1165,8 +1165,8 @@ public class JCdmBuilderMain {
 		ObjectExchange.console = console;
 		return consoleScrollPane;
 	}
-	
-	
+
+
 	private void printUsage() {
 		System.out.println("Usage: java -jar JCDMBuilder.jar [options]");
 		System.out.println("");
@@ -1189,8 +1189,8 @@ public class JCdmBuilderMain {
 		System.out.println("-continueonerror                   Continue after error during ETL, creating");
 		System.out.println("                                   indices, and creating constraints.");
 	}
-	
-	
+
+
 	private void executeParameters(String[] args) {
 		executeCdmStructureWhenReady		    = false;
 		executeVocabWhenReady				    = false;
@@ -1202,7 +1202,7 @@ public class JCdmBuilderMain {
 		executeResultsStructureWhenReady	    = false;
 		idsToBigInt							    = false;
 		continueOnError                         = false;
-		
+
 		String parameter = null;
 		String parameterValue = null;
 		int argNr = 0;
@@ -1250,7 +1250,7 @@ public class JCdmBuilderMain {
 			parameterValue = null;
 			argNr++;
 		}
-		
+
 		executeStructureCheckBox.setSelected(executeCdmStructureWhenReady);
 		executeVocabCheckBox.setSelected(executeVocabWhenReady);
 		executeETLCheckBox.setSelected(executeEtlWhenReady);
@@ -1261,8 +1261,8 @@ public class JCdmBuilderMain {
 		executeResultsStructureCheckBox.setSelected(executeResultsStructureWhenReady);
 		continueOnErrorCheckBox.setSelected(continueOnError);
 	}
-	
-	
+
+
 	private void pickFolder() {
 		JFileChooser fileChooser = new JFileChooser(new File(folderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -1270,8 +1270,8 @@ public class JCdmBuilderMain {
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			folderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
 	}
-	
-	
+
+
 	private void loadSettingsFile() {
 		JFileChooser fileChooser = new JFileChooser();
 		if (settingsFile == null)
@@ -1284,8 +1284,8 @@ public class JCdmBuilderMain {
 			loadSettings(fileChooser.getSelectedFile().getAbsolutePath());
 		}
 	}
-	
-	
+
+
 	private void saveSettingsFile() {
 		JFileChooser fileChooser = new JFileChooser();
 		if (settingsFile == null)
@@ -1298,8 +1298,8 @@ public class JCdmBuilderMain {
 			saveSettings(fileChooser.getSelectedFile().getAbsolutePath());
 		}
 	}
-	
-	
+
+
 	private void pickVocabFolder() {
 		JFileChooser fileChooser = new JFileChooser(new File(vocabFolderField.getText().trim().equals("") ? folderField.getText() : vocabFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -1307,8 +1307,8 @@ public class JCdmBuilderMain {
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			vocabFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
 	}
-	
-	
+
+
 	private void pickSourceFolder() {
 		JFileChooser fileChooser = new JFileChooser(new File(sourceFolderField.getText().trim().equals("") ? folderField.getText() : sourceFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -1316,8 +1316,8 @@ public class JCdmBuilderMain {
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			sourceFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
 	}
-	
-	
+
+
 	private void pickTemporaryServerFolder() {
 		JFileChooser fileChooser = new JFileChooser(new File(sourceServerTempFolderField.getText().trim().equals("") ? folderField.getText() : sourceServerTempFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -1325,8 +1325,8 @@ public class JCdmBuilderMain {
 		if (returnVal == JFileChooser.APPROVE_OPTION)
 			sourceServerTempFolderField.setText(fileChooser.getSelectedFile().getAbsolutePath());
 	}
-	
-	
+
+
 	private void testConnection(DbSettings dbSettings, boolean testConnectionToDb) {
 		RichConnection connection;
 		try {
@@ -1336,7 +1336,7 @@ public class JCdmBuilderMain {
 			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error connecting to server", JOptionPane.ERROR_MESSAGE);
 			return;
 		}
-		
+
 		if (testConnectionToDb)
 			try {
 				connection.getTableNames(dbSettings.cdmSchema);
@@ -1345,61 +1345,61 @@ public class JCdmBuilderMain {
 				JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error connecting to server", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-		
+
 		connection.close();
 	}
-	
-	
+
+
 	private class IntegerFilter extends DocumentFilter {
-		
+
 		@Override
 		public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
 			Document doc = webAPIPortField.getDocument();
 			StringBuilder sb = new StringBuilder();
 			sb.append(doc.getText(0, doc.getLength()));
 			sb.insert(offset, string);
-		
+
 			if (test(sb)) {
 				super.insertString(fb, offset, string, attr);
 			}
 		}
-		
+
 		@Override
 		public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attr) throws BadLocationException {
 			Document doc = webAPIPortField.getDocument();
 			StringBuilder sb = new StringBuilder();
 			sb.append(doc.getText(0, doc.getLength()));
 			sb.replace(offset, offset + length, text);
-		
+
 			if (sb.toString().equals("") || test(sb)) {
 				super.replace(fb, offset, length, text, attr);
 			}
 		}
-		
+
 		@Override
 		public void remove(FilterBypass fb, int offset, int length) throws BadLocationException {
 			Document doc = webAPIPortField.getDocument();
 			StringBuilder sb = new StringBuilder();
 			sb.append(doc.getText(0, doc.getLength()));
 			sb.delete(offset, offset + length);
-		
+
 			if (sb.toString().equals("") || test(sb)) {
 				super.remove(fb, offset, length);
 			}
 		}
-		
-		private boolean test(StringBuilder sb) {	
+
+		private boolean test(StringBuilder sb) {
 			try {
 				Integer.parseInt(sb.toString());
 				return true;
 			} catch (NumberFormatException exception) {
 				return false;
 			}
-			
+
 		}
 	}
-	
-	
+
+
 	private DbSettings getTargetDbSettings() {
 		DbSettings dbSettings = new DbSettings();
 		dbSettings.dataType = DbSettings.DATABASE;
@@ -1422,28 +1422,28 @@ public class JCdmBuilderMain {
 				}
 			}
 		}
-		
+
 		if (dbSettings.cdmSchema.trim().length() == 0) {
 			String message = "Please specify a name for the target database";
 			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Database error", JOptionPane.ERROR_MESSAGE);
 			return null;
 		}
-		
+
 		return dbSettings;
 	}
-	
-	
+
+
 	private void etlRun(int maxPersons) {
 		EtlThread etlThread = new EtlThread(Cdm.CDM, maxPersons);
 		etlThread.start();
 	}
-	
-	
+
+
 	private class AutoRunThread extends Thread {
 		public void run() {
 			System.out.println("JCDMBuider Version " + JCdmBuilderMain.VERSION);
 			System.out.println();
-			
+
 			if (executeResultsStructureWhenReady) {
 				DropStructureThread dropStructureThread = new DropStructureThread(Cdm.RESULTS);
 				dropStructureThread.run();
@@ -1486,7 +1486,7 @@ public class JCdmBuilderMain {
 			}
 
 			StringUtilities.outputWithTime("Ready");
-			
+
 			if (continueOnError) {
 				if (errors.size() > 0) { // Show error overview
 					String errorMessage = "The following tables had errors:\n";
@@ -1501,22 +1501,22 @@ public class JCdmBuilderMain {
 			}
 		}
 	}
-	
-	
+
+
 	private class EtlThread extends Thread {
 
 		private int structure;
 		private int maxPersons;
-		
+
 		public EtlThread(int structure, int maxPersons) {
 			this.structure = structure;
 			this.maxPersons = maxPersons;
 		}
-		
+
 		public void run() {
 			for (JComponent component : componentsToDisableWhenRunning)
 				component.setEnabled(false);
-			
+
 			try {
 				if (etlType.getSelectedItem().equals("1. Load CSV files in CDM format to server") || (structure == Cdm.RESULTS)) {
 					CdmEtl etl = new CdmEtl();
@@ -1532,21 +1532,21 @@ public class JCdmBuilderMain {
 					if (dbSettings != null)
 						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerQuoteField.getText(), sourceServerNullValueField.getText(), folderField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
 				}
-				
+
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
 				for (JComponent component : componentsToDisableWhenRunning)
 					component.setEnabled(true);
-				
+
 			}
 		}
-		
+
 	}
-	
-	
+
+
 	private class VocabRunThread extends Thread {
-		
+
 		public void run() {
 			for (JComponent component : componentsToDisableWhenRunning)
 				component.setEnabled(false);
@@ -1575,18 +1575,18 @@ public class JCdmBuilderMain {
 				for (JComponent component : componentsToDisableWhenRunning)
 					component.setEnabled(true);
 			}
-			
+
 		}
 	}
-	
-	
+
+
 	private class DropStructureThread extends Thread {
 		private int structure;
-		
+
 		public DropStructureThread(int structure) {
 			this.structure = structure;
 		}
-		
+
 		public void run() {
 			for (JComponent component : componentsToDisableWhenRunning)
 				component.setEnabled(false);
@@ -1602,15 +1602,15 @@ public class JCdmBuilderMain {
 			}
 		}
 	}
-	
-	
+
+
 	private class StructureThread extends Thread {
 		private int structure;
-		
+
 		public StructureThread(int structure) {
 			this.structure = structure;
 		}
-		
+
 		public void run() {
 			for (JComponent component : componentsToDisableWhenRunning)
 				component.setEnabled(false);
@@ -1628,15 +1628,15 @@ public class JCdmBuilderMain {
 			}
 		}
 	}
-	
-	
+
+
 	private class IndexThread extends Thread {
 		private int structure;
-		
+
 		public IndexThread(int structure) {
 			this.structure = structure;
 		}
-		
+
 		public void run() {
 			for (JComponent component : componentsToDisableWhenRunning)
 				component.setEnabled(false);
@@ -1653,15 +1653,15 @@ public class JCdmBuilderMain {
 			}
 		}
 	}
-	
-	
+
+
 	private class ConstraintThread extends Thread {
 		private int structure;
-		
+
 		public ConstraintThread(int structure) {
 			this.structure = structure;
 		}
-		
+
 		public void run() {
 			for (JComponent component : componentsToDisableWhenRunning)
 				component.setEnabled(false);
@@ -1678,19 +1678,19 @@ public class JCdmBuilderMain {
 			}
 		}
 	}
-	
-	
+
+
 	private class EraThread extends Thread {
-		
+
 		private int				type;
-		
+
 		public final static int	DRUGS		= 1;
 		public final static int	CONDITIONS	= 2;
-		
+
 		public EraThread(int type) {
 			this.type = type;
 		}
-		
+
 		public void run() {
 			for (JComponent component : componentsToDisableWhenRunning)
 				component.setEnabled(false);
@@ -1701,6 +1701,8 @@ public class JCdmBuilderMain {
 				case "5.0.1":
 				case "5.3.0":
 				case "5.3.1":
+				case "5.4.0":
+				case "5.4.1":
 					version = EraBuilder.VERSION_5;
 					break;
 				case "6.0.0":
@@ -1719,12 +1721,12 @@ public class JCdmBuilderMain {
 			}
 		}
 	}
-	
-	
+
+
 	private class TextFieldLink implements DocumentListener {
 		private JTextField sourceField;
 		private JTextField linkedField;
-		
+
 		public TextFieldLink(JTextField sourceField, JTextField linkedField) {
 			this.sourceField = sourceField;
 			this.linkedField = linkedField;
@@ -1743,8 +1745,8 @@ public class JCdmBuilderMain {
 		@Override
 		public void changedUpdate(DocumentEvent e) {
 			copyValueToLinkedField();
-		} 
-		
+		}
+
 		private void copyValueToLinkedField() {
 			if (!fieldLinkActive) {
 				fieldLinkActive = true;
@@ -1753,8 +1755,8 @@ public class JCdmBuilderMain {
 			}
 		}
 	}
-	
-	
+
+
 	private void handleError(Exception e) {
 		if (!e.getMessage().equals("NO ERROR")) {
 			System.err.println("Error: " + e.getMessage());
@@ -1765,8 +1767,8 @@ public class JCdmBuilderMain {
 			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
-	
-	
+
+
 	private void runAll() {
 		ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
 		AutoRunThread autoRunThread = new AutoRunThread();
