@@ -6,7 +6,7 @@ The JCdmBuilder is a Java program that offers various tools that can be used for
 Features
 ========
 * You can load data in CDM format from CSV files into the database.
-* Creating the database structure and indices for CDM version 5.0.1, 5.3.0, 5.3.1, 5.4.0, prepared for version 6.0.
+* Creating the database structure and indices for CDM version 5.0.1, 5.3.0, 5.3.1, 5.4.0, 5.4.1, prepared for version 6.0.
 * Loading the vocabulary from files into the database.
 * Automatically creating condition and drug eras.
 * Supports SQL Server, Oracle and PostgreSQL.
@@ -16,27 +16,27 @@ Features
 Screenshots
 ===========
 
-<img src="man/Screenshot_5.4.0.7_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
+<img src="man/Screenshot_5.4.1.0_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
 
 _The Locations tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.7_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
+<img src="man/Screenshot_5.4.1.0_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
 
 _The Vocabulary tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.7_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
+<img src="man/Screenshot_5.4.1.0_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
 
 _The ETL tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.7_WebAPI.png" alt="JCdmBuilder" title="JCdmBuilder WebAPI Tab" />
+<img src="man/Screenshot_5.4.1.0_WebAPI.png" alt="JCdmBuilder" title="JCdmBuilder WebAPI Tab" />
 
 _The WebAPI tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.0.7_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
+<img src="man/Screenshot_5.4.1.0_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
 
 _The Execute tab._
 <br><br>
