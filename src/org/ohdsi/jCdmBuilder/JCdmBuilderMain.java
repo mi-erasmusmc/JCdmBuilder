@@ -31,11 +31,26 @@ import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.security.CodeSource;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Stream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -79,7 +94,7 @@ import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.IniFile;
 
 public class JCdmBuilderMain {
-	public static final String VERSION = "5.4.1.0";
+	public static final String VERSION = "5.4.1.1";
 
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 
@@ -132,6 +147,7 @@ public class JCdmBuilderMain {
 	private JCheckBox						executeVocabCheckBox;
 	private JCheckBox						executeETLCheckBox;
 	private JCheckBox           			continueOnErrorCheckBox;
+	private JCheckBox						executePrimaryKeysCheckBox;
 	private JCheckBox						executeIndicesCheckBox;
 	private JCheckBox						executeConstraintsCheckBox;
 	private JCheckBox						executeConditionErasCheckBox;
@@ -169,6 +185,7 @@ public class JCdmBuilderMain {
 	private boolean							executeCdmStructureWhenReady		    = false;
 	private boolean							executeVocabWhenReady				    = false;
 	private boolean							executeEtlWhenReady					    = false;
+	private boolean							executePrimaryKeysWhenReady				= false;
 	private boolean							executeIndicesWhenReady				    = false;
 	private boolean							executeConstraintsWhenReady			    = false;
 	private boolean							executeConditionErasWhenReady		    = false;
@@ -238,6 +255,7 @@ public class JCdmBuilderMain {
 		if (	executeCdmStructureWhenReady ||
 				executeVocabWhenReady ||
 				executeEtlWhenReady ||
+				executePrimaryKeysWhenReady ||
 				executeIndicesWhenReady ||
 				executeConstraintsWhenReady ||
 				executeConditionErasWhenReady ||
@@ -399,6 +417,8 @@ public class JCdmBuilderMain {
 		targetTempSchemaField.setToolTipText("Specify the WebAPI temp schema.");
 		targetPanel.add(targetTempSchemaField);
 		targetPanel.add(new JLabel("CDM version"));
+		//TODO replace Cdm.availableVersions by getAvailableVersions()
+		getAvailableVersions();
 		targetCdmVersion = new JComboBox<String>(Cdm.availableVersions);
 		targetCdmVersion.setToolTipText("Select the CMD version");
 		targetCdmVersion.setSelectedItem(VERSION.substring(0, VERSION.lastIndexOf('.')));
@@ -462,6 +482,37 @@ public class JCdmBuilderMain {
 		panel.add(testConnectionButtonPanel, c);
 
 		return panel;
+	}
+	
+	
+	private String[] getAvailableVersions() {
+		String[] availableVersions = new String[] {};
+
+        URI uri;
+		try {
+			uri = JCdmBuilderMain.class.getResource("/org/ohdsi/jCdmBuilder/cdm").toURI();
+	        Path myPath;
+	        if (uri.getScheme().equals("jar")) {
+	            FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
+	            myPath = fileSystem.getPath("/resources");
+	        } else {
+	            myPath = Paths.get(uri);
+	        }
+	        Stream<Path> walk;
+			walk = Files.walk(myPath, 1);
+	        for (Iterator<Path> it = walk.iterator(); it.hasNext();){
+	            System.out.println(it.next());
+	        }
+	        walk.close();
+		} catch (URISyntaxException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		return availableVersions;
 	}
 
 
@@ -1021,6 +1072,8 @@ public class JCdmBuilderMain {
 		executeCheckboxPanel.add(executeVocabCheckBox);
 		executeETLCheckBox = new JCheckBox("Perform ETL");
 		executeCheckboxPanel.add(executeETLCheckBox);
+		executePrimaryKeysCheckBox = new JCheckBox("Create CDM primary keys");
+		executeCheckboxPanel.add(executePrimaryKeysCheckBox);
 		executeIndicesCheckBox = new JCheckBox("Create CDM indices");
 		executeCheckboxPanel.add(executeIndicesCheckBox);
 		executeConstraintsCheckBox = new JCheckBox("Create CDM constraints");
@@ -1062,6 +1115,7 @@ public class JCdmBuilderMain {
 					executeVocabWhenReady = executeVocabCheckBox.isSelected();
 					executeEtlWhenReady = executeETLCheckBox.isSelected();
 					continueOnError = continueOnErrorCheckBox.isSelected();
+					executePrimaryKeysWhenReady = executePrimaryKeysCheckBox.isSelected();
 					executeIndicesWhenReady = executeIndicesCheckBox.isSelected();
 					executeConstraintsWhenReady = executeConstraintsCheckBox.isSelected();
 					executeConditionErasWhenReady = executeConditionErasCheckBox.isSelected();
@@ -1070,6 +1124,7 @@ public class JCdmBuilderMain {
 					if (	executeCdmStructureWhenReady ||
 							executeVocabWhenReady ||
 							executeEtlWhenReady ||
+							executePrimaryKeysWhenReady ||
 							executeIndicesWhenReady ||
 							executeConstraintsWhenReady ||
 							executeConditionErasWhenReady ||
@@ -1195,6 +1250,7 @@ public class JCdmBuilderMain {
 		executeCdmStructureWhenReady		    = false;
 		executeVocabWhenReady				    = false;
 		executeEtlWhenReady					    = false;
+		executePrimaryKeysWhenReady				= false;
 		executeIndicesWhenReady				    = false;
 		executeConstraintsWhenReady			    = false;
 		executeConditionErasWhenReady		    = false;
@@ -1225,6 +1281,8 @@ public class JCdmBuilderMain {
 					executeVocabWhenReady = true;
 				if (parameter.equals("-executeetl"))
 					executeEtlWhenReady = true;
+				if (parameter.equals("-executeprimarykeys"))
+					executePrimaryKeysWhenReady = true;
 				if (parameter.equals("-executeindices"))
 					executeIndicesWhenReady = true;
 				if (parameter.equals("-executeconstraints"))
@@ -1254,6 +1312,7 @@ public class JCdmBuilderMain {
 		executeStructureCheckBox.setSelected(executeCdmStructureWhenReady);
 		executeVocabCheckBox.setSelected(executeVocabWhenReady);
 		executeETLCheckBox.setSelected(executeEtlWhenReady);
+		executePrimaryKeysCheckBox.setSelected(executePrimaryKeysWhenReady);
 		executeIndicesCheckBox.setSelected(executeIndicesWhenReady);
 		executeConstraintsCheckBox.setSelected(executeConstraintsWhenReady);
 		executeConditionErasCheckBox.setSelected(executeConditionErasWhenReady);
@@ -1464,6 +1523,10 @@ public class JCdmBuilderMain {
 				EtlThread etlThread = new EtlThread(Cdm.CDM, Integer.MAX_VALUE);
 				etlThread.run();
 			}
+			if (executePrimaryKeysWhenReady) {
+				PrimaryKeysThread primaryKeysThread = new PrimaryKeysThread(Cdm.CDM);
+				primaryKeysThread.run();
+			}
 			if (executeIndicesWhenReady) {
 				IndexThread indexThread = new IndexThread(Cdm.CDM);
 				indexThread.run();
@@ -1620,6 +1683,31 @@ public class JCdmBuilderMain {
 				Cdm.createSchema(structure, dbSettings, version);
 				Cdm.createTables(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt, webAPIServerField.getText(), webAPIPortField.getText());
 				Cdm.createPatchTables(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt);
+			} catch (Exception e) {
+				handleError(e);
+			} finally {
+				for (JComponent component : componentsToDisableWhenRunning)
+					component.setEnabled(true);
+			}
+		}
+	}
+
+
+	private class PrimaryKeysThread extends Thread {
+		private int structure;
+
+		public PrimaryKeysThread(int structure) {
+			this.structure = structure;
+		}
+
+		public void run() {
+			for (JComponent component : componentsToDisableWhenRunning)
+				component.setEnabled(false);
+			try {
+				DbSettings dbSettings = getTargetDbSettings();
+				String version = targetCdmVersion.getSelectedItem().toString();
+				Cdm.createPrimaryKeys(structure, dbSettings, version, sourceFolderField.getText());
+				Cdm.createPatchPrimaryKeys(structure, dbSettings, version, sourceFolderField.getText());
 			} catch (Exception e) {
 				handleError(e);
 			} finally {

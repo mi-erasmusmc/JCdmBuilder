@@ -34,21 +34,15 @@ public interface CdmVx {
 
 	public String indicesOracle();
 
+	public String primaryKeysMSSQL();
+
+	public String primaryKeysPostgreSQL();
+
+	public String primaryKeysOracle();
+
 	public String resultsStructureMSSQL();
 
 	public String resultsStructurePostgreSQL();
 
 	public String resultsStructureOracle();
-
-	public String resultsConstraintsMSSQL();
-
-	public String resultsConstraintsPostgreSQL();
-
-	public String resultsConstraintsOracle();
-
-	public String resultsIndicesMSSQL();
-
-	public String resultsIndicesPostgreSQL();
-
-	public String resultsIndicesOracle();
 }
