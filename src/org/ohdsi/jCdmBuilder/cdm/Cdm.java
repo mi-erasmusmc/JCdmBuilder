@@ -39,7 +39,6 @@ import org.ohdsi.jCdmBuilder.DbSettings;
 import org.ohdsi.jCdmBuilder.ErrorReport;
 import org.ohdsi.jCdmBuilder.JCdmBuilderMain;
 import org.ohdsi.jCdmBuilder.cdm.v5.CdmV5;
-import org.ohdsi.jCdmBuilder.cdm.v6.CdmV6;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadTextFile;
 
@@ -55,12 +54,10 @@ public class Cdm {
 	public static final int RESULTS = 1;
 	
 	public static final String[] availableVersions = new String[] {
-			"5.0.1",
 			"5.3.0",
 			"5.3.1",
 			"5.4.0",
-			"5.4.1",
-			"6.0.0 (preliminary version)"
+			"5.4.1"
 	};
 	
 	
@@ -68,9 +65,6 @@ public class Cdm {
 		CdmVx cdm = null;
 		if (version.startsWith("5.")) {
 			cdm = new CdmV5();
-		}
-		else if (version.startsWith("6.")) {
-			cdm = new CdmV6();
 		}
 		return cdm;
 	}
@@ -236,12 +230,33 @@ public class Cdm {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
-		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.structureOracle() : getResultsDefintionURL(dbSettings, webAPIServer, webAPIPort);
-		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.structureMSSQL() : getResultsDefintionURL(dbSettings, webAPIServer, webAPIPort);
-		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.structurePostgreSQL() : getResultsDefintionURL(dbSettings, webAPIServer, webAPIPort);
+
+		if (currentStructure == CDM) {
+			if (dbSettings.dbType == DbType.ORACLE) {
+				resourceName = cdm.structureOracle();
+			}
+			else if (dbSettings.dbType == DbType.MSSQL) {
+				resourceName = cdm.structureMSSQL();
+			}
+			else if (dbSettings.dbType == DbType.POSTGRESQL) {
+				resourceName = cdm.structurePostgreSQL();
+			}
+		}
+		else if (currentStructure == RESULTS) {
+			if ((webAPIServer != null) && (webAPIPort != null) && (!webAPIServer.trim().equals("")) && (!webAPIPort.trim().equals(""))) {
+				resourceName = getResultsDefintionURL(dbSettings, webAPIServer, webAPIPort);
+			}
+			else {
+				if (dbSettings.dbType == DbType.ORACLE) {
+					resourceName = cdm.resultsStructureOracle();
+				}
+				else if (dbSettings.dbType == DbType.MSSQL) {
+					resourceName = cdm.resultsStructureMSSQL();
+				}
+				else if (dbSettings.dbType == DbType.POSTGRESQL) {
+					resourceName = cdm.resultsStructurePostgreSQL();
+				}
+			}
 		}
 
 		if (resourceName != null) {
@@ -306,25 +321,57 @@ public class Cdm {
 				}
 			}
 			else {
-		        try {
-		            URL url = new URL(resourceName);
-		             
-		            // read text returned by server
-		            BufferedReader urlReader = new BufferedReader(new InputStreamReader(url.openStream()));
-		             
-		            String line;
-		            while ((line = urlReader.readLine()) != null) {
-		                sqlLines.add(line);
-		            }
-		            urlReader.close();
-		             
-		        }
-		        catch (MalformedURLException e) {
-					throw new RuntimeException("ERROR Malformed URL: " + resourceName);
-		        }
-		        catch (IOException e) {
-					StringUtilities.outputWithTime("WebAPI not found");
-		        }
+				if (resourceName.startsWith("http")) {
+			        try {
+			            URL url = new URL(resourceName);
+			             
+			            // read text returned by server
+			            BufferedReader urlReader = new BufferedReader(new InputStreamReader(url.openStream()));
+			             
+			            String line;
+			            while ((line = urlReader.readLine()) != null) {
+			                sqlLines.add(line);
+			            }
+			            urlReader.close();
+			             
+			        }
+			        catch (MalformedURLException e) {
+						throw new RuntimeException("ERROR Malformed URL: " + resourceName);
+			        }
+			        catch (IOException e) {
+						StringUtilities.outputWithTime("WebAPI not found");
+			        }
+				}
+				else {
+					InputStream resourceStream = null;
+					
+					resourceName = version + "/" + resourceName;
+					URL resourceURL = cdm.getClass().getResource(resourceName);
+					if (resourceURL != null) {
+						resourceStream = cdm.getClass().getResourceAsStream(resourceName);
+					}
+					else {
+						StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " data structure definition not found");
+					}
+
+					if (resourceStream != null) {
+						String vocabSchema = dbSettings.cdmSchema;
+						String resultsSchema = dbSettings.resultsSchema;
+						String tempSchema = dbSettings.tempSchema;
+						
+						for (String line : new ReadTextFile(resourceStream)) {
+							if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+								while (line.contains("  ")) {
+									line = line.replaceAll("  ", " ");
+								}
+								line.replaceAll("@vocabschema", vocabSchema);
+								line.replaceAll("@resultsschema", resultsSchema);
+								line.replaceAll("@tempschema", tempSchema);
+								sqlLines.add(line);
+							}
+						}
+					}
+				}
 			}
 
 			if (sqlLines.size() > 0) {
@@ -356,16 +403,90 @@ public class Cdm {
 	}
 	
 	
+	public static void createPrimaryKeys(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
+		CdmVx cdm = getCDM(version);
+		
+		String resourceName = null;
+		if (dbSettings.dbType == DbType.ORACLE) {
+			resourceName = currentStructure == CDM ? cdm.primaryKeysOracle() : null;
+		} else if (dbSettings.dbType == DbType.MSSQL) {
+			resourceName = currentStructure == CDM ? cdm.primaryKeysMSSQL() : null;
+		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
+			resourceName = currentStructure == CDM ? cdm.primaryKeysPostgreSQL() : null;
+		}
+		
+		if (resourceName != null) {
+			InputStream resourceStream = null;
+			if (sourceFolder != null) {
+				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+				if (localFile.exists()) {
+					if (localFile.canRead()) {
+						try {
+							resourceStream = new FileInputStream(localFile);
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
+						} catch (FileNotFoundException e) {
+							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
+						}
+					}
+					else {
+						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+					}
+				}
+			}
+			
+			if (resourceStream == null) {
+				resourceName = version + "/" + resourceName;
+				URL resourceURL = cdm.getClass().getResource(resourceName);
+				if (resourceURL != null) {
+					resourceStream = cdm.getClass().getResourceAsStream(resourceName);
+				}
+				else {
+					StringUtilities.outputWithTime("- " + (currentStructure == CDM ? "CDM" : "Results") + " primary keys definition not found");
+				}
+			}
+
+			if (resourceStream != null) {
+				StringUtilities.outputWithTime("Defining " + (currentStructure == CDM ? "CDM" : "Results") + " primary keys");
+				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
+				List<String> sqlLines = new ArrayList<>();
+				for (String line : new ReadTextFile(resourceStream)) {
+					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("ALTER TABLE ")) {
+							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+						}
+						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
+							line = line.replace(" ON ", " ON " + schemaName + ".");
+						}
+						sqlLines.add(line);
+					}
+				}
+				
+				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
+				
+				connection.execute(StringUtilities.join(sqlLines, "\n"));
+				
+				connection.close();
+				StringUtilities.outputWithTime("Done");
+			}
+		}
+	}
+	
+	
 	public static void createIndices(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.indicesOracle() : cdm.resultsIndicesOracle();
+			resourceName = currentStructure == CDM ? cdm.indicesOracle() : null;
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.indicesMSSQL() : cdm.resultsIndicesMSSQL();
+			resourceName = currentStructure == CDM ? cdm.indicesMSSQL() : null;
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.indicesPostgreSQL() : cdm.resultsIndicesPostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.indicesPostgreSQL() : null;
 		}
 		
 		if (resourceName != null) {
@@ -435,11 +556,11 @@ public class Cdm {
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.constraintsOracle() : cdm.resultsConstraintsOracle();
+			resourceName = currentStructure == CDM ? cdm.constraintsOracle() : null;
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.constraintsMSSQL() : cdm.resultsConstraintsMSSQL();
+			resourceName = currentStructure == CDM ? cdm.constraintsMSSQL() : null;
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.constraintsPostgreSQL() : cdm.resultsConstraintsPostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.constraintsPostgreSQL() : null;
 		}
 		
 		if (resourceName != null) {
@@ -594,16 +715,87 @@ public class Cdm {
 	}
 	
 	
+	public static void createPatchPrimaryKeys(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
+		CdmVx cdm = getCDM(version);
+		
+		String resourceName = null;
+		if (dbSettings.dbType == DbType.ORACLE) {
+			resourceName = currentStructure == CDM ? cdm.primaryKeysOracle() : null;
+		} else if (dbSettings.dbType == DbType.MSSQL) {
+			resourceName = currentStructure == CDM ? cdm.primaryKeysMSSQL() : null;
+		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
+			resourceName = currentStructure == CDM ? cdm.primaryKeysPostgreSQL() : null;
+		}
+		
+		if (resourceName != null) {
+			int lastDotPosition = resourceName.lastIndexOf(".", resourceName.length());
+			if (lastDotPosition == -1) {
+				resourceName = resourceName + " - Patch";
+			}
+			else {
+				resourceName = resourceName.substring(0, lastDotPosition) + " - Patch" + resourceName.substring(lastDotPosition);
+			}
+
+			InputStream resourceStream = null;
+			if (sourceFolder != null) {
+				File localFile = new File(sourceFolder + "/Scripts/" + resourceName);
+				if (localFile.exists()) {
+					if (localFile.canRead()) {
+						try {
+							resourceStream = new FileInputStream(localFile);
+							StringUtilities.outputWithTime("Using local definition: " + resourceName);
+						} catch (FileNotFoundException e) {
+							throw new RuntimeException("ERROR opening file: " + sourceFolder + "/Scripts/" + resourceName);
+						}
+					}
+					else {
+						throw new RuntimeException("ERROR reading file: " + sourceFolder + "/Scripts/" + resourceName);
+					}
+				}
+			}
+			
+			if (resourceStream != null) {
+				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results") + " primary keys");
+				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
+				List<String> sqlLines = new ArrayList<>();
+				for (String line : new ReadTextFile(resourceStream)) {
+					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
+						while (line.contains("  ")) {
+							line = line.replaceAll("  ", " ");
+						}
+						if (line.contains("ALTER TABLE ")) {
+							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
+						}
+						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
+							line = line.replace(" ON ", " ON " + schemaName + ".");
+						}
+						sqlLines.add(line);
+					}
+				}
+				
+				RichConnection connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
+				connection.setContext(cdm.getClass());
+				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
+				
+				connection.execute(StringUtilities.join(sqlLines, "\n"));
+				
+				connection.close();
+				StringUtilities.outputWithTime("Done");
+			}
+		}
+	}
+	
+	
 	public static void createPatchIndices(int currentStructure, DbSettings dbSettings, String version, String sourceFolder) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.indicesOracle() : cdm.resultsIndicesOracle();
+			resourceName = currentStructure == CDM ? cdm.indicesOracle() : null;
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.indicesMSSQL() : cdm.resultsIndicesMSSQL();
+			resourceName = currentStructure == CDM ? cdm.indicesMSSQL() : null;
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.indicesPostgreSQL() : cdm.resultsIndicesPostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.indicesPostgreSQL() : null;
 		}
 		
 		if (resourceName != null) {
@@ -670,11 +862,11 @@ public class Cdm {
 		
 		String resourceName = null;
 		if (dbSettings.dbType == DbType.ORACLE) {
-			resourceName = currentStructure == CDM ? cdm.constraintsOracle() : cdm.resultsConstraintsOracle();
+			resourceName = currentStructure == CDM ? cdm.constraintsOracle() : null;
 		} else if (dbSettings.dbType == DbType.MSSQL) {
-			resourceName = currentStructure == CDM ? cdm.constraintsMSSQL() : cdm.resultsConstraintsMSSQL();
+			resourceName = currentStructure == CDM ? cdm.constraintsMSSQL() : null;
 		} else if (dbSettings.dbType == DbType.POSTGRESQL) {
-			resourceName = currentStructure == CDM ? cdm.constraintsPostgreSQL() : cdm.resultsConstraintsPostgreSQL();
+			resourceName = currentStructure == CDM ? cdm.constraintsPostgreSQL() : null;
 		}
 
 		if (resourceName != null) {

@@ -46,59 +46,44 @@ public class CdmV5 implements CdmVx {
 
 	public String indicesMSSQL() {
 		//return "OMOP CDM Test sql server pk indices.txt";
-		return "OMOP CDM sql server pk indices.txt";
+		return "OMOP CDM sql server indices.txt";
 	}
 
 	public String indicesPostgreSQL() {
-		return "OMOP CDM postgresql pk indices.txt";
+		return "OMOP CDM postgresql indices.txt";
 	}
 
 	public String indicesOracle() {
-		return "OMOP CDM oracle pk indices.txt";
+		return "OMOP CDM oracle indices.txt";
+	}
+
+	@Override
+	public String primaryKeysMSSQL() {
+		return "OMOP CDM sql server primary keys.txt";
+	}
+
+	@Override
+	public String primaryKeysPostgreSQL() {
+		return "OMOP CDM postgresql primary keys.txt";
+	}
+
+	@Override
+	public String primaryKeysOracle() {
+		return "OMOP CDM oracle primary keys.txt";
 	}
 
 	@Override
 	public String resultsStructureMSSQL() {
-		return "OMOP CDM Results sql server ddl.txt";
+		return "OMOP CDM results sql server.txt";
 	}
 
 	@Override
 	public String resultsStructurePostgreSQL() {
-		return "OMOP CDM Results postgresql ddl.txt";
+		return "OMOP CDM results postgresql.txt";
 	}
 
 	@Override
 	public String resultsStructureOracle() {
-		return "OMOP CDM Results oracle ddl.txt";
-	}
-
-	@Override
-	public String resultsConstraintsMSSQL() {
-		return null;
-	}
-
-	@Override
-	public String resultsConstraintsPostgreSQL() {
-		return null;
-	}
-
-	@Override
-	public String resultsConstraintsOracle() {
-		return null;
-	}
-
-	@Override
-	public String resultsIndicesMSSQL() {
-		return null;
-	}
-
-	@Override
-	public String resultsIndicesPostgreSQL() {
-		return null;
-	}
-
-	@Override
-	public String resultsIndicesOracle() {
-		return null;
+		return "OMOP CDM results oracle.txt";
 	}
 }
