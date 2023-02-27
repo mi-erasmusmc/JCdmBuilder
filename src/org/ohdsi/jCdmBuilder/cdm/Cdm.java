@@ -30,14 +30,9 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-
 import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
-import org.ohdsi.jCdmBuilder.ErrorReport;
-import org.ohdsi.jCdmBuilder.JCdmBuilder;
 import org.ohdsi.jCdmBuilder.cdm.v5.CdmV5;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadTextFile;
@@ -285,18 +280,8 @@ public class Cdm {
 				}
 
 				if (resourceStream != null) {
-					String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 					for (String line : new ReadTextFile(resourceStream)) {
 						if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-							while (line.contains("  ")) {
-								line = line.replaceAll("  ", " ");
-							}
-							if (line.contains("CREATE TABLE ")) {
-								line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
-							}
-							if (line.contains("INSERT INTO ")) {
-								line = line.replace("INSERT INTO ", "INSERT INTO " + schemaName + ".");
-							}
 							sqlLines.add(line);
 						}
 					}
@@ -314,6 +299,7 @@ public class Cdm {
 				}
 			}
 			else {
+				// Results structure
 				if (resourceName.startsWith("http")) {
 			        try {
 			            URL url = new URL(resourceName);
@@ -440,19 +426,9 @@ public class Cdm {
 
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Defining " + (currentStructure == CDM ? "CDM" : "Results") + " primary keys");
-				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
-							line = line.replace(" ON ", " ON " + schemaName + ".");
-						}
 						sqlLines.add(line);
 					}
 				}
@@ -514,19 +490,9 @@ public class Cdm {
 
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Creating " + (currentStructure == CDM ? "CDM" : "Results") + " indices");
-				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
-							line = line.replace(" ON ", " ON " + schemaName + ".");
-						}
 						sqlLines.add(line);
 					}
 				}
@@ -588,19 +554,9 @@ public class Cdm {
 
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Creating constraints");
-				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("REFERENCES ")) {
-							line = line.replace("REFERENCES ", "REFERENCES " + schemaName + ".");
-						}
 						sqlLines.add(line);
 					}
 				}
@@ -664,22 +620,6 @@ public class Cdm {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
 						line = line.replaceAll("@CDM_SCHEMA", schemaName);
 						line = line.replaceAll("@cdm_schema", schemaName);
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("DROP TABLE IF EXISTS ")) {
-							line = line.replace("DROP TABLE IF EXISTS ", "DROP TABLE IF EXISTS " + schemaName + ".");
-						}
-						else if (line.contains("DROP TABLE ")) {
-							line = line.replace("DROP TABLE ", "DROP TABLE " + schemaName + ".");
-						}
-						else if (line.contains("CREATE TABLE ")) {
-							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
-						}
-						else if (line.contains("GRANT USAGE ON SCHEMA ")) {
-							
-							line = line.replace("CREATE TABLE ", "CREATE TABLE " + schemaName + ".");
-						}
 						sqlLines.add(line);
 					}
 				}
@@ -749,19 +689,9 @@ public class Cdm {
 			
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results") + " primary keys");
-				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
-							line = line.replace(" ON ", " ON " + schemaName + ".");
-						}
 						sqlLines.add(line);
 					}
 				}
@@ -820,19 +750,9 @@ public class Cdm {
 			
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results") + " indices");
-				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("CREATE ") && line.contains(" INDEX ") && line.contains(" ON ")) {
-							line = line.replace(" ON ", " ON " + schemaName + ".");
-						}
 						sqlLines.add(line);
 					}
 				}
@@ -891,19 +811,9 @@ public class Cdm {
 			
 			if (resourceStream != null) {
 				StringUtilities.outputWithTime("Patching " + (currentStructure == CDM ? "CDM" : "Results") + " constraints");
-				String schemaName = currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
 				List<String> sqlLines = new ArrayList<>();
 				for (String line : new ReadTextFile(resourceStream)) {
 					if ((line.trim().length() > 0) && (!line.trim().substring(0, 1).equals("#"))) {
-						while (line.contains("  ")) {
-							line = line.replaceAll("  ", " ");
-						}
-						if (line.contains("ALTER TABLE ")) {
-							line = line.replace("ALTER TABLE ", "ALTER TABLE " + schemaName + ".");
-						}
-						if (line.contains("REFERENCES ")) {
-							line = line.replace("REFERENCES ", "REFERENCES " + schemaName + ".");
-						}
 						sqlLines.add(line);
 					}
 				}
@@ -917,19 +827,6 @@ public class Cdm {
 				connection.close();
 				StringUtilities.outputWithTime("Done");
 			}
-		}
-	}
-	
-	
-	private static void handleError(Exception e, JFrame frame, String errorFolder, String item, boolean continueOnError) {
-		JCdmBuilder.errors.add(item);
-		System.err.println("Error: " + e.getMessage());
-		String errorReportFilename = ErrorReport.generate(errorFolder, e, item);
-		String message = "Error: " + e.getLocalizedMessage();
-		message += "\nAn error report has been generated:\n" + errorReportFilename;
-		System.out.println(message);
-		if (!continueOnError) {
-			JOptionPane.showMessageDialog(frame, StringUtilities.wordWrap(message, 80), "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
 }

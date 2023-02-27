@@ -28,12 +28,8 @@ public class EraBuilder {
 		String resourceName = null;
 		if (cdmVersion == VERSION_5 && domain == DRUG_ERA)
 			resourceName = "drugEraV5.sql";
-		if (cdmVersion == VERSION_6 && domain == DRUG_ERA)
-			resourceName = "drugEraV6.sql";
 		if (cdmVersion == VERSION_5 && domain == CONDITION_ERA)
 			resourceName = "conditionEraV5.sql";
-		if (cdmVersion == VERSION_6 && domain == CONDITION_ERA)
-			resourceName = "conditionEraV6.sql";
 
 		InputStream resourceStream = null;
 		if (sourceFolder != null) {
