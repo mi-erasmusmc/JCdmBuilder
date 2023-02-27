@@ -32,7 +32,7 @@ import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
 import org.ohdsi.jCdmBuilder.ErrorReport;
-import org.ohdsi.jCdmBuilder.JCdmBuilderMain;
+import org.ohdsi.jCdmBuilder.JCdmBuilder;
 import org.ohdsi.jCdmBuilder.utilities.ReadAthenaFile;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.FileUtilities;
@@ -158,7 +158,7 @@ public class InsertVocabularyInServer {
 	}
 	
 	private void handleError(Exception e, JFrame frame, String errorFolder, String item, boolean continueOnError) {
-		JCdmBuilderMain.errors.add(item);
+		JCdmBuilder.errors.add(item);
 		System.err.println("Error: " + e.getMessage());
 		String errorReportFilename = ErrorReport.generate(errorFolder, e, item);
 		String message = "Error: " + e.getLocalizedMessage();

@@ -11,10 +11,10 @@ public class Launcher {
 
 		if (heapSizeMegs > MIN_HEAP) {
 			System.out.println("Launching with current VM");
-			JCdmBuilderMain.main(args);
+			JCdmBuilder.main(args);
 		} else {
 			System.out.println("Starting new VM");
-			String pathToJar = JCdmBuilderMain.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+			String pathToJar = JCdmBuilder.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
 			ProcessBuilder pb = new ProcessBuilder("java", "-Xmx" + MIN_HEAP + "m", "-classpath", pathToJar,
 					" org.ohdsi.jCdmBuilder.JCdmBuilderMain");
 			pb.start();

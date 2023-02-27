@@ -37,7 +37,7 @@ import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
 import org.ohdsi.jCdmBuilder.ErrorReport;
-import org.ohdsi.jCdmBuilder.JCdmBuilderMain;
+import org.ohdsi.jCdmBuilder.JCdmBuilder;
 import org.ohdsi.jCdmBuilder.cdm.v5.CdmV5;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadTextFile;
@@ -52,13 +52,6 @@ public class Cdm {
 	
 	public static final int CDM     = 0;
 	public static final int RESULTS = 1;
-	
-	public static final String[] availableVersions = new String[] {
-			"5.3.0",
-			"5.3.1",
-			"5.4.0",
-			"5.4.1"
-	};
 	
 	
 	public static CdmVx getCDM(String version) {
@@ -929,7 +922,7 @@ public class Cdm {
 	
 	
 	private static void handleError(Exception e, JFrame frame, String errorFolder, String item, boolean continueOnError) {
-		JCdmBuilderMain.errors.add(item);
+		JCdmBuilder.errors.add(item);
 		System.err.println("Error: " + e.getMessage());
 		String errorReportFilename = ErrorReport.generate(errorFolder, e, item);
 		String message = "Error: " + e.getLocalizedMessage();

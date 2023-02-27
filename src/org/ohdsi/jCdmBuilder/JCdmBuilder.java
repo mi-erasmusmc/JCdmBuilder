@@ -36,14 +36,10 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.CodeSource;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -93,7 +89,7 @@ import org.ohdsi.jCdmBuilder.vocabulary.InsertVocabularyInServer;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.IniFile;
 
-public class JCdmBuilderMain {
+public class JCdmBuilder {
 	public static final String VERSION = "5.4.1.1";
 
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
@@ -201,8 +197,8 @@ public class JCdmBuilderMain {
 
 
 	public static void main(String[] args) {
-		JCdmBuilderMain.errors = new ArrayList<String>();
-		new JCdmBuilderMain(args);
+		JCdmBuilder.errors = new ArrayList<String>();
+		new JCdmBuilder(args);
 	}
 
 
@@ -211,7 +207,7 @@ public class JCdmBuilderMain {
 	 * @param container - the GUI component on which the icon is to be put
 	 */
 	public static void setIcon(Object container){
-		URL url = JCdmBuilderMain.class.getResource(ICON);
+		URL url = JCdmBuilder.class.getResource(ICON);
 		Image img = Toolkit.getDefaultToolkit().getImage(url);
 		if (container.getClass() == JFrame.class ||
 				JFrame.class.isAssignableFrom(container.getClass()))
@@ -224,7 +220,7 @@ public class JCdmBuilderMain {
 	}
 
 
-	public JCdmBuilderMain(String[] args) {
+	public JCdmBuilder(String[] args) {
 		if (args.length > 0 && (args[0].toLowerCase().equals("-usage") || args[0].toLowerCase().equals("-help") || args[0].toLowerCase().equals("?"))) {
 			printUsage();
 			return;
@@ -237,7 +233,7 @@ public class JCdmBuilderMain {
 			}
 		});
 		frame.setLayout(new BorderLayout());
-		JCdmBuilderMain.setIcon(frame);
+		JCdmBuilder.setIcon(frame);
 
 		JMenuBar menuBar = createMenu();
 
@@ -417,9 +413,7 @@ public class JCdmBuilderMain {
 		targetTempSchemaField.setToolTipText("Specify the WebAPI temp schema.");
 		targetPanel.add(targetTempSchemaField);
 		targetPanel.add(new JLabel("CDM version"));
-		//TODO replace Cdm.availableVersions by getAvailableVersions()
-		getAvailableVersions();
-		targetCdmVersion = new JComboBox<String>(Cdm.availableVersions);
+		targetCdmVersion = new JComboBox<String>(getAvailableVersions());
 		targetCdmVersion.setToolTipText("Select the CMD version");
 		targetCdmVersion.setSelectedItem(VERSION.substring(0, VERSION.lastIndexOf('.')));
 
@@ -487,29 +481,79 @@ public class JCdmBuilderMain {
 	
 	private String[] getAvailableVersions() {
 		String[] availableVersions = new String[] {};
+		String rootPath = "/org/ohdsi/jCdmBuilder/cdm";
+		String nativeRootPath = "";
+		for (int pos = 0; pos < rootPath.length(); pos++) {
+			nativeRootPath += rootPath.substring(pos, pos + 1).equals("/") ? File.separator : rootPath.substring(pos, pos + 1);
+		}
+		List<String> versions = new ArrayList<String>();
 
         URI uri;
 		try {
-			uri = JCdmBuilderMain.class.getResource("/org/ohdsi/jCdmBuilder/cdm").toURI();
-	        Path myPath;
-	        if (uri.getScheme().equals("jar")) {
-	            FileSystem fileSystem = FileSystems.newFileSystem(uri, Collections.<String, Object>emptyMap());
-	            myPath = fileSystem.getPath("/resources");
-	        } else {
+			uri = JCdmBuilder.class.getResource(rootPath).toURI();
+	        if (uri.getScheme().equals("file")) {
+	        	// Running in IDE
+		        Path myPath;
 	            myPath = Paths.get(uri);
+		        Stream<Path> walk;
+				walk = Files.walk(myPath, 1);
+				Path versionPath = null;
+		        for (Iterator<Path> it = walk.iterator(); it.hasNext();){
+		        	Path path = it.next();
+		            if (path.toString().contains(nativeRootPath + File.separator + "v")) {
+		            	versionPath = path;
+		            	break;
+		            }
+		        }
+		        walk.close();
+		        if (versionPath != null) {
+					walk = Files.walk(versionPath, 1);
+			        for (Iterator<Path> it = walk.iterator(); it.hasNext();){
+			        	String name = it.next().toString();
+	        			if (
+	        					name.contains(nativeRootPath + File.separator + "v") &&
+	        					name.substring(name.indexOf(nativeRootPath) + nativeRootPath.length() + 2).contains(File.separator) &&
+	        					(!name.endsWith(".class"))
+	        			) {
+	        				versions.add(name.substring(name.lastIndexOf(File.separator) + 1));
+	        			}
+			        }
+			        walk.close();
+		        }
 	        }
-	        Stream<Path> walk;
-			walk = Files.walk(myPath, 1);
-	        for (Iterator<Path> it = walk.iterator(); it.hasNext();){
-	            System.out.println(it.next());
+	        else {
+	        	// Running as jar
+				String jarPath = JCdmBuilder.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+        		URL jar = new URL("file:" + jarPath);
+        		rootPath = rootPath.substring(1);
+        		ZipInputStream zip = new ZipInputStream(jar.openStream());
+        		while(true) {
+        			ZipEntry e = zip.getNextEntry();
+        			if (e == null)
+        				break;
+        			String name = e.getName();
+        			if (
+        					name.startsWith(rootPath + "/v") &&
+        					name.substring(rootPath.length() + 2, name.length() - 1).contains("/") &&
+        					name.endsWith("/") &&
+        					(!name.endsWith(".class"))
+        			) {
+        				name = name.substring(0, name.length() - 1);
+        				versions.add(name.substring(name.lastIndexOf("/") + 1));
+        			}
+        		}
 	        }
-	        walk.close();
 		} catch (URISyntaxException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		}
+		
+		if (versions.size() > 0) {
+			availableVersions = new String[versions.size()];
+			versions.toArray(availableVersions);
 		}
 		
 		return availableVersions;
@@ -1500,7 +1544,7 @@ public class JCdmBuilderMain {
 
 	private class AutoRunThread extends Thread {
 		public void run() {
-			System.out.println("JCDMBuider Version " + JCdmBuilderMain.VERSION);
+			System.out.println("JCDMBuider Version " + JCdmBuilder.VERSION);
 			System.out.println();
 
 			if (executeResultsStructureWhenReady) {
