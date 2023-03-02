@@ -90,7 +90,9 @@ import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.IniFile;
 
 public class JCdmBuilder {
-	public static final String VERSION = "5.4.1.1";
+	public static final String VERSION = "5.4.1.2";
+	
+	public static String patchScriptsPath = null;
 
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 
@@ -218,9 +220,21 @@ public class JCdmBuilder {
 		else
 			((JFrame)container).setIconImage(img);
 	}
+	
+	
+	private static void setPatchScriptsPath() {
+		// Set the pathScriptsPath to the path of the jar file
+		try {
+			patchScriptsPath = JCdmBuilder.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
+			patchScriptsPath = patchScriptsPath.substring(0, patchScriptsPath.lastIndexOf('/') + 1) + "SQL Scripts";
+		} catch (URISyntaxException e) {
+			System.out.println("Cannot determine location of JCDMBuilder-v" + VERSION + ".jar" + ".");
+		}
+	}
 
 
 	public JCdmBuilder(String[] args) {
+		setPatchScriptsPath();
 		if (args.length > 0 && (args[0].toLowerCase().equals("-usage") || args[0].toLowerCase().equals("-help") || args[0].toLowerCase().equals("?"))) {
 			printUsage();
 			return;
@@ -1273,6 +1287,10 @@ public class JCdmBuilder {
 		System.out.println("");
 		System.out.println("-settingsfile <file>        Use the specified settings file");
 		System.out.println("-targetpassword <password>  Set target database password");
+		System.out.println("-patchScriptsPath <path>    Set the path for SQL patch scripts.");
+		System.out.println("                            If not specified it looks for them");
+		System.out.println("                            in the 'SQL Scripts' folder next to");
+		System.out.println("                            the builder .jar file.");
 		System.out.println("");
 		System.out.println("The following options allow the steps to be automatically executed. Steps are");
 		System.out.println("executed in order:");
@@ -1318,6 +1336,11 @@ public class JCdmBuilder {
 					argNr++;
 					parameterValue = args[argNr];
 					targetPasswordField.setText(parameterValue);
+				}
+				if (parameter.equals("-patchscriptspath")) {
+					argNr++;
+					parameterValue = args[argNr];
+					patchScriptsPath = parameterValue;
 				}
 				if (parameter.equals("-executecdmstructure"))
 					executeCdmStructureWhenReady = true;
@@ -1700,7 +1723,7 @@ public class JCdmBuilder {
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
-				Cdm.dropStructure(structure, dbSettings, version, sourceFolderField.getText());
+				Cdm.dropStructure(structure, dbSettings, version);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1725,8 +1748,8 @@ public class JCdmBuilder {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
 				Cdm.createSchema(structure, dbSettings, version);
-				Cdm.createTables(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt, webAPIServerField.getText(), webAPIPortField.getText());
-				Cdm.createPatchTables(structure, dbSettings, version, sourceFolderField.getText(), idsToBigInt);
+				Cdm.createTables(structure, dbSettings, version, idsToBigInt, webAPIServerField.getText(), webAPIPortField.getText());
+				Cdm.createPatchTables(structure, dbSettings, version, idsToBigInt);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1750,8 +1773,8 @@ public class JCdmBuilder {
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
-				Cdm.createPrimaryKeys(structure, dbSettings, version, sourceFolderField.getText());
-				Cdm.createPatchPrimaryKeys(structure, dbSettings, version, sourceFolderField.getText());
+				Cdm.createPrimaryKeys(structure, dbSettings, version);
+				Cdm.createPatchPrimaryKeys(structure, dbSettings, version);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1775,8 +1798,8 @@ public class JCdmBuilder {
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
-				Cdm.createIndices(structure, dbSettings, version, sourceFolderField.getText());
-				Cdm.createPatchIndices(structure, dbSettings, version, sourceFolderField.getText());
+				Cdm.createIndices(structure, dbSettings, version);
+				Cdm.createPatchIndices(structure, dbSettings, version);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1800,8 +1823,8 @@ public class JCdmBuilder {
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
-				Cdm.createConstraints(structure, dbSettings, version, sourceFolderField.getText());
-				Cdm.createPatchConstraints(structure, dbSettings, version, version);
+				Cdm.createConstraints(structure, dbSettings, version);
+				Cdm.createPatchConstraints(structure, dbSettings, version);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {

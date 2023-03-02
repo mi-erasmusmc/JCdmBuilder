@@ -230,6 +230,7 @@ The available options are:
 | ? | Show the available options. |
 | -settingsfile \<file\> | Use the specified settings file. |
 | -targetpassword \<password\> | Set target database password. The password is not in the settingsfile. |
+| -patchScriptsPath \<path\> | Set the path for SQL patch scripts. If not specified it looks for them in the 'SQL Scripts' folder next to the builder .jar file. |
 | -idtobigint | When creating the CDM structure, use BIGINT instead of INT for all IDs. |
 
 The following options allow the steps to be automatically executed. Steps are executed in order: 
