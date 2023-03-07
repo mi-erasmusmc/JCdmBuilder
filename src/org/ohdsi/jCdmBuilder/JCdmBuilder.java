@@ -558,10 +558,8 @@ public class JCdmBuilder {
         		}
 	        }
 		} catch (URISyntaxException e1) {
-			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
@@ -1852,16 +1850,9 @@ public class JCdmBuilder {
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
 				int version = EraBuilder.VERSION_5;
-				switch (targetCdmVersion.getSelectedItem().toString()) {
-				case "5.0.1":
-				case "5.3.0":
-				case "5.3.1":
-				case "5.4.0":
-				case "5.4.1":
+				switch (targetCdmVersion.getSelectedItem().toString().substring(0, 1)) {
+				case "5":
 					version = EraBuilder.VERSION_5;
-					break;
-				case "6.0.0":
-					version = EraBuilder.VERSION_6;
 					break;
 				default:
 					break;

@@ -17,7 +17,6 @@ public class EraBuilder {
 	public static int	CONDITION_ERA	= 2;
 
 	public static int	VERSION_5		= 5;
-	public static int	VERSION_6		= 6;
 
 	public static void buildEra(DbSettings dbSettings, int cdmVersion, String sourceFolder, int domain) {
 		if (domain == DRUG_ERA)
