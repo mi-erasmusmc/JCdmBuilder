@@ -51,6 +51,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
+import javax.swing.GroupLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -69,6 +70,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -90,9 +92,7 @@ import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.IniFile;
 
 public class JCdmBuilder {
-	public static final String VERSION = "5.4.1.2";
-	
-	public static String patchScriptsPath = null;
+	public static final String VERSION = "5.4.1.3";
 
 	private static final String ICON = "/org/ohdsi/jCdmBuilder/OHDSI Icon Picture 048x048.gif";
 
@@ -132,7 +132,8 @@ public class JCdmBuilder {
 
 	private JFrame							frame;
 	private JTabbedPane						tabbedPane;
-	private JTextField						folderField;
+	private JTextField						workingFolderField;
+	private JTextField						localScriptsFolderField;
 	private JComboBox<String>				vocabSourceType;
 	private DefaultComboBoxModel<String>	vocabSourceTypeModel;
 	private JTextField						vocabFolderField;
@@ -220,21 +221,9 @@ public class JCdmBuilder {
 		else
 			((JFrame)container).setIconImage(img);
 	}
-	
-	
-	private static void setPatchScriptsPath() {
-		// Set the pathScriptsPath to the path of the jar file
-		try {
-			patchScriptsPath = JCdmBuilder.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath();
-			patchScriptsPath = patchScriptsPath.substring(0, patchScriptsPath.lastIndexOf('/') + 1) + "SQL Scripts";
-		} catch (URISyntaxException e) {
-			System.out.println("Cannot determine location of JCDMBuilder-v" + VERSION + ".jar" + ".");
-		}
-	}
 
 
 	public JCdmBuilder(String[] args) {
-		setPatchScriptsPath();
 		if (args.length > 0 && (args[0].toLowerCase().equals("-usage") || args[0].toLowerCase().equals("-help") || args[0].toLowerCase().equals("?"))) {
 			printUsage();
 			return;
@@ -273,7 +262,7 @@ public class JCdmBuilder {
 				executeConditionErasWhenReady ||
 				executeResultsStructureWhenReady) {
 			autoStart = true;
-			ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
+			ObjectExchange.console.setDebugFile(workingFolderField.getText() + "/Console.txt");
 			AutoRunThread autoRunThread = new AutoRunThread();
 			autoRunThread.start();
 		}
@@ -379,21 +368,67 @@ public class JCdmBuilder {
 		c.weightx = 0.5;
 
 		JPanel folderPanel = new JPanel();
-		folderPanel.setLayout(new BoxLayout(folderPanel, BoxLayout.X_AXIS));
-		folderPanel.setBorder(BorderFactory.createTitledBorder("Working folder"));
-		folderField = new JTextField();
-		folderField.setText("");
-		folderField.setToolTipText("The folder where all output will be written");
-		folderPanel.add(folderField);
-		JButton pickButton = new JButton("Select");
-		pickButton.setToolTipText("Pick a different working folder");
-		folderPanel.add(pickButton);
-		pickButton.addActionListener(new ActionListener() {
+		GroupLayout folderPanelLayout = new GroupLayout(folderPanel);
+		folderPanelLayout.setAutoCreateGaps(true);
+		folderPanel.setLayout(folderPanelLayout);
+		folderPanel.setBorder(BorderFactory.createTitledBorder("Folders"));
+		
+		JLabel workingFolderLabel = new JLabel("Working Folder:");
+		workingFolderField = new JTextField();
+		workingFolderField.setText("");
+		workingFolderField.setToolTipText("The folder where all output will be written");
+		JButton workingFolderPickButton = new JButton("Select");
+		workingFolderPickButton.setToolTipText("Pick a different working folder");
+		workingFolderPickButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				pickFolder();
+				pickFolder(workingFolderField);
 			}
 		});
-		componentsToDisableWhenRunning.add(pickButton);
+		
+		JLabel localScriptsFolderLabel = new JLabel("Local Scripts Folder:");
+		localScriptsFolderField = new JTextField();
+		localScriptsFolderField.setText("");
+		localScriptsFolderField.setToolTipText("The folder where local SQL scripts are");
+		JButton localScriptsFolderPickButton = new JButton("Select");
+		localScriptsFolderPickButton.setToolTipText("Pick a different scripts folder");
+		localScriptsFolderPickButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				pickFolder(localScriptsFolderField);
+			}
+		});
+		
+		folderPanelLayout.setHorizontalGroup(folderPanelLayout.createSequentialGroup()
+				.addGroup(folderPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+						.addComponent(workingFolderLabel)
+						.addComponent(localScriptsFolderLabel)
+						)
+				.addGroup(folderPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+						.addComponent(workingFolderField)
+						.addComponent(localScriptsFolderField)
+						)
+				.addGroup(folderPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
+						.addComponent(workingFolderPickButton)
+						.addComponent(localScriptsFolderPickButton)
+						)
+				);
+		folderPanelLayout.setVerticalGroup(folderPanelLayout.createSequentialGroup()
+				.addGroup(folderPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+						.addComponent(workingFolderLabel)
+						.addComponent(workingFolderField)
+						.addComponent(workingFolderPickButton)
+						)
+				.addGroup(folderPanelLayout.createParallelGroup(GroupLayout.Alignment.BASELINE)
+						.addComponent(localScriptsFolderLabel)
+						.addComponent(localScriptsFolderField)
+						.addComponent(localScriptsFolderPickButton)
+						)
+				);
+		folderPanelLayout.linkSize(SwingConstants.HORIZONTAL, workingFolderLabel, localScriptsFolderLabel);
+		folderPanelLayout.linkSize(SwingConstants.HORIZONTAL, workingFolderPickButton, localScriptsFolderPickButton);
+		folderPanelLayout.linkSize(SwingConstants.VERTICAL, workingFolderField, workingFolderPickButton);
+		folderPanelLayout.linkSize(SwingConstants.VERTICAL, localScriptsFolderField, localScriptsFolderPickButton);
+		
+		componentsToDisableWhenRunning.add(workingFolderPickButton);
 		c.gridx = 0;
 		c.gridy = 0;
 		c.gridwidth = 1;
@@ -616,7 +651,8 @@ public class JCdmBuilder {
 		settingsFile.readFile();
 
 		// Locations
-		if (settingsFile.getValue("Locations", "Workspace Folder")           != null) folderField.setText(settingsFile.getValue("Locations", "Workspace Folder"));
+		if (settingsFile.getValue("Locations", "Workspace Folder")           != null) workingFolderField.setText(settingsFile.getValue("Locations", "Workspace Folder"));
+		if (settingsFile.getValue("Locations", "Local Scripts Folder")       != null) localScriptsFolderField.setText(settingsFile.getValue("Locations", "Local Scripts Folder"));
 		if (settingsFile.getValue("Locations", "Target Database Type")       != null) targetType.setSelectedItem(settingsFile.getValue("Locations", "Target Database Type"));
 		if (settingsFile.getValue("Locations", "Target Server Location")     != null) targetServerField.setText(settingsFile.getValue("Locations", "Target Server Location"));
 		if (settingsFile.getValue("Locations", "Target User Name")           != null) targetUserField.setText(settingsFile.getValue("Locations", "Target User Name"));
@@ -651,7 +687,8 @@ public class JCdmBuilder {
 
 		// Locations
 		settingsFile.addGroup("Locations", null);
-		settingsFile.setValue("Locations", "Workspace Folder", folderField.getText(), null);
+		settingsFile.setValue("Locations", "Workspace Folder", workingFolderField.getText(), null);
+		settingsFile.setValue("Locations", "Local Scripts Folder", localScriptsFolderField.getText(), null);
 		settingsFile.setValue("Locations", "Target Database Type", targetType.getSelectedItem().toString(), null);
 		settingsFile.setValue("Locations", "Target Server Location", targetServerField.getText(), null);
 		settingsFile.setValue("Locations", "Target User Name", targetUserField.getText(), null);
@@ -1215,7 +1252,7 @@ public class JCdmBuilder {
 		boolean result = true;
 		List<String> errors = new ArrayList<String>();
 
-		result = folderExists(folderField.getText().trim(), false, "Working folder", errors);
+		result = folderExists(workingFolderField.getText().trim(), false, "Working folder", errors);
 		String connectionResult = testConnectionResult(getTargetDbSettings());
 		if (!connectionResult.equals("OK")) {
 			errors.add(connectionResult);
@@ -1335,11 +1372,6 @@ public class JCdmBuilder {
 					parameterValue = args[argNr];
 					targetPasswordField.setText(parameterValue);
 				}
-				if (parameter.equals("-patchscriptspath")) {
-					argNr++;
-					parameterValue = args[argNr];
-					patchScriptsPath = parameterValue;
-				}
 				if (parameter.equals("-executecdmstructure"))
 					executeCdmStructureWhenReady = true;
 				if (parameter.equals("-executevocab"))
@@ -1387,7 +1419,7 @@ public class JCdmBuilder {
 	}
 
 
-	private void pickFolder() {
+	private void pickFolder(JTextField folderField) {
 		JFileChooser fileChooser = new JFileChooser(new File(folderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select folder");
@@ -1425,7 +1457,7 @@ public class JCdmBuilder {
 
 
 	private void pickVocabFolder() {
-		JFileChooser fileChooser = new JFileChooser(new File(vocabFolderField.getText().trim().equals("") ? folderField.getText() : vocabFolderField.getText()));
+		JFileChooser fileChooser = new JFileChooser(new File(vocabFolderField.getText().trim().equals("") ? workingFolderField.getText() : vocabFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select vocabulary folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
@@ -1434,7 +1466,7 @@ public class JCdmBuilder {
 
 
 	private void pickSourceFolder() {
-		JFileChooser fileChooser = new JFileChooser(new File(sourceFolderField.getText().trim().equals("") ? folderField.getText() : sourceFolderField.getText()));
+		JFileChooser fileChooser = new JFileChooser(new File(sourceFolderField.getText().trim().equals("") ? workingFolderField.getText() : sourceFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select source folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
@@ -1443,7 +1475,7 @@ public class JCdmBuilder {
 
 
 	private void pickTemporaryServerFolder() {
-		JFileChooser fileChooser = new JFileChooser(new File(sourceServerTempFolderField.getText().trim().equals("") ? folderField.getText() : sourceServerTempFolderField.getText()));
+		JFileChooser fileChooser = new JFileChooser(new File(sourceServerTempFolderField.getText().trim().equals("") ? workingFolderField.getText() : sourceServerTempFolderField.getText()));
 		fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 		int returnVal = fileChooser.showDialog(frame, "Select temporary server folder");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
@@ -1651,14 +1683,14 @@ public class JCdmBuilder {
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceFolderField.getText(), sourceDelimiterField.getText(), sourceQuoteField.getText(), sourceNullValueField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
+						etl.process(structure, sourceFolderField.getText(), sourceDelimiterField.getText(), sourceQuoteField.getText(), sourceNullValueField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, workingFolderField.getText(), continueOnError);
 				}
 				if (etlType.getSelectedItem().equals("2. Bulk Load CSV files from server in CDM format to server")) {
 					CdmEtl etl = new CdmEtl();
 					DbSettings dbSettings = getTargetDbSettings();
 					testConnection(dbSettings, false);
 					if (dbSettings != null)
-						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerQuoteField.getText(), sourceServerNullValueField.getText(), folderField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, folderField.getText(), continueOnError);
+						etl.process(structure, sourceServerFolderField.getText(), sourceServerDelimiterField.getText(), sourceServerQuoteField.getText(), sourceServerNullValueField.getText(), workingFolderField.getText(), sourceServerTempFolderField.getText(), sourceServerTempLocalFolderField.getText(), dbSettings, maxPersons, Integer.parseInt(versionIdField.getText()), targetCdmVersion.getSelectedItem().toString(), frame, workingFolderField.getText(), continueOnError);
 				}
 
 			} catch (Exception e) {
@@ -1689,7 +1721,7 @@ public class JCdmBuilder {
 					InsertVocabularyInServer process = new InsertVocabularyInServer();
 					DbSettings dbSettings = getTargetDbSettings();
 					if (dbSettings != null)
-						process.process(vocabFolderField.getText(), folderField.getText(), vocabServerTempFolderField.getText(), vocabServerTempLocalFolderField.getText(), dbSettings, frame, folderField.getText());
+						process.process(vocabFolderField.getText(), workingFolderField.getText(), vocabServerTempFolderField.getText(), vocabServerTempLocalFolderField.getText(), dbSettings, frame, workingFolderField.getText());
 				}
 				else if (vocabSourceType.getSelectedItem().toString().equals(VOCABTYPE_SCHEMA_LOAD)) {
 					CopyVocabularyFromSchema process = new CopyVocabularyFromSchema();
@@ -1745,9 +1777,10 @@ public class JCdmBuilder {
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
+				String localScriptsFolder = folderExists(localScriptsFolderField.getText(), true, "Local Scripts Folder", new ArrayList<String>()) ? localScriptsFolderField.getText() : null;
 				Cdm.createSchema(structure, dbSettings, version);
-				Cdm.createTables(structure, dbSettings, version, idsToBigInt, webAPIServerField.getText(), webAPIPortField.getText());
-				Cdm.createPatchTables(structure, dbSettings, version, idsToBigInt);
+				Cdm.createTables(structure, dbSettings, version, localScriptsFolder, idsToBigInt, webAPIServerField.getText(), webAPIPortField.getText());
+				Cdm.createPatchTables(structure, dbSettings, version, localScriptsFolder, idsToBigInt);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1771,8 +1804,9 @@ public class JCdmBuilder {
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
-				Cdm.createPrimaryKeys(structure, dbSettings, version);
-				Cdm.createPatchPrimaryKeys(structure, dbSettings, version);
+				String localScriptsFolder = folderExists(localScriptsFolderField.getText(), true, "Local Scripts Folder", new ArrayList<String>()) ? localScriptsFolderField.getText() : null;
+				Cdm.createPrimaryKeys(structure, dbSettings, version, localScriptsFolder);
+				Cdm.createPatchPrimaryKeys(structure, dbSettings, version, localScriptsFolder);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1796,8 +1830,9 @@ public class JCdmBuilder {
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
-				Cdm.createIndices(structure, dbSettings, version);
-				Cdm.createPatchIndices(structure, dbSettings, version);
+				String localScriptsFolder = folderExists(localScriptsFolderField.getText(), true, "Local Scripts Folder", new ArrayList<String>()) ? localScriptsFolderField.getText() : null;
+				Cdm.createIndices(structure, dbSettings, version, localScriptsFolder);
+				Cdm.createPatchIndices(structure, dbSettings, version, localScriptsFolder);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1821,8 +1856,9 @@ public class JCdmBuilder {
 			try {
 				DbSettings dbSettings = getTargetDbSettings();
 				String version = targetCdmVersion.getSelectedItem().toString();
-				Cdm.createConstraints(structure, dbSettings, version);
-				Cdm.createPatchConstraints(structure, dbSettings, version);
+				String localScriptsFolder = folderExists(localScriptsFolderField.getText(), true, "Local Scripts Folder", new ArrayList<String>()) ? localScriptsFolderField.getText() : null;
+				Cdm.createConstraints(structure, dbSettings, version, localScriptsFolder);
+				Cdm.createPatchConstraints(structure, dbSettings, version, localScriptsFolder);
 			} catch (Exception e) {
 				handleError(e);
 			} finally {
@@ -1906,7 +1942,7 @@ public class JCdmBuilder {
 	private void handleError(Exception e) {
 		if (!e.getMessage().equals("NO ERROR")) {
 			System.err.println("Error: " + e.getMessage());
-			String errorReportFilename = ErrorReport.generate(folderField.getText(), e, null);
+			String errorReportFilename = ErrorReport.generate(workingFolderField.getText(), e, null);
 			String message = "Error: " + e.getLocalizedMessage();
 			message += "\nAn error report has been generated:\n" + errorReportFilename;
 			System.out.println(message);
@@ -1916,7 +1952,7 @@ public class JCdmBuilder {
 
 
 	private void runAll() {
-		ObjectExchange.console.setDebugFile(folderField.getText() + "/Console.txt");
+		ObjectExchange.console.setDebugFile(workingFolderField.getText() + "/Console.txt");
 		AutoRunThread autoRunThread = new AutoRunThread();
 		autoRunThread.start();
 	}

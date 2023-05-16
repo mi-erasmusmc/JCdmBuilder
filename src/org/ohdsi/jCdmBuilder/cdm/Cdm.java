@@ -33,7 +33,6 @@ import java.util.regex.Pattern;
 import org.ohdsi.databases.DbType;
 import org.ohdsi.databases.RichConnection;
 import org.ohdsi.jCdmBuilder.DbSettings;
-import org.ohdsi.jCdmBuilder.JCdmBuilder;
 import org.ohdsi.jCdmBuilder.cdm.v5.CdmV5;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadTextFile;
@@ -215,7 +214,7 @@ public class Cdm {
 	}
 	
 	
-	public static void createTables(int currentStructure, DbSettings dbSettings, String version, boolean idsToBigInt, String webAPIServer, String webAPIPort) {
+	public static void createTables(int currentStructure, DbSettings dbSettings, String version, String localScriptsFolder, boolean idsToBigInt, String webAPIServer, String webAPIPort) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
@@ -252,19 +251,19 @@ public class Cdm {
 			List<String> sqlLines = new ArrayList<>();
 			if (currentStructure != RESULTS) {
 				InputStream resourceStream = null;
-				if (JCdmBuilder.patchScriptsPath != null) {
-					File localFile = new File(JCdmBuilder.patchScriptsPath + resourceName);
+				if (localScriptsFolder != null) {
+					File localFile = new File(localScriptsFolder + File.separator + resourceName);
 					if (localFile.exists()) {
 						if (localFile.canRead()) {
 							try {
 								resourceStream = new FileInputStream(localFile);
 								StringUtilities.outputWithTime("Using local definition: " + resourceName);
 							} catch (FileNotFoundException e) {
-								throw new RuntimeException("ERROR opening file: " + JCdmBuilder.patchScriptsPath + resourceName);
+								throw new RuntimeException("ERROR opening file: " + localScriptsFolder + File.separator + resourceName);
 							}
 						}
 						else {
-							throw new RuntimeException("ERROR reading file: " + JCdmBuilder.patchScriptsPath + resourceName);
+							throw new RuntimeException("ERROR reading file: " + localScriptsFolder + File.separator + resourceName);
 						}
 					}
 				}
@@ -383,7 +382,7 @@ public class Cdm {
 	}
 	
 	
-	public static void createPrimaryKeys(int currentStructure, DbSettings dbSettings, String version) {
+	public static void createPrimaryKeys(int currentStructure, DbSettings dbSettings, String version, String localScriptsFolder) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
@@ -397,19 +396,19 @@ public class Cdm {
 		
 		if (resourceName != null) {
 			InputStream resourceStream = null;
-			if (JCdmBuilder.patchScriptsPath != null) {
-				File localFile = new File(JCdmBuilder.patchScriptsPath + resourceName);
+			if (localScriptsFolder != null) {
+				File localFile = new File(localScriptsFolder + File.separator + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
 							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + JCdmBuilder.patchScriptsPath + resourceName);
+							throw new RuntimeException("ERROR opening file: " + localScriptsFolder + File.separator + resourceName);
 						}
 					}
 					else {
-						throw new RuntimeException("ERROR reading file: " + JCdmBuilder.patchScriptsPath + resourceName);
+						throw new RuntimeException("ERROR reading file: " + localScriptsFolder + File.separator + resourceName);
 					}
 				}
 			}
@@ -447,7 +446,7 @@ public class Cdm {
 	}
 	
 	
-	public static void createIndices(int currentStructure, DbSettings dbSettings, String version) {
+	public static void createIndices(int currentStructure, DbSettings dbSettings, String version, String localScriptsFolder) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
@@ -461,19 +460,19 @@ public class Cdm {
 		
 		if (resourceName != null) {
 			InputStream resourceStream = null;
-			if (JCdmBuilder.patchScriptsPath != null) {
-				File localFile = new File(JCdmBuilder.patchScriptsPath + resourceName);
+			if (localScriptsFolder != null) {
+				File localFile = new File(localScriptsFolder + File.separator + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
 							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + JCdmBuilder.patchScriptsPath + resourceName);
+							throw new RuntimeException("ERROR opening file: " + localScriptsFolder + File.separator + resourceName);
 						}
 					}
 					else {
-						throw new RuntimeException("ERROR reading file: " + JCdmBuilder.patchScriptsPath + resourceName);
+						throw new RuntimeException("ERROR reading file: " + localScriptsFolder + File.separator + resourceName);
 					}
 				}
 			}
@@ -511,7 +510,7 @@ public class Cdm {
 	}
 	
 	
-	public static void createConstraints(int currentStructure, DbSettings dbSettings, String version) {
+	public static void createConstraints(int currentStructure, DbSettings dbSettings, String version, String localScriptsFolder) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
@@ -525,19 +524,19 @@ public class Cdm {
 		
 		if (resourceName != null) {
 			InputStream resourceStream = null;
-			if (JCdmBuilder.patchScriptsPath != null) {
-				File localFile = new File(JCdmBuilder.patchScriptsPath + resourceName);
+			if (localScriptsFolder != null) {
+				File localFile = new File(localScriptsFolder + File.separator + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
 							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + JCdmBuilder.patchScriptsPath + resourceName);
+							throw new RuntimeException("ERROR opening file: " + localScriptsFolder + File.separator + resourceName);
 						}
 					}
 					else {
-						throw new RuntimeException("ERROR reading file: " + JCdmBuilder.patchScriptsPath + resourceName);
+						throw new RuntimeException("ERROR reading file: " + localScriptsFolder + File.separator + resourceName);
 					}
 				}
 			}
@@ -575,7 +574,7 @@ public class Cdm {
 	}
 	
 	
-	public static void createPatchTables(int currentStructure, DbSettings dbSettings, String version, boolean idsToBigInt) {
+	public static void createPatchTables(int currentStructure, DbSettings dbSettings, String version, String localScriptsFolder, boolean idsToBigInt) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
@@ -597,19 +596,19 @@ public class Cdm {
 			}
 
 			InputStream resourceStream = null;
-			if (JCdmBuilder.patchScriptsPath != null) {
-				File localFile = new File(JCdmBuilder.patchScriptsPath + resourceName);
+			if (localScriptsFolder != null) {
+				File localFile = new File(localScriptsFolder + File.separator + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
 							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + JCdmBuilder.patchScriptsPath + resourceName);
+							throw new RuntimeException("ERROR opening file: " + localScriptsFolder + File.separator + resourceName);
 						}
 					}
 					else {
-						throw new RuntimeException("ERROR reading file: " + JCdmBuilder.patchScriptsPath + resourceName);
+						throw new RuntimeException("ERROR reading file: " + localScriptsFolder + File.separator + resourceName);
 					}
 				}
 			}
@@ -649,7 +648,7 @@ public class Cdm {
 	}
 	
 	
-	public static void createPatchPrimaryKeys(int currentStructure, DbSettings dbSettings, String version) {
+	public static void createPatchPrimaryKeys(int currentStructure, DbSettings dbSettings, String version, String localScriptsFolder) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
@@ -671,19 +670,19 @@ public class Cdm {
 			}
 
 			InputStream resourceStream = null;
-			if (JCdmBuilder.patchScriptsPath != null) {
-				File localFile = new File(JCdmBuilder.patchScriptsPath + resourceName);
+			if (localScriptsFolder != null) {
+				File localFile = new File(localScriptsFolder + File.separator + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
 							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + JCdmBuilder.patchScriptsPath + resourceName);
+							throw new RuntimeException("ERROR opening file: " + localScriptsFolder + File.separator + resourceName);
 						}
 					}
 					else {
-						throw new RuntimeException("ERROR reading file: " + JCdmBuilder.patchScriptsPath + resourceName);
+						throw new RuntimeException("ERROR reading file: " + localScriptsFolder + File.separator + resourceName);
 					}
 				}
 			}
@@ -710,7 +709,7 @@ public class Cdm {
 	}
 	
 	
-	public static void createPatchIndices(int currentStructure, DbSettings dbSettings, String version) {
+	public static void createPatchIndices(int currentStructure, DbSettings dbSettings, String version, String localScriptsFolder) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
@@ -732,19 +731,19 @@ public class Cdm {
 			}
 
 			InputStream resourceStream = null;
-			if (JCdmBuilder.patchScriptsPath != null) {
-				File localFile = new File(JCdmBuilder.patchScriptsPath + resourceName);
+			if (localScriptsFolder != null) {
+				File localFile = new File(localScriptsFolder + File.separator + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
 							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + JCdmBuilder.patchScriptsPath + resourceName);
+							throw new RuntimeException("ERROR opening file: " + localScriptsFolder + File.separator + resourceName);
 						}
 					}
 					else {
-						throw new RuntimeException("ERROR reading file: " + JCdmBuilder.patchScriptsPath + resourceName);
+						throw new RuntimeException("ERROR reading file: " + localScriptsFolder + File.separator + resourceName);
 					}
 				}
 			}
@@ -771,7 +770,7 @@ public class Cdm {
 	}
 	
 	
-	public static void createPatchConstraints(int currentStructure, DbSettings dbSettings, String version) {
+	public static void createPatchConstraints(int currentStructure, DbSettings dbSettings, String version, String localScriptsFolder) {
 		CdmVx cdm = getCDM(version);
 		
 		String resourceName = null;
@@ -793,19 +792,19 @@ public class Cdm {
 			}
 
 			InputStream resourceStream = null;
-			if (JCdmBuilder.patchScriptsPath != null) {
-				File localFile = new File(JCdmBuilder.patchScriptsPath + resourceName);
+			if (localScriptsFolder != null) {
+				File localFile = new File(localScriptsFolder + File.separator + resourceName);
 				if (localFile.exists()) {
 					if (localFile.canRead()) {
 						try {
 							resourceStream = new FileInputStream(localFile);
 							StringUtilities.outputWithTime("Using local definition: " + resourceName);
 						} catch (FileNotFoundException e) {
-							throw new RuntimeException("ERROR opening file: " + JCdmBuilder.patchScriptsPath + resourceName);
+							throw new RuntimeException("ERROR opening file: " + localScriptsFolder + File.separator + resourceName);
 						}
 					}
 					else {
-						throw new RuntimeException("ERROR reading file: " + JCdmBuilder.patchScriptsPath + resourceName);
+						throw new RuntimeException("ERROR reading file: " + localScriptsFolder + File.separator + resourceName);
 					}
 				}
 			}
