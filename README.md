@@ -92,6 +92,7 @@ The Locations tab contains the location of the working folder and all informatio
 The local scripts should have one of the following names where <DBMS> is one of "oracle", "postgresql", or "sql server":
 
 | **Name** | **Description** |
+| ------------------------ | ----------------------------------------------------------------------------- |
 | OMOP CDM <DBMS> ddl.txt | Overrules the original CDM DDL definition for the specified DBMS. |
 | OMOP CDM <DBMS> primary keys.txt | Overrules the original CDM primary key definitions for the specified DBMS. |
 | OMOP CDM <DBMS> constraints.txt | Overrules the original CDM constraint definitions for the specified DBMS. |
