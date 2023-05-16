@@ -85,7 +85,7 @@ _The Locations tab_
 The Locations tab contains the location of the working folder and all information for connecting to the target database.
 
 | **Field** | **Description** |
-| ------------------------ | ----------------------------------------------------------------------------- |
+| -------------------------------------------- | -------------------------------------------------------------- |
 |Working Folder | This is the folder where the log file (Console.txt) and the error files are written. |
 |Local Scripts Folder | This is the folder where optional local scripts can be found. May be left empty. |
 
@@ -93,14 +93,14 @@ The local scripts should have one of the following names where \<DBMS\> is one o
 
 | **Name** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
-| OMOP CDM <DBMS> ddl.txt | Overrules the original CDM DDL definition for the specified DBMS. |
-| OMOP CDM <DBMS> primary keys.txt | Overrules the original CDM primary key definitions for the specified DBMS. |
-| OMOP CDM <DBMS> constraints.txt | Overrules the original CDM constraint definitions for the specified DBMS. |
-| OMOP CDM <DBMS> indices.txt | Overrules the original CDM index definitions for the specified DBMS. |
-| OMOP CDM <DBMS> ddl - Patch.txt | Adds additional tables to the CDM database for the specified DBMS. |
-| OMOP CDM <DBMS> primary keys - Patch.txt | Adds additional primary key definitions to the CDM database for the specified DBMS. |
-| OMOP CDM <DBMS> constraints - Patch.txt | Adds additional constraints to the CDM database for the specified DBMS. |
-| OMOP CDM <DBMS> indices - Patch.txt | Adds additional indices to the CDM database for the specified DBMS. |
+| OMOP CDM \<DBMS\> ddl.txt | Overrules the original CDM DDL definition for the specified DBMS. |
+| OMOP CDM \<DBMS\> primary keys.txt | Overrules the original CDM primary key definitions for the specified DBMS. |
+| OMOP CDM \<DBMS\> constraints.txt | Overrules the original CDM constraint definitions for the specified DBMS. |
+| OMOP CDM \<DBMS\> indices.txt | Overrules the original CDM index definitions for the specified DBMS. |
+| OMOP CDM \<DBMS\> ddl - Patch.txt | Adds additional tables to the CDM database for the specified DBMS. |
+| OMOP CDM \<DBMS\> primary keys - Patch.txt | Adds additional primary key definitions to the CDM database for the specified DBMS. |
+| OMOP CDM \<DBMS\> constraints - Patch.txt | Adds additional constraints to the CDM database for the specified DBMS. |
+| OMOP CDM \<DBMS\> indices - Patch.txt | Adds additional indices to the CDM database for the specified DBMS. |
 
 The section "Target CDM Location" contains all information on how to connect to the target database. Currently the JCDMBuilder supports three database types for which we will describe how to fill the connection details.
 
