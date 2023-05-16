@@ -89,7 +89,7 @@ The Locations tab contains the location of the working folder and all informatio
 |Working Folder | This is the folder where the log file (Console.txt) and the error files are written. |
 |Local Scripts Folder | This is the folder where optional local scripts can be found. May be left empty. |
 
-The local scripts should have one of the following names where <DBMS> is one of "oracle", "postgresql", or "sql server":
+The local scripts should have one of the following names where \<DBMS\> is one of "oracle", "postgresql", or "sql server":
 
 | **Name** | **Description** |
 | ------------------------ | ----------------------------------------------------------------------------- |
