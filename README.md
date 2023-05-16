@@ -85,7 +85,7 @@ _The Locations tab_
 The Locations tab contains the location of the working folder and all information for connecting to the target database.
 
 | **Field** | **Description** |
-| -------------------------------------------- | -------------------------------------------------------------- |
+| --------------------------------------------------- | -------------------------------------------------- |
 |Working Folder | This is the folder where the log file (Console.txt) and the error files are written. |
 |Local Scripts Folder | This is the folder where optional local scripts can be found. May be left empty. |
 
