@@ -384,6 +384,7 @@ public class JCdmBuilder {
 				pickFolder(workingFolderField);
 			}
 		});
+		componentsToDisableWhenRunning.add(workingFolderPickButton);
 		
 		JLabel localScriptsFolderLabel = new JLabel("Local Scripts Folder:");
 		localScriptsFolderField = new JTextField();
@@ -396,6 +397,7 @@ public class JCdmBuilder {
 				pickFolder(localScriptsFolderField);
 			}
 		});
+		componentsToDisableWhenRunning.add(localScriptsFolderPickButton);
 		
 		folderPanelLayout.setHorizontalGroup(folderPanelLayout.createSequentialGroup()
 				.addGroup(folderPanelLayout.createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -428,7 +430,6 @@ public class JCdmBuilder {
 		folderPanelLayout.linkSize(SwingConstants.VERTICAL, workingFolderField, workingFolderPickButton);
 		folderPanelLayout.linkSize(SwingConstants.VERTICAL, localScriptsFolderField, localScriptsFolderPickButton);
 		
-		componentsToDisableWhenRunning.add(workingFolderPickButton);
 		c.gridx = 0;
 		c.gridy = 0;
 		c.gridwidth = 1;
