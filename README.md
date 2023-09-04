@@ -16,27 +16,27 @@ Features
 Screenshots
 ===========
 
-<img src="man/Screenshot_5.4.1.4_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
+<img src="man/Screenshot_5.4.1.5_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
 
 _The Locations tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.1.4_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
+<img src="man/Screenshot_5.4.1.5_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
 
 _The Vocabulary tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.1.4_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
+<img src="man/Screenshot_5.4.1.5_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
 
 _The ETL tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.1.4_WebAPI.png" alt="JCdmBuilder" title="JCdmBuilder WebAPI Tab" />
+<img src="man/Screenshot_5.4.1.5_WebAPI.png" alt="JCdmBuilder" title="JCdmBuilder WebAPI Tab" />
 
 _The WebAPI tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.1.4_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
+<img src="man/Screenshot_5.4.1.5_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
 
 _The Execute tab._
 <br><br>
