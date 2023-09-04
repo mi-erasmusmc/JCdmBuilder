@@ -102,6 +102,7 @@ public class InsertVocabularyInServer {
 									databaseName = databaseName.substring(0, databaseName.indexOf(";")).trim();
 								}
 							}
+							/* Split always to automatically convert character sets
 							if (FileUtils.sizeOf(file) < 2000000000L) {
 								temporarySourceFileName = databaseName + "_" + dbSettings.cdmSchema + "_" + file.getName();
 								temporarySourceFileNamePath = temporaryServerFolder + File.separator + temporarySourceFileName;
@@ -109,10 +110,13 @@ public class InsertVocabularyInServer {
 								StringUtilities.outputWithTime("Copy file " + file.getName() + " to " + temporarySourceFile.getAbsolutePath());
 								fileParts.add(temporarySourceFileName);
 								FileUtils.copyFile(file, temporarySourceFile);
+								//fileParts = FileUtilities.copyCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, (char) 0);
 							}
 							else { // Split file in parts of less than 2 GB.
 								fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, (char) 0, 2000000000);
 							}
+							*/
+							fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, (char) 0, 2000000000);
 						}
 						
 						// Copy data into table

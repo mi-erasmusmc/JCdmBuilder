@@ -41,6 +41,47 @@ public class FileUtilities {
 		copyStream(new GZIPInputStream(new FileInputStream(sourceFilename)), new FileOutputStream(targetFilename)); 
 	}
 	
+	
+	public static List<String>  copyCSVFile(File file, String tempFolder, String destinationFolder, String fileNamePrefix, char quote) throws IOException {
+		List<String> fileParts = new ArrayList<String>();
+		String partFileName = fileNamePrefix + "_" + file.getName();
+		String temporaryFileNamePath = tempFolder + File.separator + partFileName;
+		String destinationFileNamePath = destinationFolder + File.separator + partFileName;
+		StringUtilities.outputWithTime("    " + temporaryFileNamePath);
+		StringUtilities.outputWithTime("Copy file " + file.getName() + " to " + destinationFileNamePath);
+		BufferedReader fileReader = new BufferedReader(new FileReader(file));
+		BufferedWriter fileWriter = null;
+		String record = getNextCSVRecord(fileReader, (int) quote);
+		String header = null;
+		while (record != null) {
+			if (fileWriter == null) {
+				fileWriter = new BufferedWriter(new FileWriter(new File(temporaryFileNamePath)));
+				if (header == null) {
+					header = record;
+				}
+				else {
+					fileWriter.append(header);
+				}
+			}
+			fileWriter.append(record);
+			record = getNextCSVRecord(fileReader, (int) quote);
+		}
+		if (fileWriter != null) {
+			fileWriter.close();
+			if (!temporaryFileNamePath.equals(destinationFileNamePath)) {
+				File tempFile = new File(temporaryFileNamePath);
+				File destinationFile = new File(destinationFileNamePath);
+				StringUtilities.outputWithTime("    Copy " + temporaryFileNamePath + " to " + destinationFileNamePath);
+				FileUtils.copyFile(tempFile, destinationFile);
+				StringUtilities.outputWithTime("    Delete " + temporaryFileNamePath);
+				FileUtils.forceDelete(tempFile);
+			}
+		}
+		StringUtilities.outputWithTime("Copy file " + file.getName() + " to " + destinationFileNamePath + " finished");
+		fileParts.add(partFileName);
+		return fileParts;
+	}
+	
 	public static List<String> splitCSVFile(File file, String tempFolder, String destinationFolder, String fileNamePrefix, char quote, int maxSize) throws IOException {
 		StringUtilities.outputWithTime("Split file " + file.getName() + " into:");
 		List<String> fileParts = new ArrayList<String>();

@@ -118,6 +118,7 @@ public class CdmEtl {
 									databaseName = databaseName.substring(0, databaseName.indexOf(";")).trim();
 								}
 							}
+							/* Split always to automatically convert character sets
 							if (FileUtils.sizeOf(file) < 2000000000L) {
 								temporarySourceFileName = databaseName + "_" + dbSettings.cdmSchema + "_" + file.getName();
 								temporarySourceFileNamePath = temporaryServerFolder + File.separator + temporarySourceFileName;
@@ -129,6 +130,8 @@ public class CdmEtl {
 							else { // Split file in parts of less than 2 GB.
 								fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
 							}
+							*/
+							fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
 						}
 						
 						// Copy data into table
