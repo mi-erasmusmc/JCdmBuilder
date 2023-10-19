@@ -74,16 +74,16 @@ public class CdmV5 implements CdmVx {
 
 	@Override
 	public String resultsStructureMSSQL() {
-		return "OMOP CDM results sql server.txt";
+		return "OMOP CDM sql server results.txt";
 	}
 
 	@Override
 	public String resultsStructurePostgreSQL() {
-		return "OMOP CDM results postgresql.txt";
+		return "OMOP CDM postgresql results.txt";
 	}
 
 	@Override
 	public String resultsStructureOracle() {
-		return "OMOP CDM results oracle.txt";
+		return "OMOP CDM oracle results.txt";
 	}
 }
