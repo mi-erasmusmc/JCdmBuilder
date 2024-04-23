@@ -6,7 +6,7 @@ The JCdmBuilder is a Java program that offers various tools that can be used for
 Features
 ========
 * You can load data in CDM format from CSV files into the database.
-* Creating the database structure and indices for CDM version 5.0.1, 5.3.0, 5.3.1, 5.4.0, 5.4.1, prepared for version 6.0.
+* Creating the database structure and indices for CDM version 5.0.1, 5.3.0, 5.3.1, 5.4.0, 5.4.1.
 * Loading the vocabulary from files into the database.
 * Automatically creating condition and drug eras.
 * Supports SQL Server, Oracle and PostgreSQL.
@@ -16,27 +16,27 @@ Features
 Screenshots
 ===========
 
-<img src="man/Screenshot_5.4.1.5_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
+<img src="man/Screenshot_5.4.1.6_Locations.png" alt="JCdmBuilder" title="JCdmBuilder Locations Tab" />
 
 _The Locations tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.1.5_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
+<img src="man/Screenshot_5.4.1.6_Vocabulary.png" alt="JCdmBuilder" title="JCdmBuilder Vocabulary Tab" />
 
 _The Vocabulary tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.1.5_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
+<img src="man/Screenshot_5.4.1.6_ETL.png" alt="JCdmBuilder" title="JCdmBuilder ETL Tab" />
 
 _The ETL tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.1.5_WebAPI.png" alt="JCdmBuilder" title="JCdmBuilder WebAPI Tab" />
+<img src="man/Screenshot_5.4.1.6_WebAPI.png" alt="JCdmBuilder" title="JCdmBuilder WebAPI Tab" />
 
 _The WebAPI tab._
 <br><br>
 
-<img src="man/Screenshot_5.4.1.5_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
+<img src="man/Screenshot_5.4.1.6_Execute.png" alt="JCdmBuilder" title="JCdmBuilder Execute Tab" />
 
 _The Execute tab._
 <br><br>
@@ -47,7 +47,7 @@ JCdmBuilder is a Java program.
 
 System Requirements
 ============
-* Java
+* Java 8
 
 Dependencies
 ============
@@ -264,8 +264,7 @@ The following options allow the steps to be automatically executed. Steps are ex
 
 
 Getting Involved
-=============
-* Developer questions/comments/feedback: <a href="http://forums.ohdsi.org/c/developers">OHDSI Forum</a>
+================
 * We use the <a href="../../issues">GitHub issue tracker</a> for all bugs/issues/enhancements
 
 License
