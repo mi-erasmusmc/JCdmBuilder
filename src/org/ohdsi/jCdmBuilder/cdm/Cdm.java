@@ -76,15 +76,6 @@ public class Cdm {
 				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 				
 				String schema = currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
-				
-				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " indices if they exist");
-				Map<String, List<String>> indices = connection.getIndices(schema);
-				for (String tableName : indices.keySet()) {
-					for (String index : indices.get(tableName)) {
-						connection.dropIndexIfExists(schema, tableName, index);
-					}
-				}
-				StringUtilities.outputWithTime("Done");
 
 				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " primary key constraints if they exist");
 				Map<String, List<String>> primaryKeyConstraints = connection.getPrimaryKeyConstraints(schema);
@@ -117,12 +108,12 @@ public class Cdm {
 				connection.use(currentStructure == CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 				
 				String schema = currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema;
-
-				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " foreign key constraints if they exist");
-				Map<String, List<String>> foreignKeyConstraints = connection.getForeignKeyConstraints(schema);
-				for (String tableName : foreignKeyConstraints.keySet()) {
-					for (String foreignKeyConstraint : foreignKeyConstraints.get(tableName)) {
-						connection.dropConstraintIfExists(schema, tableName, foreignKeyConstraint);
+				
+				StringUtilities.outputWithTime("Deleting old " + (currentStructure == CDM ? "CDM" : "Results") + " indices if they exist");
+				Map<String, List<String>> indices = connection.getIndices(schema);
+				for (String tableName : indices.keySet()) {
+					for (String index : indices.get(tableName)) {
+						connection.dropIndexIfExists(schema, tableName, index);
 					}
 				}
 				StringUtilities.outputWithTime("Done");
