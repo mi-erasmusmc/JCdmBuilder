@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.ohdsi.jCdmBuilder.JCdmBuilder;
 import org.ohdsi.utilities.SimpleCounter;
 import org.ohdsi.utilities.StringUtilities;
 import org.ohdsi.utilities.files.ReadCSVFileWithHeader;
@@ -452,16 +453,29 @@ public class RichConnection {
 	public Map<String, String> getFieldTypes(String schema, String table) {
 		Map<String, String> types = new HashMap<String, String>();
 		if (dbType == DbType.MSSQL) {
-			for (Row row : query("SELECT c.name as column_name, t.name as data_type FROM sys.syscolumns c LEFT OUTER JOIN sys.types t ON t.system_type_id = c.xtype WHERE id=OBJECT_ID('" + schema + "." + table + "')")) {
+			for (Row row : query("SELECT c.name as column_name, t.name as data_type, c.length FROM sys.syscolumns c LEFT OUTER JOIN sys.types t ON t.system_type_id = c.xtype WHERE id=OBJECT_ID('" + schema + "." + table + "')")) {
 				String columnName = row.get("column_name", true).toUpperCase();
 				String columnType = row.get("data_type", true).toUpperCase();
+				if (columnType.equals("VARCHAR")) {
+					String columnLength = row.get("length", true);
+					if (!columnLength.equals("")) {
+						columnType += "(" + columnLength + ")";
+					}
+				}
 				types.put(columnName, columnType);
 			}
 		}
 		else if (dbType == DbType.POSTGRESQL) {
-			for (Row row : query("SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = '" + schema.toLowerCase() + "' AND table_name='" + table.toLowerCase() + "'")) {
+			for (Row row : query("SELECT column_name, data_type, character_maximum_length FROM information_schema.columns WHERE table_schema = '" + schema.toLowerCase() + "' AND table_name='" + table.toLowerCase() + "'")) {
 				String columnName = row.get("column_name", true).toUpperCase();
 				String columnType = row.get("data_type", true).toUpperCase();
+				if (columnType.equals("CHARACTER VARYING")) {
+					columnType = "VARCHAR";
+					String columnLength = row.get("character_maximum_length", true);
+					if (!columnLength.equals("")) {
+						columnType += "(" + columnLength + ")";
+					}
+				}
 				types.put(columnName, columnType);
 			}
 		}
@@ -935,37 +949,54 @@ public class RichConnection {
 						if (tableName.equals("note") && (value != null) && (value.contains("\\"))) {
 							value = value.replace("\\\\", SUBSTITUTE).replace("\\n", "\n").replace("\\t", "\t").replace(SUBSTITUTE, "\\");
 						}
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATE")))
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATE")))
 							statement.setDate(i + 1, getSQLDate(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("TIMESTAMP")))
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("TIMESTAMP")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
 						else
 						statement.setObject(i + 1, value, Types.OTHER);
 					}
 					else if (dbType == DbType.ORACLE) {
-						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATE")))
+						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATE")))
 							statement.setDate(i + 1, getSQLDate(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).startsWith("TIMESTAMP(")))
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().startsWith("TIMESTAMP(")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
 						else
 							statement.setString(i + 1, value);
 					}
 					else if (dbType == DbType.MSSQL) {
-						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATE")))
+						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATE")))
 							statement.setDate(i + 1, getSQLDate(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATETIME")))
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATETIME")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATETIME2")))
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATETIME2")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("DATETIMEOFFSET")))
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATETIMEOFFSET")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).equals("SMALLDATETIME")))
+						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("SMALLDATETIME")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
 						else
 							statement.setString(i + 1, value);
 					}
 					else
 						statement.setString(i + 1, value);
+					
+					// Truncate strings when too long due to failing character conversions (unicode)
+					if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().startsWith("VARCHAR("))) {
+						Integer length = null;
+						try {
+							if (columnTypes.get(columns.get(i).toUpperCase()).contains(")")) {
+								length = Integer.parseInt(columnTypes.get(columns.get(i).toUpperCase()).substring(8, columnTypes.get(columns.get(i).toUpperCase()).indexOf(')')));
+							}
+						} catch (NumberFormatException exception) {
+							length = null;
+						}
+						if (length != null) {
+							if (value.length() > length) {
+								value = value.substring(0, length);
+							}
+						}
+					}
 				}
 				statement.addBatch();
 			}
@@ -1355,5 +1386,11 @@ public class RichConnection {
 		@Override
 		public void remove() {
 		}
+	}
+
+
+	public static void main(String[] args) {
+		RichConnection connection = new RichConnection("localhost/Vocabulary-20240830", null, "postgres", "Test", DbType.getDbType("PostgreSQL"));
+		Map<String, String> columnTypes = connection.getFieldTypes("cdm", "person");
 	}
 }

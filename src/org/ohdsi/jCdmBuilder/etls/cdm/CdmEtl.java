@@ -131,6 +131,7 @@ public class CdmEtl {
 								fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
 							}
 							*/
+							Map<String, String> columnTypes = connection.getFieldTypes(dbSettings.cdmSchema, table);
 							fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
 						}
 						
