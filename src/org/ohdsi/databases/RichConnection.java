@@ -472,7 +472,7 @@ public class RichConnection {
 				if (columnType.equals("CHARACTER VARYING")) {
 					columnType = "VARCHAR";
 					String columnLength = row.get("character_maximum_length", true);
-					if (!columnLength.equals("")) {
+					if ((columnLength != null) && (!columnLength.equals(""))) {
 						columnType += "(" + columnLength + ")";
 					}
 				}
@@ -945,6 +945,9 @@ public class RichConnection {
 					String value = row.get(columns.get(i), true);
 					if (value != null && (nullValueString != null) && value.equals(nullValueString))
 						value = null;
+					if (value != null) {
+						value = truncateVarcharIfTooLong(value, columns.get(i).toUpperCase(), columnTypes);
+					}
 					if (dbType == DbType.POSTGRESQL) {// PostgreSQL does not allow unspecified types
 						if (tableName.equals("note") && (value != null) && (value.contains("\\"))) {
 							value = value.replace("\\\\", SUBSTITUTE).replace("\\n", "\n").replace("\\t", "\t").replace(SUBSTITUTE, "\\");
@@ -954,7 +957,7 @@ public class RichConnection {
 						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("TIMESTAMP")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
 						else
-						statement.setObject(i + 1, value, Types.OTHER);
+							statement.setObject(i + 1, value, Types.OTHER);
 					}
 					else if (dbType == DbType.ORACLE) {
 						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATE")))
@@ -980,23 +983,6 @@ public class RichConnection {
 					}
 					else
 						statement.setString(i + 1, value);
-					
-					// Truncate strings when too long due to failing character conversions (unicode)
-					if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().startsWith("VARCHAR("))) {
-						Integer length = null;
-						try {
-							if (columnTypes.get(columns.get(i).toUpperCase()).contains(")")) {
-								length = Integer.parseInt(columnTypes.get(columns.get(i).toUpperCase()).substring(8, columnTypes.get(columns.get(i).toUpperCase()).indexOf(')')));
-							}
-						} catch (NumberFormatException exception) {
-							length = null;
-						}
-						if (length != null) {
-							if (value.length() > length) {
-								value = value.substring(0, length);
-							}
-						}
-					}
 				}
 				statement.addBatch();
 			}
@@ -1012,6 +998,29 @@ public class RichConnection {
 			}
 			throw new RuntimeException(e);
 		}
+	}
+	
+	String truncateVarcharIfTooLong(String value, String column, Map<String, String> columnTypes) {
+		// Truncate strings when too long due to failing character conversions (unicode)
+		if (columnTypes != null) {
+			String columnType = columnTypes.get(column).toUpperCase();
+			if (columnType.startsWith("VARCHAR(")) {
+				Integer length = null;
+				try {
+					if (columnType.contains(")")) {
+						length = Integer.parseInt(columnType.substring(8, columnType.indexOf(')')));
+					}
+				} catch (NumberFormatException exception) {
+					length = null;
+				}
+				if (length != null) {
+					if (value.length() > length) {
+						value = value.substring(0, length);
+					}
+				}
+			}
+		}
+		return value;
 	}
 	
 	private java.sql.Timestamp getSQLTimeStamp(String timeStampValue) {
