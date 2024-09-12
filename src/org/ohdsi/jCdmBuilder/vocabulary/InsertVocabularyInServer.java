@@ -116,7 +116,9 @@ public class InsertVocabularyInServer {
 								fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, (char) 0, 2000000000);
 							}
 							*/
-							fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, (char) 0, 2000000000);
+							//fileParts = FileUtilities.oldSplitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, (char) 0, 2000000000);
+							Map<String, Integer> varCharColumnLengths = connection.getVarcharColumnLengths(connection.getFieldTypes(dbSettings.cdmSchema, table));
+							fileParts = FileUtilities.splitCSVFile(file, varCharColumnLengths, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, '\t', (char) 0, 2000000000);
 						}
 						
 						// Copy data into table

@@ -137,6 +137,23 @@ public class Row {
 		return StringUtilities.join(data, ",");
 	}
 	
+	public String toCSVString(char delimiter, char quote) {
+		String quoteString = String.valueOf(quote);
+		List<String> data = new ArrayList<String>(cells);
+		for (String fieldName : fieldName2ColumnIndex.keySet()) {
+			int index = fieldName2ColumnIndex.get(fieldName);
+			if (data.size() > index) {
+				String value = data.get(index);
+				if (value.contains(quoteString)) {
+					//value = value.replace(quoteString, quoteString + quoteString);
+					value = quoteString + value + quoteString;
+					data.set(index, value);
+				}
+			}
+		}
+		return StringUtilities.join(data, String.valueOf(delimiter));
+	}
+	
 	public void remove(String field) {
 		Integer index = fieldName2ColumnIndex.remove(field);
 		cells.remove((int)index);

@@ -38,12 +38,6 @@ public class CdmEtl {
 		Set<String> tables = new HashSet<String>();
 		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema))
 			tables.add(table.toLowerCase());
-		
-		if (targetCmdVersion.equals("5.0.1")) {
-			connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + "_version");
-			String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-			connection.execute("INSERT INTO " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + "_version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
-		}
 
 		for (File file : new File(folder).listFiles()) {
 			String table = "";
@@ -84,12 +78,6 @@ public class CdmEtl {
 		Set<String> tables = new HashSet<String>();
 		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema))
 			tables.add(table.toLowerCase());
-		
-		if (targetCdmVersion.equals("5.0.1")) {
-			connection.execute("TRUNCATE TABLE _version");
-			String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-			connection.execute("INSERT INTO _version (version_id, version_date) VALUES (" + versionId + ", '" + date + "')");
-		}
 
 		for (File file : new File(folder).listFiles()) {
 			String table = "";
@@ -131,8 +119,9 @@ public class CdmEtl {
 								fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
 							}
 							*/
-							Map<String, String> columnTypes = connection.getFieldTypes(dbSettings.cdmSchema, table);
-							fileParts = FileUtilities.splitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
+							//fileParts = FileUtilities.oldSplitCSVFile(file, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, quote, 2000000000);
+							Map<String, Integer> varCharColumnLengths = connection.getVarcharColumnLengths(connection.getFieldTypes(dbSettings.cdmSchema, table));
+							fileParts = FileUtilities.splitCSVFile(file, varCharColumnLengths, workingFolder, temporaryServerFolder, databaseName + "_" + dbSettings.cdmSchema, delimiter, quote, 2000000000);
 						}
 						
 						// Copy data into table

@@ -493,6 +493,32 @@ public class RichConnection {
 		return types;
 	}
 	
+	public Map<String, Integer> getVarcharColumnLengths(Map<String, String> columnTypes) {
+		Map<String, Integer> varcharColumnLengths = new HashMap<String, Integer>();
+		if (columnTypes != null) {
+			for (String column : columnTypes.keySet()) {
+				String columnType = columnTypes.get(column).toUpperCase();
+				if (columnType.startsWith("VARCHAR")) {
+					if (columnType.startsWith("VARCHAR(")) {
+						Integer length = null;
+						try {
+							if (columnType.contains(")")) {
+								length = Integer.parseInt(columnType.substring(8, columnType.indexOf(')')));
+							}
+						} catch (NumberFormatException exception) {
+							length = 65535;
+						}
+						varcharColumnLengths.put(column, length);
+					}
+				}
+				else {
+					varcharColumnLengths.put(column, 65535);
+				}
+			}
+		}
+		return varcharColumnLengths;
+	}
+	
 	public Map<String, List<String>> getForeignKeyConstraints(String schema) {
 		return getForeignKeyConstraints(schema, null);
 	}
@@ -930,6 +956,7 @@ public class RichConnection {
 		columns = rows.get(0).getFieldNames();
 		for (int i = 0; i < columns.size(); i++)
 			columns.set(i, columnNameToSqlName(columns.get(i)));
+		Map<String, Integer> varcharColumnLengths = getVarcharColumnLengths(columnTypes);
 
 		String sql = "INSERT INTO " + tableName;
 		sql = sql + " (" + StringUtilities.join(columns, ",") + ")";
@@ -942,41 +969,40 @@ public class RichConnection {
 			PreparedStatement statement = connection.prepareStatement(sql);
 			for (Row row : rows) {
 				for (int i = 0; i < columns.size(); i++) {
+					String column = columns.get(i).toUpperCase();
 					String value = row.get(columns.get(i), true);
 					if (value != null && (nullValueString != null) && value.equals(nullValueString))
 						value = null;
-					if (value != null) {
-						value = truncateVarcharIfTooLong(value, columns.get(i).toUpperCase(), columnTypes);
-					}
+					value = StringUtilities.truncateStringIfTooLong(value, varcharColumnLengths.get(column));
 					if (dbType == DbType.POSTGRESQL) {// PostgreSQL does not allow unspecified types
 						if (tableName.equals("note") && (value != null) && (value.contains("\\"))) {
 							value = value.replace("\\\\", SUBSTITUTE).replace("\\n", "\n").replace("\\t", "\t").replace(SUBSTITUTE, "\\");
 						}
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATE")))
+						else if ((columnTypes != null) && (columnTypes.get(column).toUpperCase().equals("DATE")))
 							statement.setDate(i + 1, getSQLDate(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("TIMESTAMP")))
+						else if ((columnTypes != null) && (columnTypes.get(column).toUpperCase().equals("TIMESTAMP")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
 						else
 							statement.setObject(i + 1, value, Types.OTHER);
 					}
 					else if (dbType == DbType.ORACLE) {
-						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATE")))
+						if ((columnTypes != null) && (columnTypes.get(column).toUpperCase().equals("DATE")))
 							statement.setDate(i + 1, getSQLDate(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().startsWith("TIMESTAMP(")))
+						else if ((columnTypes != null) && (columnTypes.get(column).toUpperCase().startsWith("TIMESTAMP(")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
 						else
 							statement.setString(i + 1, value);
 					}
 					else if (dbType == DbType.MSSQL) {
-						if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATE")))
+						if ((columnTypes != null) && (columnTypes.get(column).toUpperCase().equals("DATE")))
 							statement.setDate(i + 1, getSQLDate(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATETIME")))
+						else if ((columnTypes != null) && (columnTypes.get(column).toUpperCase().equals("DATETIME")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATETIME2")))
+						else if ((columnTypes != null) && (columnTypes.get(column).toUpperCase().equals("DATETIME2")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("DATETIMEOFFSET")))
+						else if ((columnTypes != null) && (columnTypes.get(column).toUpperCase().equals("DATETIMEOFFSET")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
-						else if ((columnTypes != null) && (columnTypes.get(columns.get(i).toUpperCase()).toUpperCase().equals("SMALLDATETIME")))
+						else if ((columnTypes != null) && (columnTypes.get(column).toUpperCase().equals("SMALLDATETIME")))
 							statement.setTimestamp(i + 1, getSQLTimeStamp(value));
 						else
 							statement.setString(i + 1, value);
@@ -998,29 +1024,6 @@ public class RichConnection {
 			}
 			throw new RuntimeException(e);
 		}
-	}
-	
-	String truncateVarcharIfTooLong(String value, String column, Map<String, String> columnTypes) {
-		// Truncate strings when too long due to failing character conversions (unicode)
-		if (columnTypes != null) {
-			String columnType = columnTypes.get(column).toUpperCase();
-			if (columnType.startsWith("VARCHAR(")) {
-				Integer length = null;
-				try {
-					if (columnType.contains(")")) {
-						length = Integer.parseInt(columnType.substring(8, columnType.indexOf(')')));
-					}
-				} catch (NumberFormatException exception) {
-					length = null;
-				}
-				if (length != null) {
-					if (value.length() > length) {
-						value = value.substring(0, length);
-					}
-				}
-			}
-		}
-		return value;
 	}
 	
 	private java.sql.Timestamp getSQLTimeStamp(String timeStampValue) {
@@ -1399,7 +1402,12 @@ public class RichConnection {
 
 
 	public static void main(String[] args) {
+		/*
 		RichConnection connection = new RichConnection("localhost/Vocabulary-20240830", null, "postgres", "Test", DbType.getDbType("PostgreSQL"));
 		Map<String, String> columnTypes = connection.getFieldTypes("cdm", "person");
+		*/
+		List<String> test = new ArrayList<String>(10);
+		test.set(9, "Test");
+		System.out.println(test);
 	}
 }

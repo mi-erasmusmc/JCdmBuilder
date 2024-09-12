@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.DataFormatException;
 
 public class StringUtilities {
@@ -74,6 +75,16 @@ public class StringUtilities {
 			buffer.append(objects[i].toString());
 		}
 		return buffer.toString();
+	}
+	
+	public static String truncateStringIfTooLong(String value, Integer length) {
+		// Truncate strings when too long due to failing character conversions (unicode)
+		if ((value != null) && (length != null)) {
+			if (value.length() > length) {
+				value = value.substring(0, length);
+			}
+		}
+		return value;
 	}
 	
 	public static int twoHexDigitsToInt(String value, int index) {

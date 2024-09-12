@@ -27,7 +27,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.io.FileUtils;
@@ -36,6 +39,7 @@ import org.ohdsi.utilities.StringUtilities;
 public class FileUtilities {
 	static int CR = 13;
 	static int LF = 10;
+	static String EOL = File.separator.equals("/") ? "\n" : "\r\n";
 	
 	public static void decompressGZIP(String sourceFilename, String targetFilename) throws FileNotFoundException, IOException{
 		copyStream(new GZIPInputStream(new FileInputStream(sourceFilename)), new FileOutputStream(targetFilename)); 
@@ -82,7 +86,7 @@ public class FileUtilities {
 		return fileParts;
 	}
 	
-	public static List<String> splitCSVFile(File file, String tempFolder, String destinationFolder, String fileNamePrefix, char quote, int maxSize) throws IOException {
+	public static List<String> oldSplitCSVFile(File file, Map<String, String> columnTypes, String tempFolder, String destinationFolder, String fileNamePrefix, char delimiter, char quote, int maxSize) throws IOException {
 		StringUtilities.outputWithTime("Split file " + file.getName() + " into:");
 		List<String> fileParts = new ArrayList<String>();
 		int fileNr = 0;
@@ -138,6 +142,84 @@ public class FileUtilities {
 				FileUtils.forceDelete(tempFile);
 			}
 		}
+		StringUtilities.outputWithTime("Split file " + file.getName() + " finished");
+		return fileParts;
+	}
+	
+	public static List<String> splitCSVFile(File file, Map<String, Integer> varcharColumnLengths, String tempFolder, String destinationFolder, String fileNamePrefix, char delimiter, char quote, int maxSize) throws IOException {
+		StringUtilities.outputWithTime("Split file " + file.getName() + " into:");
+		List<String> fileParts = new ArrayList<String>();
+		int fileNr = 0;
+		int fileSize = 0;
+		String header = null;
+		String temporaryPartFileNamePath = null;
+		String destinationPartFileNamePath = null;
+		
+		ReadCSVFileWithHeader csvReader = new ReadCSVFileWithHeader(file.getAbsolutePath(), delimiter, quote);
+		Iterator<Row> csvReaderIterator = csvReader.iterator();
+		BufferedWriter fileWriter = null;
+		
+		// Convert uppercase column names in varcharColumnLengths to the header column names in the file.
+		for (String headerColumn : csvReader.getHeader()) {
+			String uppercaseHeaderColumn = headerColumn.toUpperCase();
+			if (!headerColumn.equals(uppercaseHeaderColumn)) {
+				varcharColumnLengths.put(headerColumn, varcharColumnLengths.get(uppercaseHeaderColumn));
+				varcharColumnLengths.remove(uppercaseHeaderColumn);
+			}
+			header += (header == null ? "" : delimiter) + headerColumn; 
+		}
+		
+		while (csvReaderIterator.hasNext()) {
+			if (fileWriter == null) {
+				fileNr++;
+				String partFileName = fileNamePrefix + "_" + Integer.toString(fileNr) + "_" + file.getName();
+				temporaryPartFileNamePath = tempFolder + File.separator + partFileName;
+				destinationPartFileNamePath = destinationFolder + File.separator + partFileName;
+				fileParts.add(partFileName);
+				StringUtilities.outputWithTime("    " + temporaryPartFileNamePath);
+				fileWriter = new BufferedWriter(new FileWriter(new File(temporaryPartFileNamePath)));
+				fileWriter.append(header + EOL);
+				fileSize += header.length() + EOL.length();
+			}
+			Row row = csvReaderIterator.next();
+			if ((varcharColumnLengths != null) && (varcharColumnLengths.keySet().size() > 0)) {
+				for (String column : varcharColumnLengths.keySet()) {
+					row.set(column, StringUtilities.truncateStringIfTooLong(row.get(column, false), varcharColumnLengths.get(column)));
+				}
+			}
+			String record = row.toCSVString(delimiter, quote) + EOL;
+			fileWriter.append(record);
+			fileSize += record.length();
+			if (fileSize > maxSize) {
+				fileWriter.close();
+				if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
+					File tempFile = new File(temporaryPartFileNamePath);
+					File destinationFile = new File(destinationPartFileNamePath);
+					if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
+						StringUtilities.outputWithTime("    Copy " + temporaryPartFileNamePath + " to " + destinationPartFileNamePath);
+						FileUtils.copyFile(tempFile, destinationFile);
+					}
+					StringUtilities.outputWithTime("    Delete " + temporaryPartFileNamePath);
+					FileUtils.forceDelete(tempFile);
+				}
+				fileWriter = null;
+				fileSize = 0;
+			}
+		}
+		if (fileWriter != null) {
+			fileWriter.close();
+			if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
+				File tempFile = new File(temporaryPartFileNamePath);
+				File destinationFile = new File(destinationPartFileNamePath);
+				if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
+					StringUtilities.outputWithTime("    Copy " + temporaryPartFileNamePath + " to " + destinationPartFileNamePath);
+					FileUtils.copyFile(tempFile, destinationFile);
+				}
+				StringUtilities.outputWithTime("    Delete " + temporaryPartFileNamePath);
+				FileUtils.forceDelete(tempFile);
+			}
+		}
+
 		StringUtilities.outputWithTime("Split file " + file.getName() + " finished");
 		return fileParts;
 	}
@@ -211,5 +293,19 @@ public class FileUtilities {
 			}
 		}
 		return record;
+	}
+
+
+	public static void main(String[] args) {
+		Map<String, Integer> varcharColumnLengths = new HashMap<String, Integer>();
+		varcharColumnLengths.put("COLUMN1", 20);
+		varcharColumnLengths.put("COLUMN2", 25);
+		varcharColumnLengths.put("COLUMN3", 30);
+		try {
+			FileUtilities.splitCSVFile(new File("D:\\Temp\\CDM\\Temp\\TestFile.csv"), varcharColumnLengths, "D:\\Temp\\CDM\\Temp", "D:\\Temp", "Split", ',', '"', 1000000);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }
