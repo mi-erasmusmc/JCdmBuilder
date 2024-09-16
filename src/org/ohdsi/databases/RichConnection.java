@@ -480,9 +480,16 @@ public class RichConnection {
 			}
 		}
 		else if (dbType == DbType.ORACLE) {
-			for (Row row : query("SELECT COLUMN_NAME, DATA_TYPE FROM ALL_TAB_COLS WHERE TABLE_NAME = '" + table.toUpperCase() + "' AND owner = '" + schema.toUpperCase() + "' AND NOT REGEXP_LIKE(COLUMN_NAME, '^SYS_')")) {
+			for (Row row : query("SELECT COLUMN_NAME, DATA_TYPE, DATA_LENGTH FROM ALL_TAB_COLS WHERE TABLE_NAME = '" + table.toUpperCase() + "' AND owner = '" + schema.toUpperCase() + "' AND NOT REGEXP_LIKE(COLUMN_NAME, '^SYS_')")) {
 				String columnName = row.get("COLUMN_NAME", true).toUpperCase();
 				String columnType = row.get("DATA_TYPE", true).toUpperCase();
+				if (columnType.startsWith("VARCHAR")) {
+					columnType = "VARCHAR";
+					String columnLength = row.get("DATA_LENGTH", true);
+					if ((columnLength != null) && (!columnLength.equals(""))) {
+						columnType += "(" + columnLength + ")";
+					}
+				}
 				types.put(columnName, columnType);
 			}
 		}
