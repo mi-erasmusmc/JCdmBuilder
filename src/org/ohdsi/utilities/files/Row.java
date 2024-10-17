@@ -138,15 +138,23 @@ public class Row {
 	}
 	
 	public String toCSVString(char delimiter, char quote) {
+		String delimiterString = String.valueOf(delimiter);
 		String quoteString = String.valueOf(quote);
 		List<String> data = new ArrayList<String>(cells);
 		for (String fieldName : fieldName2ColumnIndex.keySet()) {
 			int index = fieldName2ColumnIndex.get(fieldName);
 			if (data.size() > index) {
 				String value = data.get(index);
+				boolean valueChanged = false;
 				if (value.contains(quoteString)) {
-					//value = value.replace(quoteString, quoteString + quoteString);
+					value = value.replace(quoteString, quoteString + quoteString);
+					valueChanged = true;
+				}
+				if (value.contains(delimiterString)) {
 					value = quoteString + value + quoteString;
+					valueChanged = true;
+				}
+				if (valueChanged) {
 					data.set(index, value);
 				}
 			}
