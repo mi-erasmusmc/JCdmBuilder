@@ -150,7 +150,7 @@ public class Row {
 					value = value.replace(quoteString, quoteString + quoteString);
 					valueChanged = true;
 				}
-				if (value.contains(delimiterString)) {
+				if (value.contains(delimiterString) || value.contains("\r") || value.contains("\n")) {
 					value = quoteString + value + quoteString;
 					valueChanged = true;
 				}

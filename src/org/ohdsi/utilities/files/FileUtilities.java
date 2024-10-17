@@ -151,7 +151,7 @@ public class FileUtilities {
 		List<String> fileParts = new ArrayList<String>();
 		int fileNr = 0;
 		int fileSize = 0;
-		String header = null;
+		String header = "";
 		String temporaryPartFileNamePath = null;
 		String destinationPartFileNamePath = null;
 		
@@ -166,7 +166,7 @@ public class FileUtilities {
 				varcharColumnLengths.put(headerColumn, varcharColumnLengths.get(uppercaseHeaderColumn));
 				varcharColumnLengths.remove(uppercaseHeaderColumn);
 			}
-			header += (header == null ? "" : delimiter) + headerColumn; 
+			header += (header.equals("") ? "" : delimiter) + headerColumn; 
 		}
 		
 		while (csvReaderIterator.hasNext()) {
@@ -182,6 +182,7 @@ public class FileUtilities {
 				fileSize += header.length() + EOL.length();
 			}
 			Row row = csvReaderIterator.next();
+			
 			if ((varcharColumnLengths != null) && (varcharColumnLengths.keySet().size() > 0)) {
 				for (String column : varcharColumnLengths.keySet()) {
 					row.set(column, StringUtilities.truncateStringIfTooLong(row.get(column, false), varcharColumnLengths.get(column)));
