@@ -108,6 +108,7 @@ public class ReadCSVFile implements Iterable<List<String>> {
 	public ReadCSVFile(InputStream inputstream, char delimiter, char textDelimiter, String charSet) {
 		this(inputstream, charSet);
 		this.delimiter = delimiter;
+		this.textDelimiter = textDelimiter;
 	}
 	
 	public Iterator<List<String>> getIterator() {
