@@ -71,7 +71,7 @@ public class CdmEtl {
 		connection.use(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema);
 		
 		char delimiter = delimiterString.trim().toLowerCase().equals("tab") ? '\t' : delimiterString.charAt(0);
-		char quote     = quoteString.charAt(0);
+		char quote     = quoteString.equals("") ? (char) 127 : quoteString.charAt(0);
 		
 		Set<String> tables = new HashSet<String>();
 		for (String table : connection.getTableNames(currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema))
