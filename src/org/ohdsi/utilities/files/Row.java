@@ -100,7 +100,9 @@ public class Row {
 	}
 	
 	public void set(String fieldName, String value) {
-		cells.set(fieldName2ColumnIndex.get(fieldName), value);
+		if (fieldName2ColumnIndex.get(fieldName) != null) {
+			cells.set(fieldName2ColumnIndex.get(fieldName), value);
+		}
 	}
 	
 	public void set(String fieldName, int value) {
