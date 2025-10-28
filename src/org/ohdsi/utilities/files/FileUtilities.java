@@ -39,7 +39,7 @@ import org.ohdsi.utilities.StringUtilities;
 public class FileUtilities {
 	static int CR = 13;
 	static int LF = 10;
-	static String EOL = File.separator.equals("/") ? "\n" : "\r\n";
+	static String EOL = "\r\n"; //File.separator.equals("/") ? "\n" : "\r\n";
 	
 	public static void decompressGZIP(String sourceFilename, String targetFilename) throws FileNotFoundException, IOException{
 		copyStream(new GZIPInputStream(new FileInputStream(sourceFilename)), new FileOutputStream(targetFilename)); 

@@ -85,7 +85,6 @@ public class InsertVocabularyInServer {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
 						connection.execute("TRUNCATE TABLE " + dbSettings.cdmSchema + "." + table);
 
-						String temporarySourceFileName = file.getName();
 						String temporarySourceFileNamePath = file.getAbsolutePath();
 						if (!folder.equals(temporaryLocalServerFolder)) {
 							// Copy source file to temporary file on the server
@@ -125,17 +124,17 @@ public class InsertVocabularyInServer {
 						for (String fileName : fileParts) {
 							// PostgreSQL
 							if (dbSettings.dbType == DbType.POSTGRESQL) {
-								StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + fileName + " into table " + table);
+								StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + File.separator + fileName + " into table " + table);
 								// Use delete character as quote
-								connection.execute("COPY " + dbSettings.cdmSchema + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH DELIMITER '\t' NULL '' ENCODING 'WIN1252' CSV HEADER QUOTE '" + ((char) 127) + "';");
+								connection.execute("COPY " + dbSettings.cdmSchema + "." + table + " FROM '" + temporaryLocalServerFolder + File.separator + fileName + "' WITH DELIMITER '\t' NULL '' ENCODING 'WIN1252' CSV HEADER QUOTE '" + ((char) 127) + "';");
 							}
 							// Microsoft SQL Server
 							else if (dbSettings.dbType == DbType.MSSQL) {
-								connection.execute("BULK INSERT " + dbSettings.cdmSchema + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH (FORMAT = 'CSV', FIRSTROW = 2, FIELDTERMINATOR = '\t', FIELDQUOTE = '', ROWTERMINATOR = '\n');");
+								connection.execute("BULK INSERT " + dbSettings.cdmSchema + "." + table + " FROM '" + temporaryLocalServerFolder + File.separator + fileName + "' WITH (FORMAT = 'CSV', FIRSTROW = 2, FIELDTERMINATOR = '\t', FIELDQUOTE = '', ROWTERMINATOR = '\n');");
 							}
 							// Oracle
 							else if (dbSettings.dbType == DbType.ORACLE) {
-								connection.execute("LOAD DATA INFILE '" + temporaryLocalServerFolder + "/" + fileName + "' INTO TABLE " + dbSettings.cdmSchema + "." + table + " FIELD TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '' LINES TERMINATED BY '\n';");
+								connection.execute("LOAD DATA INFILE '" + temporaryLocalServerFolder + File.separator + fileName + "' INTO TABLE " + dbSettings.cdmSchema + "." + table + " FIELD TERMINATED BY '\t' OPTIONALLY ENCLOSED BY '' LINES TERMINATED BY '\n';");
 							}
 
 							temporarySourceFileNamePath = temporaryServerFolder + File.separator + fileName;

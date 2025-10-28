@@ -87,7 +87,6 @@ public class CdmEtl {
 						StringUtilities.outputWithTime("Inserting data for table " + table);
 						connection.execute("TRUNCATE TABLE " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table);
 
-						String temporarySourceFileName = file.getName();
 						String temporarySourceFileNamePath = file.getAbsolutePath();
 						if (!folder.equals(temporaryLocalServerFolder)) {
 							// Copy source file to temporary file on the server
