@@ -123,6 +123,14 @@ public class CdmEtl {
 						
 						// Copy data into table
 						for (String fileName : fileParts) {
+							if ((!temporaryLocalServerFolder.endsWith("/")) && (!temporaryLocalServerFolder.endsWith("\\"))) {
+								if (temporaryLocalServerFolder.startsWith("/")) {
+									temporaryLocalServerFolder += "/";
+								}
+								else {
+									temporaryLocalServerFolder += "\\";
+								}
+							}
 							StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + fileName + " into table " + table);
 							// PostgreSQL
 							if (dbSettings.dbType == DbType.POSTGRESQL) {
