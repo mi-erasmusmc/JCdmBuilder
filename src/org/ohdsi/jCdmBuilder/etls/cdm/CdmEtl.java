@@ -123,18 +123,18 @@ public class CdmEtl {
 						
 						// Copy data into table
 						for (String fileName : fileParts) {
+							StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + fileName + " into table " + table);
 							// PostgreSQL
 							if (dbSettings.dbType == DbType.POSTGRESQL) {
-								StringUtilities.outputWithTime("Import file " + temporaryLocalServerFolder + "/" + fileName + " into table " + table);
-								connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH DELIMITER '" + delimiter + "' NULL '" + (nullValueString == null ? "" : nullValueString) + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
+								connection.execute("COPY " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table + " FROM '" + temporaryLocalServerFolder + fileName + "' WITH DELIMITER '" + delimiter + "' NULL '" + (nullValueString == null ? "" : nullValueString) + "' ENCODING 'WIN1252' CSV HEADER QUOTE '\"';");
 							}
 							// Microsoft SQL Server
 							else if (dbSettings.dbType == DbType.MSSQL) {
-								connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table + " FROM '" + temporaryLocalServerFolder + "/" + fileName + "' WITH (FORMAT = 'CSV', FIRSTROW = 2, FIELDTERMINATOR = '" + delimiter + "', FIELDQUOTE = '" + quote + "', ROWTERMINATOR = '\n');");
+								connection.execute("BULK INSERT " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table + " FROM '" + temporaryLocalServerFolder + fileName + "' WITH (FORMAT = 'CSV', FIRSTROW = 2, FIELDTERMINATOR = '" + delimiter + "', FIELDQUOTE = '" + quote + "', ROWTERMINATOR = '\n');");
 							}
 							// Oracle
 							else if (dbSettings.dbType == DbType.ORACLE) {
-								connection.execute("LOAD DATA INFILE '" + temporaryLocalServerFolder + "/" + fileName + "' INTO TABLE " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table + " FIELD TERMINATED BY '" + delimiter + "' OPTIONALLY ENCLOSED BY '" + quote + "' LINES TERMINATED BY '\n';");
+								connection.execute("LOAD DATA INFILE '" + temporaryLocalServerFolder + fileName + "' INTO TABLE " + (currentStructure == Cdm.CDM ? dbSettings.cdmSchema : dbSettings.resultsSchema) + "." + table + " FIELD TERMINATED BY '" + delimiter + "' OPTIONALLY ENCLOSED BY '" + quote + "' LINES TERMINATED BY '\n';");
 							}
 
 							temporarySourceFileNamePath = temporaryServerFolder + File.separator + fileName;
