@@ -26,6 +26,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.rmi.server.ExportException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -169,43 +170,55 @@ public class FileUtilities {
 			header += (header.equals("") ? "" : delimiter) + headerColumn; 
 		}
 		
-		while (csvReaderIterator.hasNext()) {
-			if (fileWriter == null) {
-				fileNr++;
-				String partFileName = fileNamePrefix + "_" + Integer.toString(fileNr) + "_" + file.getName();
-				temporaryPartFileNamePath = tempFolder + File.separator + partFileName;
-				destinationPartFileNamePath = destinationFolder + File.separator + partFileName;
-				fileParts.add(partFileName);
-				StringUtilities.outputWithTime("    " + temporaryPartFileNamePath);
-				fileWriter = new BufferedWriter(new FileWriter(new File(temporaryPartFileNamePath)));
-				fileWriter.append(header + EOL);
-				fileSize += header.length() + EOL.length();
-			}
-			Row row = csvReaderIterator.next();
-			
-			if ((varcharColumnLengths != null) && (varcharColumnLengths.keySet().size() > 0)) {
-				for (String column : varcharColumnLengths.keySet()) {
-					row.set(column, StringUtilities.truncateStringIfTooLong(row.get(column, false), varcharColumnLengths.get(column)));
+		Row row = null;
+		try {
+			while (csvReaderIterator.hasNext()) {
+				if (fileWriter == null) {
+					fileNr++;
+					String partFileName = fileNamePrefix + "_" + Integer.toString(fileNr) + "_" + file.getName();
+					temporaryPartFileNamePath = tempFolder + File.separator + partFileName;
+					destinationPartFileNamePath = destinationFolder + File.separator + partFileName;
+					fileParts.add(partFileName);
+					StringUtilities.outputWithTime("    " + temporaryPartFileNamePath);
+					fileWriter = new BufferedWriter(new FileWriter(new File(temporaryPartFileNamePath)));
+					fileWriter.append(header + EOL);
+					fileSize += header.length() + EOL.length();
 				}
-			}
-			String record = row.toCSVString(delimiter, quote) + EOL;
-			fileWriter.append(record);
-			fileSize += record.length();
-			if (fileSize > maxSize) {
-				fileWriter.close();
-				if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
-					File tempFile = new File(temporaryPartFileNamePath);
-					File destinationFile = new File(destinationPartFileNamePath);
-					if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
-						StringUtilities.outputWithTime("    Copy " + temporaryPartFileNamePath + " to " + destinationPartFileNamePath);
-						FileUtils.copyFile(tempFile, destinationFile);
+				row = csvReaderIterator.next();
+				
+				if ((varcharColumnLengths != null) && (varcharColumnLengths.keySet().size() > 0)) {
+					for (String column : varcharColumnLengths.keySet()) {
+						row.set(column, StringUtilities.truncateStringIfTooLong(row.get(column, false), varcharColumnLengths.get(column)));
 					}
-					StringUtilities.outputWithTime("    Delete " + temporaryPartFileNamePath);
-					FileUtils.forceDelete(tempFile);
 				}
-				fileWriter = null;
-				fileSize = 0;
+				String record = row.toCSVString(delimiter, quote) + EOL;
+				fileWriter.append(record);
+				fileSize += record.length();
+				if (fileSize > maxSize) {
+					fileWriter.close();
+					if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
+						File tempFile = new File(temporaryPartFileNamePath);
+						File destinationFile = new File(destinationPartFileNamePath);
+						if (!temporaryPartFileNamePath.equals(destinationPartFileNamePath)) {
+							StringUtilities.outputWithTime("    Copy " + temporaryPartFileNamePath + " to " + destinationPartFileNamePath);
+							FileUtils.copyFile(tempFile, destinationFile);
+						}
+						StringUtilities.outputWithTime("    Delete " + temporaryPartFileNamePath);
+						FileUtils.forceDelete(tempFile);
+					}
+					fileWriter = null;
+					fileSize = 0;
+				}
 			}
+		} catch (Exception exception) {
+			System.out.println("Error: " + exception.getMessage());
+			System.out.println("Stacktrace:");
+			exception.printStackTrace(System.out);
+			if (row != null) {
+				System.out.println("Row: " + row.toString());
+			}
+			System.out.flush();
+			throw exception;
 		}
 		if (fileWriter != null) {
 			fileWriter.close();
