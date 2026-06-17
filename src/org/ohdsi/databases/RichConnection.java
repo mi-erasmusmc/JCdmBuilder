@@ -1034,25 +1034,30 @@ public class RichConnection {
 	
 	private java.sql.Timestamp getSQLTimeStamp(String timeStampValue) {
 		if (timeStampValue != null) {
-			String[] timeStampValueSplit = timeStampValue.split(" ");
-			String dateString = "";
-			String timeString = "";
-			
-			if (timeStampValueSplit.length > 0) {
-				dateString = getSQLDateString(timeStampValueSplit[0].trim());
+			if (!timeStampValue.trim().equals("")) {
+				String[] timeStampValueSplit = timeStampValue.split(" ");
+				String dateString = "";
+				String timeString = "";
+				
+				if (timeStampValueSplit.length > 0) {
+					dateString = getSQLDateString(timeStampValueSplit[0].trim());
+				}
+				
+				if (timeStampValueSplit.length > 1) {
+					timeString = getSQLTimeString(timeStampValueSplit[1].trim());
+				}
+				
+				if (dateString == null) {
+					return null;
+				}
+				else if ((timeString == null) || (timeString.equals(""))) {
+					timeString = "00:00:00";
+				}
+				return java.sql.Timestamp.valueOf(dateString + " " + timeString);
 			}
-			
-			if (timeStampValueSplit.length > 1) {
-				timeString = getSQLTimeString(timeStampValueSplit[1].trim());
-			}
-			
-			if (dateString == null) {
+			else {
 				return null;
 			}
-			else if ((timeString == null) || (timeString.equals(""))) {
-				timeString = "00:00:00";
-			}
-			return java.sql.Timestamp.valueOf(dateString + " " + timeString);
 		}
 		else {
 			return null;
@@ -1062,7 +1067,7 @@ public class RichConnection {
 	private java.sql.Date getSQLDate(String dateValue) {
 		// Return an SQL date or null
 		String dateString = getSQLDateString(dateValue);
-		java.sql.Date date = dateString == null ? null : java.sql.Date.valueOf(dateString);
+		java.sql.Date date = (dateString == null ? null : (dateString.trim().equals("") ? null : java.sql.Date.valueOf(dateString)));
 		return date;
 	}
 	
@@ -1408,12 +1413,7 @@ public class RichConnection {
 
 
 	public static void main(String[] args) {
-		/*
-		RichConnection connection = new RichConnection("localhost/Vocabulary-20240830", null, "postgres", "Test", DbType.getDbType("PostgreSQL"));
-		Map<String, String> columnTypes = connection.getFieldTypes("cdm", "person");
-		*/
-		List<String> test = new ArrayList<String>(10);
-		test.set(9, "Test");
-		System.out.println(test);
+		RichConnection connection = new RichConnection("localhost/Mees", null, "postgres", "postgres", DbType.getDbType("PostgreSQL"));
+		java.sql.Timestamp ts = connection.getSQLTimeStamp("");
 	}
 }
