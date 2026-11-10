@@ -147,21 +147,22 @@ public class CdmEtl {
 
 							temporarySourceFileNamePath = temporaryServerFolder + File.separator + fileName;
 							File temporarySourceFile = new File(temporarySourceFileNamePath);
-							if (temporarySourceFile != null) {
+							if ((temporarySourceFile != null) && temporarySourceFile.exists()) {
 								FileUtils.forceDelete(temporarySourceFile);
 							}
 						}
 					}
 				}
 			} catch (Exception e) {
+				/* Keep files for debugging
 				// Delete files from the server
 				for (String fileName : fileParts) {
 					File temporarySourceFile = new File(temporaryServerFolder + File.separator + fileName);
-					if (temporarySourceFile != null) {
+					if ((temporarySourceFile != null) && temporarySourceFile.exists()) {
 						FileUtils.forceDelete(temporarySourceFile);
 					}
 				}
-				
+				*/
 				handleError(e, frame, errorFolder, "Table " + table, continueOnError);
 				if (continueOnError || JOptionPane.showConfirmDialog(frame, "Do you want to continue with the next table?","Continue?",JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
 					connection = new RichConnection(dbSettings.server, dbSettings.domain, dbSettings.user, dbSettings.password, dbSettings.dbType);
